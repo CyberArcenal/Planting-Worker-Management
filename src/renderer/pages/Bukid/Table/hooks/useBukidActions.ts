@@ -8,8 +8,8 @@ import {
   showSuccess,
   showToast,
 } from "../../../../utils/notification";
-import bukidAPI from "../../../../apis/bukid";
-import type { BukidData } from "../../../../apis/bukid";
+import bukidAPI from "../../../../apis/core/bukid";
+import type { BukidData } from "../../../../apis/core/bukid";
 
 export const useBukidActions = (
   bukids: BukidData[],
@@ -239,7 +239,7 @@ export const useBukidActions = (
 
   const handleOnBukidComplete = async (id: number) => {
     try {
-      showLoading("Marking bukid as completed...")
+      showLoading("Marking bukid as completed...");
       const response = await bukidAPI.updateStatus(id, "completed");
       if (response.status) {
         fetchBukids();
@@ -247,7 +247,7 @@ export const useBukidActions = (
       }
     } catch (err) {
       showError("Failed to complete bukid");
-    }finally{
+    } finally {
       hideLoading();
     }
   };

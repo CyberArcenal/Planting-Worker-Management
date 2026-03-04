@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { ChevronRight as ChevronRightIcon } from 'lucide-react';
-import PitakTableRow from './PitakTableRow';
-import type { PitakWithDetails } from '../../../../apis/pitak';
+import React, { useState } from "react";
+import { ChevronRight as ChevronRightIcon } from "lucide-react";
+import PitakTableRow from "./PitakTableRow";
+import type { PitakWithDetails } from "../../../../apis/core/pitak";
 
 interface PitakTableViewProps {
   pitaks: PitakWithDetails[];
@@ -43,36 +43,39 @@ const PitakTableView: React.FC<PitakTableViewProps> = ({
   onViewPayment,
 }) => {
   const [expandedPitak, setExpandedPitak] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<string>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   const toggleExpandPitak = (id: number) => {
-    setExpandedPitak(prev => prev === id ? null : id);
+    setExpandedPitak((prev) => (prev === id ? null : id));
   };
 
-  const handleOnUpdateLuWang = (id: number, totalLuwang: number | null = null) => {
+  const handleOnUpdateLuWang = (
+    id: number,
+    totalLuwang: number | null = null,
+  ) => {
     if (totalLuwang === null) return;
     onUpdateLuWang(id, totalLuwang);
-  }
+  };
 
   const handleOnAssign = (id: number, pitakData: any = null) => {
     if (pitakData === null) return;
     onAssign(id, pitakData);
-  }
+  };
 
   const handleOnDelete = (id: number) => {
-    const pitak = pitaks.find(p => p.id === id);
+    const pitak = pitaks.find((p) => p.id === id);
     onDelete(id, pitak?.location as string);
-  }
+  };
 
   return (
     <div className="pitak-table-container">
@@ -85,19 +88,24 @@ const PitakTableView: React.FC<PitakTableViewProps> = ({
                   <th className="px-3 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedPitaks.length === pitaks.length && pitaks.length > 0}
+                      checked={
+                        selectedPitaks.length === pitaks.length &&
+                        pitaks.length > 0
+                      }
                       onChange={toggleSelectAll}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
-                      onClick={() => handleSort('location')}
+                      onClick={() => handleSort("location")}
                       className="flex items-center gap-1 hover:text-gray-700"
                     >
                       Location
-                      {sortBy === 'location' && (
-                        <ChevronRightIcon className={`w-3 h-3 transform ${sortOrder === 'asc' ? 'rotate-90' : '-rotate-90'}`} />
+                      {sortBy === "location" && (
+                        <ChevronRightIcon
+                          className={`w-3 h-3 transform ${sortOrder === "asc" ? "rotate-90" : "-rotate-90"}`}
+                        />
                       )}
                     </button>
                   </th>
@@ -106,12 +114,14 @@ const PitakTableView: React.FC<PitakTableViewProps> = ({
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
-                      onClick={() => handleSort('totalLuwang')}
+                      onClick={() => handleSort("totalLuwang")}
                       className="flex items-center gap-1 hover:text-gray-700"
                     >
                       Luwang Capacity
-                      {sortBy === 'totalLuwang' && (
-                        <ChevronRightIcon className={`w-3 h-3 transform ${sortOrder === 'asc' ? 'rotate-90' : '-rotate-90'}`} />
+                      {sortBy === "totalLuwang" && (
+                        <ChevronRightIcon
+                          className={`w-3 h-3 transform ${sortOrder === "asc" ? "rotate-90" : "-rotate-90"}`}
+                        />
                       )}
                     </button>
                   </th>
@@ -120,12 +130,14 @@ const PitakTableView: React.FC<PitakTableViewProps> = ({
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
-                      onClick={() => handleSort('createdAt')}
+                      onClick={() => handleSort("createdAt")}
                       className="flex items-center gap-1 hover:text-gray-700"
                     >
                       Created
-                      {sortBy === 'createdAt' && (
-                        <ChevronRightIcon className={`w-3 h-3 transform ${sortOrder === 'asc' ? 'rotate-90' : '-rotate-90'}`} />
+                      {sortBy === "createdAt" && (
+                        <ChevronRightIcon
+                          className={`w-3 h-3 transform ${sortOrder === "asc" ? "rotate-90" : "-rotate-90"}`}
+                        />
                       )}
                     </button>
                   </th>

@@ -17,7 +17,7 @@ import {
   Info,
   DollarSign,
 } from "lucide-react";
-import workerAPI from "../../../../apis/worker";
+import workerAPI from "../../../../apis/core/worker";
 import { showError, showSuccess } from "../../../../utils/notification";
 import { dialogs } from "../../../../utils/dialogs";
 

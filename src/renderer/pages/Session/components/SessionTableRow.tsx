@@ -9,7 +9,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import SessionActionsDropdown from "./SessionActionsDropdown";
-import type { SessionListData } from "../../../apis/session";
+import type { SessionListData } from "../../../apis/core/session";
 import { formatDate } from "../../../utils/formatters";
 
 interface SessionTableRowProps {

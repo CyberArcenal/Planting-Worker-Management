@@ -18,7 +18,7 @@ import {
   TrendingDown,
   Percent,
 } from "lucide-react";
-import type { PaymentData } from "../../../../apis/payment";
+import type { PaymentData } from "../../../../apis/core/payment";
 
 interface PaymentActionsDropdownProps {
   payment: PaymentData;

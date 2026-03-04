@@ -1,8 +1,13 @@
 // components/Bukid/hooks/useBukidData.ts
-import { useState, useEffect, useCallback } from 'react';
-import type { BukidData, BukidFilters, BukidStatsData, BukidSummaryData } from '../../../../apis/bukid';
-import bukidAPI from '../../../../apis/bukid';
-import { showError } from '../../../../utils/notification';
+import { useState, useEffect, useCallback } from "react";
+import type {
+  BukidData,
+  BukidFilters,
+  BukidStatsData,
+  BukidSummaryData,
+} from "../../../../apis/core/bukid";
+import bukidAPI from "../../../../apis/core/bukid";
+import { showError } from "../../../../utils/notification";
 
 export const useBukidData = () => {
   const [loading, setLoading] = useState(true);
@@ -21,13 +26,13 @@ export const useBukidData = () => {
   const [limit] = useState(20);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('name');
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   // View options
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedBukids, setSelectedBukids] = useState<number[]>([]);
 
   // Fetch bukid data
@@ -41,7 +46,7 @@ export const useBukidData = () => {
         limit,
         sortBy,
         sortOrder,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
       };
 
       let response;
@@ -56,12 +61,12 @@ export const useBukidData = () => {
         setTotalPages(response.data.pagination.totalPages || 1);
         setTotalItems(response.data.pagination.total || 0);
       } else {
-        throw new Error(response.message || 'Failed to fetch bukid data');
+        throw new Error(response.message || "Failed to fetch bukid data");
       }
     } catch (err: any) {
       setError(err.message);
       showError(err.message);
-      console.error('Failed to fetch bukid data:', err);
+      console.error("Failed to fetch bukid data:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -89,12 +94,12 @@ export const useBukidData = () => {
             } catch {
               return null;
             }
-          })
+          }),
         );
         setSummary(summaryData.filter(Boolean) as BukidSummaryData[]);
       }
     } catch (err) {
-      console.error('Failed to fetch summary/stats:', err);
+      console.error("Failed to fetch summary/stats:", err);
     }
   }, []);
 

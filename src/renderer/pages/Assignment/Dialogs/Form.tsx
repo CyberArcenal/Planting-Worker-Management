@@ -18,10 +18,10 @@ import {
   UserX,
 } from "lucide-react";
 import { showError, showSuccess } from "../../../utils/notification";
-import type { Assignment, Worker } from "../../../apis/assignment";
-import assignmentAPI from "../../../apis/assignment";
+import type { Assignment, Worker } from "../../../apis/core/assignment";
+import assignmentAPI from "../../../apis/core/assignment";
 import PitakSelect from "../../../components/Selects/Pitak";
-import workerAPI from "../../../apis/worker";
+import workerAPI from "../../../apis/core/worker";
 
 interface AssignmentFormDialogProps {
   workerIds?: number[]; // ✅ Ginawang optional
@@ -78,30 +78,35 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
         setWorkerLoading(true);
         try {
           // Fetch worker details for each ID
-          const workerPromises = workerIds.map(id => 
-            workerAPI.getWorkerById(id).catch(() => null)
+          const workerPromises = workerIds.map((id) =>
+            workerAPI.getWorkerById(id).catch(() => null),
           );
-          
+
           const workerResponses = await Promise.all(workerPromises);
           const validWorkers = workerResponses
-            .filter((response): response is { status: boolean; data: { worker: Worker } } => 
-              response !== null && response.status && response.data?.worker
+            .filter(
+              (
+                response,
+              ): response is { status: boolean; data: { worker: Worker } } =>
+                response !== null && response.status && response.data?.worker,
             )
-            .map(response => response?.data.worker);
-          
-          setFormData(prev => ({
+            .map((response) => response?.data.worker);
+
+          setFormData((prev) => ({
             ...prev,
             workers: validWorkers,
           }));
-          
+
           // Kung reassignment, maaaring kailangan natin ng original assignment details
           if (isReassignment && reassignmentAssignmentId) {
             try {
-              const assignmentResponse = await assignmentAPI.getAssignmentById(reassignmentAssignmentId);
+              const assignmentResponse = await assignmentAPI.getAssignmentById(
+                reassignmentAssignmentId,
+              );
               if (assignmentResponse.status && assignmentResponse.data) {
                 const assignment = assignmentResponse.data;
                 // Set the original pitak and date as defaults
-                setFormData(prev => ({
+                setFormData((prev) => ({
                   ...prev,
                   pitakId: assignment.pitak?.id || null,
                   assignmentDate: assignment.assignmentDate,
@@ -142,14 +147,16 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
               worker.status === "active" || worker.status === "on-leave",
           );
           setAvailableWorkers(activeWorkers);
-          
+
           // Kung may preselected workers, i-sync sa available workers
           if (formData.workers.length > 0) {
-            const updatedWorkers = formData.workers.map(selectedWorker => {
-              const updatedWorker = activeWorkers.find(w => w.id === selectedWorker.id);
+            const updatedWorkers = formData.workers.map((selectedWorker) => {
+              const updatedWorker = activeWorkers.find(
+                (w) => w.id === selectedWorker.id,
+              );
               return updatedWorker || selectedWorker;
             });
-            setFormData(prev => ({ ...prev, workers: updatedWorkers }));
+            setFormData((prev) => ({ ...prev, workers: updatedWorkers }));
           }
         } else {
           setWorkerError(response.message || "Failed to load workers");
@@ -381,11 +388,14 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
         if (response.status && response.data?.assignments) {
           // Optional: Cancel the old assignment
           try {
-            await assignmentAPI.cancelAssignment(reassignmentAssignmentId, "Reassigned to new plot");
+            await assignmentAPI.cancelAssignment(
+              reassignmentAssignmentId,
+              "Reassigned to new plot",
+            );
           } catch (cancelErr) {
             console.error("Error canceling old assignment:", cancelErr);
           }
-          
+
           showSuccess(
             `Successfully reassigned ${formData.workers.length} worker(s)!`,
           );
@@ -445,13 +455,14 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
               </h3>
               <div className="text-xs text-gray-600 flex items-center gap-2">
                 <span>
-                  {isReassignment 
-                    ? "Reassign selected workers to a different plot" 
+                  {isReassignment
+                    ? "Reassign selected workers to a different plot"
                     : "Assign multiple workers to a plot"}
                 </span>
                 {isReassignment && workerIds.length > 0 && (
                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                    {workerIds.length} worker{workerIds.length !== 1 ? 's' : ''} selected
+                    {workerIds.length} worker{workerIds.length !== 1 ? "s" : ""}{" "}
+                    selected
                   </span>
                 )}
               </div>
@@ -527,7 +538,9 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                   <div className="flex items-center gap-2 mb-3">
                     <LandPlot className="w-4 h-4 text-gray-500" />
                     <h4 className="text-sm font-semibold text-gray-900">
-                      {isReassignment ? "New Plot Assignment" : "Plot Assignment"}
+                      {isReassignment
+                        ? "New Plot Assignment"
+                        : "Plot Assignment"}
                     </h4>
                   </div>
                   <div className="space-y-4">
@@ -551,8 +564,8 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                         </p>
                       )}
                       <p className="mt-1 text-xs text-gray-500">
-                        {isReassignment 
-                          ? "Choose the new plot where workers will be reassigned" 
+                        {isReassignment
+                          ? "Choose the new plot where workers will be reassigned"
                           : "Choose the plot where workers will be assigned"}
                       </p>
                     </div>
@@ -563,7 +576,10 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                         className="block text-xs font-medium mb-1.5 text-gray-700"
                         htmlFor="assignmentDate"
                       >
-                        {isReassignment ? "New Assignment Date" : "Assignment Date"} <span className="text-red-500">*</span>
+                        {isReassignment
+                          ? "New Assignment Date"
+                          : "Assignment Date"}{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="assignmentDate"
@@ -606,7 +622,10 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-xs font-medium text-gray-700">
-                          {isReassignment ? "Workers to Reassign" : "Selected Workers for This Assignment"} <span className="text-red-500">*</span>
+                          {isReassignment
+                            ? "Workers to Reassign"
+                            : "Selected Workers for This Assignment"}{" "}
+                          <span className="text-red-500">*</span>
                         </label>
                         <button
                           type="button"
@@ -696,7 +715,9 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                     <div className="p-4 rounded border border-dashed border-gray-300 text-center bg-gray-50">
                       <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600">
-                        {workerLoading ? "Loading workers..." : "No workers selected"}
+                        {workerLoading
+                          ? "Loading workers..."
+                          : "No workers selected"}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         Select workers from the list below to assign them to
@@ -890,9 +911,11 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                       className={`w-full px-3 py-2 rounded text-sm border ${
                         errors.notes ? "border-red-500" : "border-gray-300"
                       } focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none`}
-                      placeholder={isReassignment 
-                        ? "Enter any notes about this reassignment...\n• Reason for reassignment\n• Specific tasks for new assignment\n• Special instructions\n• Expected work duration" 
-                        : "Enter any additional notes about this assignment... \n• Specific tasks to be performed\n• Tools or equipment needed\n• Special instructions or precautions\n• Expected work duration\n• Quality requirements\n• Communication protocols"}
+                      placeholder={
+                        isReassignment
+                          ? "Enter any notes about this reassignment...\n• Reason for reassignment\n• Specific tasks for new assignment\n• Special instructions\n• Expected work duration"
+                          : "Enter any additional notes about this assignment... \n• Specific tasks to be performed\n• Tools or equipment needed\n• Special instructions or precautions\n• Expected work duration\n• Quality requirements\n• Communication protocols"
+                      }
                       rows={4}
                     />
                     {errors.notes && (
@@ -903,8 +926,8 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                     )}
                     <div className="mt-2 flex justify-between items-center">
                       <p className="text-xs text-gray-500">
-                        {isReassignment 
-                          ? "Add details about why workers are being reassigned" 
+                        {isReassignment
+                          ? "Add details about why workers are being reassigned"
                           : "Add detailed instructions and information for the workers"}
                       </p>
                       <span
@@ -926,7 +949,9 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
             {formData.workers.length > 0 && (
               <div className="p-3 bg-gray-50 rounded border border-gray-200">
                 <h5 className="text-xs font-medium text-gray-900 mb-2">
-                  {isReassignment ? "Reassignment Summary" : "Assignment Summary"}
+                  {isReassignment
+                    ? "Reassignment Summary"
+                    : "Assignment Summary"}
                 </h5>
                 <div className="space-y-1">
                   {formData.workers.some(
@@ -968,7 +993,9 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                     <div className="flex items-center gap-2 text-xs text-blue-700">
                       <Users className="w-3 h-3" />
                       <span>
-                        {workerIds.length} worker{workerIds.length !== 1 ? 's' : ''} selected for reassignment
+                        {workerIds.length} worker
+                        {workerIds.length !== 1 ? "s" : ""} selected for
+                        reassignment
                       </span>
                     </div>
                   )}
@@ -1006,12 +1033,15 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                 {submitting ? (
                   <>
                     <Loader className="w-3.5 h-3.5 animate-spin" />
-                    {isReassignment ? "Reassigning..." : "Creating Assignments..."}
+                    {isReassignment
+                      ? "Reassigning..."
+                      : "Creating Assignments..."}
                   </>
                 ) : (
                   <>
                     <Save className="w-3.5 h-3.5" />
-                    {isReassignment ? "Reassign" : "Assign"} {formData.workers.length} Worker
+                    {isReassignment ? "Reassign" : "Assign"}{" "}
+                    {formData.workers.length} Worker
                     {formData.workers.length !== 1 ? "s" : ""}
                   </>
                 )}

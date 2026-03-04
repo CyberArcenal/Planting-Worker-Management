@@ -10,7 +10,7 @@ import {
   Info,
   Save,
 } from "lucide-react";
-import sessionAPI from "../../../apis/session";
+import sessionAPI from "../../../apis/core/session";
 import { dialogs } from "../../../utils/dialogs";
 import { showSuccess, showError } from "../../../utils/notification";
 

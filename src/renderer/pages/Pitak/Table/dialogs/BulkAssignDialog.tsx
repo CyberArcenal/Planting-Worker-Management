@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Calendar, X, Package, Check, Plus, Search, User, AlertCircle } from 'lucide-react';
-import workerAPI, { type WorkerData } from '../../../../apis/worker';
+import React, { useState, useEffect } from "react";
+import {
+  Users,
+  Calendar,
+  X,
+  Package,
+  Check,
+  Plus,
+  Search,
+  User,
+  AlertCircle,
+} from "lucide-react";
+import workerAPI, { type WorkerData } from "../../../../apis/core/worker";
 
 interface BulkAssignDialogProps {
   selectedCount: number;
@@ -15,11 +25,13 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
   data,
   onChange,
   onSubmit,
-  onClose
+  onClose,
 }) => {
-  const [selectedWorkers, setSelectedWorkers] = useState<any[]>(data.workers || []);
+  const [selectedWorkers, setSelectedWorkers] = useState<any[]>(
+    data.workers || [],
+  );
   const [availableWorkers, setAvailableWorkers] = useState<WorkerData[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showWorkerList, setShowWorkerList] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,20 +44,23 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
       try {
         const response = await workerAPI.getActiveWorkers({
           limit: 100,
-          sortBy: 'name',
-          sortOrder: 'ASC'
+          sortBy: "name",
+          sortOrder: "ASC",
         });
-        
+
         if (response.status) {
-          setAvailableWorkers(response.data.workers.filter(worker => 
-            worker.status === 'active' || worker.status === 'on-leave'
-          ));
+          setAvailableWorkers(
+            response.data.workers.filter(
+              (worker) =>
+                worker.status === "active" || worker.status === "on-leave",
+            ),
+          );
         } else {
-          setError(response.message || 'Failed to load workers');
+          setError(response.message || "Failed to load workers");
         }
       } catch (err: any) {
-        setError(err.message || 'Failed to load workers');
-        console.error('Error fetching workers:', err);
+        setError(err.message || "Failed to load workers");
+        console.error("Error fetching workers:", err);
       } finally {
         setLoading(false);
       }
@@ -56,10 +71,11 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
     }
   }, [showWorkerList]);
 
-  const filteredWorkers = availableWorkers.filter(worker =>
-    (worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     worker.contact?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     worker.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredWorkers = availableWorkers.filter(
+    (worker) =>
+      worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      worker.contact?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      worker.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleInputChange = (field: string, value: any) => {
@@ -67,27 +83,30 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
   };
 
   const toggleWorkerSelection = (worker: WorkerData) => {
-    const isSelected = selectedWorkers.some(w => w.id === worker.id);
+    const isSelected = selectedWorkers.some((w) => w.id === worker.id);
     let updatedWorkers;
-    
+
     if (isSelected) {
-      updatedWorkers = selectedWorkers.filter(w => w.id !== worker.id);
+      updatedWorkers = selectedWorkers.filter((w) => w.id !== worker.id);
     } else {
-      updatedWorkers = [...selectedWorkers, {
-        id: worker.id,
-        name: worker.name,
-        contact: worker.contact,
-        email: worker.email,
-        status: worker.status
-      }];
+      updatedWorkers = [
+        ...selectedWorkers,
+        {
+          id: worker.id,
+          name: worker.name,
+          contact: worker.contact,
+          email: worker.email,
+          status: worker.status,
+        },
+      ];
     }
-    
+
     setSelectedWorkers(updatedWorkers);
     onChange({ ...data, workers: updatedWorkers });
   };
 
   const removeWorker = (workerId: number) => {
-    const updatedWorkers = selectedWorkers.filter(w => w.id !== workerId);
+    const updatedWorkers = selectedWorkers.filter((w) => w.id !== workerId);
     setSelectedWorkers(updatedWorkers);
     onChange({ ...data, workers: updatedWorkers });
   };
@@ -99,11 +118,16 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return { bg: '#d1fae5', text: '#065f46', border: '#10b981' };
-      case 'on-leave': return { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' };
-      case 'inactive': return { bg: '#f3f4f6', text: '#6b7280', border: '#9ca3af' };
-      case 'terminated': return { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' };
-      default: return { bg: '#f3f4f6', text: '#6b7280', border: '#9ca3af' };
+      case "active":
+        return { bg: "#d1fae5", text: "#065f46", border: "#10b981" };
+      case "on-leave":
+        return { bg: "#fef3c7", text: "#92400e", border: "#f59e0b" };
+      case "inactive":
+        return { bg: "#f3f4f6", text: "#6b7280", border: "#9ca3af" };
+      case "terminated":
+        return { bg: "#fee2e2", text: "#991b1b", border: "#ef4444" };
+      default:
+        return { bg: "#f3f4f6", text: "#6b7280", border: "#9ca3af" };
     }
   };
 
@@ -119,9 +143,13 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
               <Users className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Bulk Assign Workers</h3>
+              <h3 className="text-base font-semibold text-gray-900">
+                Bulk Assign Workers
+              </h3>
               <p className="text-xs text-gray-600">
-                Assign workers to <span className="font-bold text-blue-600">{selectedCount}</span> selected pitaks
+                Assign workers to{" "}
+                <span className="font-bold text-blue-600">{selectedCount}</span>{" "}
+                selected pitaks
               </p>
             </div>
           </div>
@@ -143,9 +171,15 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                 <Package className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900">Bulk Operation</h4>
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Bulk Operation
+                </h4>
                 <p className="text-xs text-gray-600">
-                  This will assign {selectedWorkers.length > 0 ? `${selectedWorkers.length} worker(s)` : 'workers'} to all {selectedCount} selected pitaks
+                  This will assign{" "}
+                  {selectedWorkers.length > 0
+                    ? `${selectedWorkers.length} worker(s)`
+                    : "workers"}{" "}
+                  to all {selectedCount} selected pitaks
                 </p>
               </div>
             </div>
@@ -162,8 +196,10 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
             </label>
             <input
               type="date"
-              value={data.assignmentDate || ''}
-              onChange={(e) => handleInputChange('assignmentDate', e.target.value)}
+              value={data.assignmentDate || ""}
+              onChange={(e) =>
+                handleInputChange("assignmentDate", e.target.value)
+              }
               className="w-full px-3 py-2 rounded text-sm border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
             />
           </div>
@@ -184,11 +220,11 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                 </button>
               )}
             </div>
-            
+
             {/* Selected Workers List */}
             {selectedWorkers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {selectedWorkers.map(worker => {
+                {selectedWorkers.map((worker) => {
                   const statusColor = getStatusColor(worker.status);
                   return (
                     <div
@@ -200,8 +236,12 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                           <User className="w-3 h-3 text-blue-600" />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{worker.name}</div>
-                          <div className="text-xs text-gray-500 truncate">{worker.contact || worker.email || 'No contact'}</div>
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {worker.name}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {worker.contact || worker.email || "No contact"}
+                          </div>
                         </div>
                       </div>
                       <button
@@ -218,7 +258,9 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
               <div className="p-3 rounded border border-dashed border-gray-300 text-center">
                 <Users className="w-6 h-6 text-gray-400 mx-auto mb-1" />
                 <p className="text-xs text-gray-600">No workers selected</p>
-                <p className="text-xs text-gray-500 mt-1">Select workers from the list below</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select workers from the list below
+                </p>
               </div>
             )}
 
@@ -233,11 +275,11 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                   onClick={() => setShowWorkerList(!showWorkerList)}
                   className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
                 >
-                  {showWorkerList ? 'Hide List' : 'Show List'}
+                  {showWorkerList ? "Hide List" : "Show List"}
                   <Search className="w-3 h-3" />
                 </button>
               </div>
-              
+
               {showWorkerList && (
                 <div className="space-y-2">
                   <div className="relative">
@@ -250,12 +292,14 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                     />
                     <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                   </div>
-                  
+
                   <div className="max-h-48 overflow-y-auto rounded border border-gray-300 divide-y divide-gray-200">
                     {loading ? (
                       <div className="p-4 text-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="text-xs text-gray-600 mt-1">Loading workers...</p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Loading workers...
+                        </p>
                       </div>
                     ) : error ? (
                       <div className="p-3 text-center">
@@ -264,37 +308,49 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                       </div>
                     ) : filteredWorkers.length === 0 ? (
                       <div className="p-3 text-center">
-                        <p className="text-xs text-gray-600">No workers found</p>
+                        <p className="text-xs text-gray-600">
+                          No workers found
+                        </p>
                       </div>
                     ) : (
-                      filteredWorkers.map(worker => {
-                        const isSelected = selectedWorkers.some(w => w.id === worker.id);
+                      filteredWorkers.map((worker) => {
+                        const isSelected = selectedWorkers.some(
+                          (w) => w.id === worker.id,
+                        );
                         const statusColor = getStatusColor(worker.status);
                         return (
                           <div
                             key={worker.id}
-                            className={`p-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-blue-50' : ''}`}
+                            className={`p-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer ${isSelected ? "bg-blue-50" : ""}`}
                             onClick={() => toggleWorkerSelection(worker)}
                           >
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
-                                {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                              <div
+                                className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-300"}`}
+                              >
+                                {isSelected && (
+                                  <Check className="w-2.5 h-2.5 text-white" />
+                                )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="text-sm font-medium text-gray-900 truncate">{worker.name}</div>
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {worker.name}
+                                </div>
                                 <div className="flex items-center gap-1 mt-0.5">
-                                  <span 
+                                  <span
                                     className="text-xs px-1.5 py-0.5 rounded-full truncate"
                                     style={{
                                       backgroundColor: statusColor.bg,
                                       color: statusColor.text,
-                                      border: `1px solid ${statusColor.border}`
+                                      border: `1px solid ${statusColor.border}`,
                                     }}
                                   >
                                     {worker.status}
                                   </span>
                                   <span className="text-xs text-gray-500 truncate">
-                                    {worker.contact || worker.email || 'No contact'}
+                                    {worker.contact ||
+                                      worker.email ||
+                                      "No contact"}
                                   </span>
                                 </div>
                               </div>
@@ -315,7 +371,9 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
           {/* Distribution Summary */}
           {selectedWorkers.length > 0 && (
             <div className="p-3 rounded bg-gray-50 border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Assignment Summary</h4>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                Assignment Summary
+              </h4>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <div className="text-gray-600">Total Pitaks:</div>
@@ -327,16 +385,21 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                 </div>
                 <div>
                   <div className="text-gray-600">Total Assignments:</div>
-                  <div className="font-medium">{selectedCount * selectedWorkers.length}</div>
+                  <div className="font-medium">
+                    {selectedCount * selectedWorkers.length}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-600">Assignment Date:</div>
-                  <div className="font-medium">{data.assignmentDate || 'Not set'}</div>
+                  <div className="font-medium">
+                    {data.assignmentDate || "Not set"}
+                  </div>
                 </div>
               </div>
               <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
-                {selectedWorkers.length} worker(s) will be assigned to {selectedCount} pitak(s) 
-                ({selectedCount * selectedWorkers.length} total assignments).
+                {selectedWorkers.length} worker(s) will be assigned to{" "}
+                {selectedCount} pitak(s) (
+                {selectedCount * selectedWorkers.length} total assignments).
               </div>
             </div>
           )}
@@ -347,8 +410,8 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
               Notes (Optional)
             </label>
             <textarea
-              value={data.notes || ''}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
+              value={data.notes || ""}
+              onChange={(e) => handleInputChange("notes", e.target.value)}
               className="w-full px-3 py-2 rounded text-sm border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
               rows={2}
               placeholder="Add notes for all assignments..."
@@ -360,7 +423,8 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
         <div className="p-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-600">
-              <span className="font-medium">Required fields</span> are marked with *
+              <span className="font-medium">Required fields</span> are marked
+              with *
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -374,11 +438,9 @@ const BulkAssignDialog: React.FC<BulkAssignDialogProps> = ({
                 disabled={isSubmitDisabled}
                 className="px-3 py-1.5 rounded text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {selectedWorkers.length > 0 ? (
-                  `Assign ${selectedWorkers.length} Worker${selectedWorkers.length !== 1 ? 's' : ''} to ${selectedCount} Pitaks`
-                ) : (
-                  `Assign to ${selectedCount} Pitaks`
-                )}
+                {selectedWorkers.length > 0
+                  ? `Assign ${selectedWorkers.length} Worker${selectedWorkers.length !== 1 ? "s" : ""} to ${selectedCount} Pitaks`
+                  : `Assign to ${selectedCount} Pitaks`}
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 // workerAPI.ts - Refactored to align with IPC handlers
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 
 // ============================================================================
 // INTERFACE DEFINITIONS
@@ -88,8 +88,14 @@ export interface WorkerAssignmentSummary {
       completed: number;
       cancelled: number;
     };
-    byBukid: Record<string, { count: number; totalLuwang: number; pitaks: string[] }>;
-    byPitak: Record<string, { count: number; totalLuwang: number; bukid: string }>;
+    byBukid: Record<
+      string,
+      { count: number; totalLuwang: number; pitaks: string[] }
+    >;
+    byPitak: Record<
+      string,
+      { count: number; totalLuwang: number; bukid: string }
+    >;
     averageLuwang: number;
     recentActivity: any[];
   };
@@ -389,7 +395,8 @@ export class WorkerAPI {
     try {
       const user = kabAuthStore.getUser();
       if (user && user.id) {
-        const userId = typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
         return isNaN(userId) ? null : userId;
       }
       return null;
@@ -434,7 +441,9 @@ export class WorkerAPI {
     }
   }
 
-  async getWorkerById(id: number): Promise<WorkerResponse<WorkerDetailResponse>> {
+  async getWorkerById(
+    id: number,
+  ): Promise<WorkerResponse<WorkerDetailResponse>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -455,7 +464,9 @@ export class WorkerAPI {
     }
   }
 
-  async getWorkerByName(name: string): Promise<WorkerResponse<{ workers: WorkerData[] }>> {
+  async getWorkerByName(
+    name: string,
+  ): Promise<WorkerResponse<{ workers: WorkerData[] }>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -478,7 +489,7 @@ export class WorkerAPI {
 
   async getWorkerByStatus(
     status: string,
-    params?: { page?: number; limit?: number }
+    params?: { page?: number; limit?: number },
   ): Promise<WorkerResponse<WorkerListResponse>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -524,7 +535,7 @@ export class WorkerAPI {
   async getWorkerWithPayments(
     id: number,
     periodStart?: string,
-    periodEnd?: string
+    periodEnd?: string,
   ): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -550,7 +561,7 @@ export class WorkerAPI {
     id: number,
     startDate?: string,
     endDate?: string,
-    groupBy?: string
+    groupBy?: string,
   ): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -641,7 +652,9 @@ export class WorkerAPI {
     }
   }
 
-  async searchWorkers(params: WorkerSearchParams): Promise<WorkerResponse<WorkerListResponse>> {
+  async searchWorkers(
+    params: WorkerSearchParams,
+  ): Promise<WorkerResponse<WorkerListResponse>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -668,7 +681,7 @@ export class WorkerAPI {
 
   async getWorkerDebtSummary(
     workerId: number,
-    includeHistory?: boolean
+    includeHistory?: boolean,
   ): Promise<WorkerResponse<WorkerDebtSummary>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -694,7 +707,7 @@ export class WorkerAPI {
     workerId: number,
     periodStart?: string,
     periodEnd?: string,
-    groupBy?: string
+    groupBy?: string,
   ): Promise<WorkerResponse<WorkerPaymentSummary>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -703,7 +716,12 @@ export class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerPaymentSummary",
-        params: this.enrichParams({ workerId, periodStart, periodEnd, groupBy }),
+        params: this.enrichParams({
+          workerId,
+          periodStart,
+          periodEnd,
+          groupBy,
+        }),
       });
 
       return response;
@@ -720,7 +738,7 @@ export class WorkerAPI {
     workerId: number,
     startDate?: string,
     endDate?: string,
-    groupBy?: string
+    groupBy?: string,
   ): Promise<WorkerResponse<WorkerAssignmentSummary>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -742,9 +760,7 @@ export class WorkerAPI {
     }
   }
 
-  async calculateWorkerBalance(
-    workerId: number
-  ): Promise<WorkerResponse<any>> {
+  async calculateWorkerBalance(workerId: number): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -772,7 +788,7 @@ export class WorkerAPI {
   async getWorkerAttendance(
     workerId: number,
     month?: number,
-    year?: number
+    year?: number,
   ): Promise<WorkerResponse<WorkerAttendance>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -797,7 +813,7 @@ export class WorkerAPI {
   async getWorkerPerformance(
     workerId: number,
     period?: string,
-    compareToPrevious?: boolean
+    compareToPrevious?: boolean,
   ): Promise<WorkerResponse<WorkerPerformance>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -824,7 +840,7 @@ export class WorkerAPI {
     reportType?: string,
     startDate?: string,
     endDate?: string,
-    format?: string
+    format?: string,
   ): Promise<WorkerResponse<WorkerReport>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -833,7 +849,13 @@ export class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "generateWorkerReport",
-        params: this.enrichParams({ workerId, reportType, startDate, endDate, format }),
+        params: this.enrichParams({
+          workerId,
+          reportType,
+          startDate,
+          endDate,
+          format,
+        }),
       });
 
       return response;
@@ -850,7 +872,9 @@ export class WorkerAPI {
   // ✏️ WRITE METHODS
   // ============================================================================
 
-  async createWorker(data: WorkerCreateData): Promise<WorkerResponse<{ worker: WorkerData }>> {
+  async createWorker(
+    data: WorkerCreateData,
+  ): Promise<WorkerResponse<{ worker: WorkerData }>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -871,7 +895,9 @@ export class WorkerAPI {
     }
   }
 
-  async updateWorker(data: WorkerUpdateData): Promise<WorkerResponse<{ worker: WorkerData }>> {
+  async updateWorker(
+    data: WorkerUpdateData,
+  ): Promise<WorkerResponse<{ worker: WorkerData }>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -916,8 +942,13 @@ export class WorkerAPI {
   async updateWorkerStatus(
     id: number,
     status: "active" | "inactive" | "on-leave" | "terminated",
-    notes?: string
-  ): Promise<WorkerResponse<{ worker: WorkerData; change: { oldStatus: string; newStatus: string } }>> {
+    notes?: string,
+  ): Promise<
+    WorkerResponse<{
+      worker: WorkerData;
+      change: { oldStatus: string; newStatus: string };
+    }>
+  > {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -942,7 +973,7 @@ export class WorkerAPI {
     id: number,
     contact?: string | null,
     email?: string | null,
-    address?: string | null
+    address?: string | null,
   ): Promise<WorkerResponse<{ worker: WorkerData }>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -968,7 +999,9 @@ export class WorkerAPI {
   // 🔄 BATCH OPERATIONS
   // ============================================================================
 
-  async bulkCreateWorkers(data: WorkerBulkCreateData): Promise<WorkerResponse<any>> {
+  async bulkCreateWorkers(
+    data: WorkerBulkCreateData,
+  ): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -989,7 +1022,9 @@ export class WorkerAPI {
     }
   }
 
-  async bulkUpdateWorkers(data: WorkerBulkUpdateData): Promise<WorkerResponse<any>> {
+  async bulkUpdateWorkers(
+    data: WorkerBulkUpdateData,
+  ): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -1013,7 +1048,7 @@ export class WorkerAPI {
   async importWorkersFromCSV(
     filePath: string,
     hasHeader: boolean = true,
-    delimiter: string = ","
+    delimiter: string = ",",
   ): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
@@ -1035,7 +1070,9 @@ export class WorkerAPI {
     }
   }
 
-  async exportWorkersToCSV(params: WorkerExportParams): Promise<WorkerResponse<any>> {
+  async exportWorkersToCSV(
+    params: WorkerExportParams,
+  ): Promise<WorkerResponse<any>> {
     try {
       if (!window.backendAPI?.worker) {
         throw new Error("Electron API not available");
@@ -1064,7 +1101,7 @@ export class WorkerAPI {
     try {
       const response = await this.getWorkerByName(name);
       if (response.status && (response.data?.workers?.length || 0) > 0) {
-        if(!response.data){
+        if (!response.data) {
           throw new Error("Invalid response data");
         }
         return response.data?.workers[0];
@@ -1099,11 +1136,14 @@ export class WorkerAPI {
     }
   }
 
-  async getWorkerFinancialSummary(workerId: number): Promise<WorkerFinancialSummary | null> {
+  async getWorkerFinancialSummary(
+    workerId: number,
+  ): Promise<WorkerFinancialSummary | null> {
     try {
       const response = await this.getWorkerSummary(workerId);
       if (response.status && response.data?.summary) {
-        const { totalDebt, totalPaid, currentBalance } = response.data.summary.financial;
+        const { totalDebt, totalPaid, currentBalance } =
+          response.data.summary.financial;
         return { totalDebt, totalPaid, currentBalance };
       }
       return null;
@@ -1137,14 +1177,18 @@ export class WorkerAPI {
 
       const attendanceRate = attendanceRes.data?.summary?.attendanceRate || 0;
       const productivityScore = performanceRes.data?.performance?.score || 0;
-      const completionRate = performanceRes.data?.currentPeriod?.assignments.completionRate || 0;
+      const completionRate =
+        performanceRes.data?.currentPeriod?.assignments.completionRate || 0;
 
       let financialHealth = "good";
       const financialSummary = await this.getWorkerFinancialSummary(workerId);
       if (financialSummary) {
-        if (financialSummary.currentBalance > 10000) financialHealth = "critical";
-        else if (financialSummary.currentBalance > 5000) financialHealth = "warning";
-        else if (financialSummary.currentBalance > 0) financialHealth = "moderate";
+        if (financialSummary.currentBalance > 10000)
+          financialHealth = "critical";
+        else if (financialSummary.currentBalance > 5000)
+          financialHealth = "warning";
+        else if (financialSummary.currentBalance > 0)
+          financialHealth = "moderate";
         else financialHealth = "good";
       }
 
@@ -1160,7 +1204,9 @@ export class WorkerAPI {
     }
   }
 
-  async createWorkerWithValidation(data: WorkerCreateData): Promise<WorkerResponse<{ worker: WorkerData }>> {
+  async createWorkerWithValidation(
+    data: WorkerCreateData,
+  ): Promise<WorkerResponse<{ worker: WorkerData }>> {
     try {
       // Validate required fields
       if (!data.name || data.name.trim() === "") {
@@ -1184,7 +1230,9 @@ export class WorkerAPI {
       // Validate status
       const validStatuses = ["active", "inactive", "on-leave", "terminated"];
       if (data.status && !validStatuses.includes(data.status)) {
-        throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+        throw new Error(
+          `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+        );
       }
 
       return await this.createWorker(data);
@@ -1197,7 +1245,9 @@ export class WorkerAPI {
     }
   }
 
-  async updateWorkerWithValidation(data: WorkerUpdateData): Promise<WorkerResponse<{ worker: WorkerData }>> {
+  async updateWorkerWithValidation(
+    data: WorkerUpdateData,
+  ): Promise<WorkerResponse<{ worker: WorkerData }>> {
     try {
       if (!data.id) {
         throw new Error("Worker ID is required");
@@ -1226,7 +1276,9 @@ export class WorkerAPI {
       if (data.status) {
         const validStatuses = ["active", "inactive", "on-leave", "terminated"];
         if (!validStatuses.includes(data.status)) {
-          throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+          throw new Error(
+            `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+          );
         }
       }
 
@@ -1317,7 +1369,11 @@ export class WorkerAPI {
   }
 
   onWorkerStatusChanged(
-    callback: (data: { id: number; oldStatus: string; newStatus: string }) => void
+    callback: (data: {
+      id: number;
+      oldStatus: string;
+      newStatus: string;
+    }) => void,
   ) {
     if (window.backendAPI && window.backendAPI.onWorkerStatusChanged) {
       window.backendAPI.onWorkerStatusChanged(callback);

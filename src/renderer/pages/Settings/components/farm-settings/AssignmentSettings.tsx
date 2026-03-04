@@ -1,14 +1,14 @@
-import React from 'react';
-import type { FarmAssignmentSettings } from '../../../../apis/system_config';
+import React from "react";
+import type { FarmAssignmentSettings } from "../../../../apis/core/system_config";
 
 interface AssignmentSettingsProps {
   settings: FarmAssignmentSettings;
   onChange: (field: keyof FarmAssignmentSettings, value: any) => void;
 }
 
-export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({ 
-  settings, 
-  onChange 
+export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({
+  settings,
+  onChange,
 }) => {
   const updateField = (field: keyof FarmAssignmentSettings, value: any) => {
     onChange(field, value);
@@ -16,10 +16,12 @@ export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({
 
   const toggleStatusOption = (status: string) => {
     const currentOptions = settings.status_options || [];
-    const updated = currentOptions.includes(status as "active" | "completed" | "cancelled")
-      ? currentOptions.filter(s => s !== status)
+    const updated = currentOptions.includes(
+      status as "active" | "completed" | "cancelled",
+    )
+      ? currentOptions.filter((s) => s !== status)
       : [...currentOptions, status];
-    updateField('status_options', updated);
+    updateField("status_options", updated);
   };
 
   return (
@@ -32,7 +34,12 @@ export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({
           <input
             type="number"
             value={settings.default_luwang_per_worker || 0}
-            onChange={(e) => updateField('default_luwang_per_worker', parseInt(e.target.value) || 0)}
+            onChange={(e) =>
+              updateField(
+                "default_luwang_per_worker",
+                parseInt(e.target.value) || 0,
+              )
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
         </div>
@@ -42,8 +49,8 @@ export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({
             Date Behavior
           </label>
           <select
-            value={settings.date_behavior || 'system_date'}
-            onChange={(e) => updateField('date_behavior', e.target.value)}
+            value={settings.date_behavior || "system_date"}
+            onChange={(e) => updateField("date_behavior", e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           >
             <option value="system_date">System Date</option>
@@ -57,11 +64,13 @@ export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({
           Status Options
         </label>
         <div className="flex flex-wrap gap-2">
-          {['active', 'completed', 'cancelled'].map((status) => (
+          {["active", "completed", "cancelled"].map((status) => (
             <label key={status} className="flex items-center gap-1">
               <input
                 type="checkbox"
-                checked={(settings.status_options || []).includes(status as "active" | "completed" | "cancelled")}
+                checked={(settings.status_options || []).includes(
+                  status as "active" | "completed" | "cancelled",
+                )}
                 onChange={() => toggleStatusOption(status)}
                 className="rounded border-gray-300"
               />
@@ -76,7 +85,9 @@ export const AssignmentSettings: React.FC<AssignmentSettingsProps> = ({
           <input
             type="checkbox"
             checked={settings.enable_notes_remarks || false}
-            onChange={(e) => updateField('enable_notes_remarks', e.target.checked)}
+            onChange={(e) =>
+              updateField("enable_notes_remarks", e.target.checked)
+            }
             className="rounded border-gray-300"
           />
           <span className="text-sm text-gray-700">Enable Notes/Remarks</span>

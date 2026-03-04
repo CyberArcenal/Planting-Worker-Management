@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { formatDate, formatCurrency } from "../../../../utils/formatters";
 import WorkerActionsDropdown from "./WorkerActionsDropdown";
-import workerAPI from "../../../../apis/worker";
+import workerAPI from "../../../../apis/core/worker";
 
 interface WorkerTableRowProps {
   worker: any;
@@ -61,12 +61,16 @@ const WorkerTableRow: React.FC<WorkerTableRowProps> = ({
   useEffect(() => {
     const fetchDetailedData = async () => {
       if (isExpanded) {
-        setFinancialData(prev => ({ ...prev, loading: true }));
+        setFinancialData((prev) => ({ ...prev, loading: true }));
         try {
           // Fetch financial summary
           const summaryResponse = await workerAPI.getWorkerSummary(worker.id);
-          if (summaryResponse.status && summaryResponse.data?.summary?.financial) {
-            const { totalDebt, totalPaid, currentBalance } = summaryResponse.data.summary.financial;
+          if (
+            summaryResponse.status &&
+            summaryResponse.data?.summary?.financial
+          ) {
+            const { totalDebt, totalPaid, currentBalance } =
+              summaryResponse.data.summary.financial;
             setFinancialData({
               totalDebt: totalDebt || 0,
               totalPaid: totalPaid || 0,
@@ -76,7 +80,7 @@ const WorkerTableRow: React.FC<WorkerTableRowProps> = ({
           }
         } catch (error) {
           console.error("Failed to fetch detailed worker data:", error);
-          setFinancialData(prev => ({ ...prev, loading: false }));
+          setFinancialData((prev) => ({ ...prev, loading: false }));
         }
       }
     };
@@ -174,7 +178,7 @@ const WorkerTableRow: React.FC<WorkerTableRowProps> = ({
                 {Math.floor(
                   (new Date().getTime() - new Date(worker.hireDate).getTime()) /
                     (1000 * 60 * 60 * 24),
-                )}{ " "}
+                )}{" "}
                 days
               </p>
             </div>
@@ -215,11 +219,11 @@ const WorkerTableRow: React.FC<WorkerTableRowProps> = ({
               <span className="text-sm text-gray-600">Current Balance:</span>
               <span
                 className={`text-sm font-medium ${
-                  financialData.currentBalance > 0 
-                    ? "text-red-600"  // Debt (worker owes)
-                    : financialData.currentBalance < 0 
-                    ? "text-green-600" // Credit (company owes)
-                    : "text-gray-800"  // Settled
+                  financialData.currentBalance > 0
+                    ? "text-red-600" // Debt (worker owes)
+                    : financialData.currentBalance < 0
+                      ? "text-green-600" // Credit (company owes)
+                      : "text-gray-800" // Settled
                 }`}
               >
                 {formatCurrency(financialData.currentBalance)}
@@ -325,7 +329,7 @@ const WorkerTableRow: React.FC<WorkerTableRowProps> = ({
                     (new Date().getTime() -
                       new Date(worker.hireDate).getTime()) /
                       (1000 * 60 * 60 * 24 * 365.25),
-                  )}{ " "}
+                  )}{" "}
                   years
                 </div>
               )}
@@ -337,7 +341,10 @@ const WorkerTableRow: React.FC<WorkerTableRowProps> = ({
           <div className="space-y-1">
             {getDebtIndicator(financialData.totalDebt)}
             <div className="text-xs text-gray-600">
-              Paid: <span className="text-green-600">{formatCurrency(financialData.totalPaid)}</span>
+              Paid:{" "}
+              <span className="text-green-600">
+                {formatCurrency(financialData.totalPaid)}
+              </span>
             </div>
           </div>
         </td>

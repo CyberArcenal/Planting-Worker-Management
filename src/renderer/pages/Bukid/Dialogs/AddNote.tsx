@@ -1,8 +1,8 @@
 // src/components/Dialogs/AddNoteDialog.tsx
-import React, { useState, useEffect } from 'react';
-import { X, FileText, Save, Loader2 } from 'lucide-react';
-import { showError, showSuccess } from '../../../utils/notification';
-import bukidAPI from '../../../apis/bukid';
+import React, { useState, useEffect } from "react";
+import { X, FileText, Save, Loader2 } from "lucide-react";
+import { showError, showSuccess } from "../../../utils/notification";
+import bukidAPI from "../../../apis/core/bukid";
 
 interface AddNoteDialogProps {
   id: number;
@@ -15,16 +15,16 @@ const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
   id,
   bukidName,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!note.trim()) {
-      setError('Note cannot be empty');
+      setError("Note cannot be empty");
       return;
     }
 
@@ -33,17 +33,17 @@ const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
 
     try {
       const response = await bukidAPI.addNote(id, note);
-      
+
       if (response.status) {
-        showSuccess('Note added successfully');
+        showSuccess("Note added successfully");
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        setError(response.message || 'Failed to add note');
+        setError(response.message || "Failed to add note");
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to add note');
-      showError('Failed to add note');
+      setError(err.message || "Failed to add note");
+      showError("Failed to add note");
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,9 @@ const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
               <FileText className="w-4 h-4 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Add Note to Bukid</h3>
+              <h3 className="text-base font-semibold text-gray-900">
+                Add Note to Bukid
+              </h3>
               <p className="text-xs text-gray-600">{bukidName}</p>
             </div>
           </div>

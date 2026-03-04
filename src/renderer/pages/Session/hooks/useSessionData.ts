@@ -1,12 +1,22 @@
 // components/Session/hooks/useSessionData.ts
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { FilterParams, SessionListData, SessionStatsData } from '../../../apis/session';
-import sessionAPI from '../../../apis/session';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type {
+  FilterParams,
+  SessionListData,
+  SessionStatsData,
+} from "../../../apis/core/session";
+import sessionAPI from "../../../apis/core/session";
 
 type SessionApiShape =
   | SessionListData[] // plain array
-  | { sessions: SessionListData[]; pagination?: { total?: number; totalPages?: number } }
-  | { items: SessionListData[]; pagination?: { total?: number; totalPages?: number } }
+  | {
+      sessions: SessionListData[];
+      pagination?: { total?: number; totalPages?: number };
+    }
+  | {
+      items: SessionListData[];
+      pagination?: { total?: number; totalPages?: number };
+    }
   | Record<string, any>; // fallback for unexpected shapes
 
 export const useSessionData = () => {
@@ -24,13 +34,15 @@ export const useSessionData = () => {
   const [limit] = useState(20);
 
   // Filters / sorting / view
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed' | 'archived'>('all');
-  const [yearFilter, setYearFilter] = useState<number | 'all'>('all');
-  const [seasonTypeFilter, setSeasonTypeFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('startDate');
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "closed" | "archived"
+  >("all");
+  const [yearFilter, setYearFilter] = useState<number | "all">("all");
+  const [seasonTypeFilter, setSeasonTypeFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("startDate");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedSessions, setSelectedSessions] = useState<number[]>([]);
 
   const fetchSessions = useCallback(async () => {
@@ -39,8 +51,8 @@ export const useSessionData = () => {
       setError(null);
 
       const filters: FilterParams = {
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        year: yearFilter !== 'all' ? (yearFilter as number) : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        year: yearFilter !== "all" ? (yearFilter as number) : undefined,
         search: searchQuery.trim() || undefined,
         sortBy: sortBy || undefined,
         sortOrder: sortOrder || undefined,
@@ -51,7 +63,7 @@ export const useSessionData = () => {
       const response = await sessionAPI.getAll(filters as any);
 
       if (!response || !response.status) {
-        throw new Error(response?.message || 'Failed to fetch sessions');
+        throw new Error(response?.message || "Failed to fetch sessions");
       }
 
       // Narrow the response.data into a union we can handle
@@ -68,14 +80,20 @@ export const useSessionData = () => {
         const pagination = (data as any).pagination;
         setAllSessions(items);
         setTotalItems(pagination?.total ?? items.length);
-        setTotalPages(pagination?.totalPages ?? Math.max(1, Math.ceil(items.length / limit)));
+        setTotalPages(
+          pagination?.totalPages ??
+            Math.max(1, Math.ceil(items.length / limit)),
+        );
       } else if (data && Array.isArray((data as any).items)) {
         // shape: { items: SessionListData[], pagination?: {...} }
         const items = (data as any).items as SessionListData[];
         const pagination = (data as any).pagination;
         setAllSessions(items);
         setTotalItems(pagination?.total ?? items.length);
-        setTotalPages(pagination?.totalPages ?? Math.max(1, Math.ceil(items.length / limit)));
+        setTotalPages(
+          pagination?.totalPages ??
+            Math.max(1, Math.ceil(items.length / limit)),
+        );
       } else {
         // Fallback: unknown shape — clear results to avoid runtime errors
         setAllSessions([]);
@@ -83,13 +101,22 @@ export const useSessionData = () => {
         setTotalPages(1);
       }
     } catch (err: any) {
-      setError(err?.message ?? 'Unknown error');
-      console.error('Failed to fetch sessions:', err);
+      setError(err?.message ?? "Unknown error");
+      console.error("Failed to fetch sessions:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [currentPage, searchQuery, statusFilter, yearFilter, seasonTypeFilter, sortBy, sortOrder, limit]);
+  }, [
+    currentPage,
+    searchQuery,
+    statusFilter,
+    yearFilter,
+    seasonTypeFilter,
+    sortBy,
+    sortOrder,
+    limit,
+  ]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -98,7 +125,7 @@ export const useSessionData = () => {
         setStats(response.data as SessionStatsData);
       }
     } catch (err) {
-      console.error('Failed to fetch session stats:', err);
+      console.error("Failed to fetch session stats:", err);
     }
   }, []);
 
@@ -110,21 +137,21 @@ export const useSessionData = () => {
       let bValue: any;
 
       switch (sortBy) {
-        case 'startDate':
+        case "startDate":
           aValue = a.startDate ? new Date(a.startDate).getTime() : 0;
           bValue = b.startDate ? new Date(b.startDate).getTime() : 0;
           break;
-        case 'endDate':
+        case "endDate":
           aValue = a.endDate ? new Date(a.endDate).getTime() : 0;
           bValue = b.endDate ? new Date(b.endDate).getTime() : 0;
           break;
-        case 'year':
+        case "year":
           aValue = a.year ?? 0;
           bValue = b.year ?? 0;
           break;
-        case 'status':
-          aValue = a.status ?? '';
-          bValue = b.status ?? '';
+        case "status":
+          aValue = a.status ?? "";
+          bValue = b.status ?? "";
           break;
         default:
           aValue = a.id;
@@ -132,7 +159,7 @@ export const useSessionData = () => {
       }
 
       if (aValue === bValue) return 0;
-      if (sortOrder === 'ASC') return aValue > bValue ? 1 : -1;
+      if (sortOrder === "ASC") return aValue > bValue ? 1 : -1;
       return aValue < bValue ? 1 : -1;
     });
     return arr;
@@ -173,10 +200,10 @@ export const useSessionData = () => {
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
-      setSortOrder(prev => (prev === 'ASC' ? 'DESC' : 'ASC'));
+      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
     } else {
       setSortBy(field);
-      setSortOrder('ASC');
+      setSortOrder("ASC");
     }
     setCurrentPage(1);
   };

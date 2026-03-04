@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import DebtActionsDropdown from "./DebtActionsDropdown";
 import { formatDate, formatCurrency } from "../../../../utils/formatters";
-import type { DebtData } from "../../../../apis/debt";
+import type { DebtData } from "../../../../apis/core/debt";
 
 interface DebtTableRowProps {
   debt: DebtData;

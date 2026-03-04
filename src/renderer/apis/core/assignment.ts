@@ -1,10 +1,10 @@
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 import type { WorkerData } from "./worker";
 
 // assignmentAPI.ts - API for Assignment Management
 export interface Assignment {
   id: number;
-  name:string;
+  name: string;
   luwangCount: string; // Changed from string to number
   assignmentDate: string;
   status: "active" | "completed" | "cancelled";
@@ -26,7 +26,7 @@ export interface Assignment {
 }
 
 export interface Worker {
-  status: 'active' | 'inactive' | 'on-leave' | 'terminated';
+  status: "active" | "inactive" | "on-leave" | "terminated";
   email: any;
   contact: any;
   id: number;
@@ -1292,53 +1292,54 @@ class AssignmentAPI {
   /**
    * Create assignment with validation
    */
-async createAssignmentWithValidation(data: {
-  workerIds: number[];
-  pitakId: number;
-  luwangCount?: number;
-  assignmentDate: string;
-  notes?: string;
-}): Promise<{
-  status: boolean;
-  message: string;
-  data: {
-    assignments: Assignment[];
-    summary: {
-      totalWorkers: number;
-      totalLuWangCount: number;
-      assignmentDate: string;
-      pitakId: number;
-    };
-  } | null;
-}> {
-  try {
-    const validation = await this.validateAssignmentData(data);
+  async createAssignmentWithValidation(data: {
+    workerIds: number[];
+    pitakId: number;
+    luwangCount?: number;
+    assignmentDate: string;
+    notes?: string;
+  }): Promise<{
+    status: boolean;
+    message: string;
+    data: {
+      assignments: Assignment[];
+      summary: {
+        totalWorkers: number;
+        totalLuWangCount: number;
+        assignmentDate: string;
+        pitakId: number;
+      };
+    } | null;
+  }> {
+    try {
+      const validation = await this.validateAssignmentData(data);
 
-    if (!validation.data.isValid) {
-      // combine errors + warnings into a readable message
-      const errorMessages = [
-        ...(validation.data.errors || []),
-        ...(validation.data.warnings || [])
-      ];
+      if (!validation.data.isValid) {
+        // combine errors + warnings into a readable message
+        const errorMessages = [
+          ...(validation.data.errors || []),
+          ...(validation.data.warnings || []),
+        ];
 
+        return {
+          status: false,
+          message:
+            errorMessages.length > 0
+              ? `Validation failed: ${errorMessages.join("; ")}`
+              : "Assignment data validation failed",
+          data: null,
+        };
+      }
+
+      return await this.createAssignment(data);
+    } catch (error: any) {
       return {
         status: false,
-        message: errorMessages.length > 0
-          ? `Validation failed: ${errorMessages.join("; ")}`
-          : "Assignment data validation failed",
+        message: error.message || "Failed to create assignment",
         data: null,
       };
     }
-
-    return await this.createAssignment(data);
-  } catch (error: any) {
-    return {
-      status: false,
-      message: error.message || "Failed to create assignment",
-      data: null,
-    };
   }
-}
 
   /**
    * Update assignment with validation

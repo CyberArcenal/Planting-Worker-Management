@@ -1,5 +1,5 @@
 // pitakAPI.ts - Complete API for Pitak Management
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 import type { BukidData } from "./bukid";
 
 export interface PitakData {
@@ -252,7 +252,7 @@ export interface CapacityValidation {
   layoutType?: string;
   sideLengths?: any;
   areaSqm?: number;
-  
+
   totalCapacity: number;
   currentlyAssigned: number;
   remainingCapacity: number;
@@ -481,7 +481,8 @@ class PitakAPI {
       const user = kabAuthStore.getUser();
       if (user && user.id) {
         // Ensure we return a number
-        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
         return isNaN(userId) ? null : userId;
       }
       return null;
@@ -963,14 +964,14 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "updatePitakLuWang",
-        params: this.enrichParams({ 
-          id, 
-          totalLuwang, 
-          adjustmentType, 
+        params: this.enrichParams({
+          id,
+          totalLuwang,
+          adjustmentType,
           notes,
           areaSqm,
           layoutType,
-          sideLengths 
+          sideLengths,
         }),
       });
 
@@ -1637,13 +1638,13 @@ class PitakAPI {
     try {
       const adjustmentType = operation === "increase" ? "add" : "subtract";
       return await this.updatePitakLuWang(
-        id, 
-        amount, 
-        adjustmentType, 
+        id,
+        amount,
+        adjustmentType,
         notes,
         areaSqm,
         layoutType,
-        sideLengths
+        sideLengths,
       );
     } catch (error: any) {
       throw new Error(`Failed to adjust pitak LuWang: ${error.message}`);

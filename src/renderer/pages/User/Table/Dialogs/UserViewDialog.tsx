@@ -23,8 +23,8 @@ import {
   UserCheck,
   UserX,
 } from "lucide-react";
-import type { UserActivityData, UserData } from "../../../../apis/user";
-import userAPI from "../../../../apis/user";
+import type { UserActivityData, UserData } from "../../../../apis/core/user";
+import userAPI from "../../../../apis/core/user";
 import { kabAuthStore } from "../../../../lib/kabAuthStore";
 import { showError, showSuccess } from "../../../../utils/notification";
 import { formatDate, formatDateTime } from "../../../../utils/formatters";

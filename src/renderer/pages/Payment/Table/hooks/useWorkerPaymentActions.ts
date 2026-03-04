@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { showSuccess, showError } from "../../../../utils/notification";
 import type { WorkerPaymentSummary } from "./useWorkerPaymentData";
-import workerAPI from "../../../../apis/worker";
-import paymentAPI from "../../../../apis/payment";
+import workerAPI from "../../../../apis/core/worker";
+import paymentAPI from "../../../../apis/core/payment";
 import { showConfirm } from "../../../../utils/dialogs";
 
 export const useWorkerPaymentActions = (

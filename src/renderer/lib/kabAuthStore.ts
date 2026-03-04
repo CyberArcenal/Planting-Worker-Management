@@ -1,13 +1,13 @@
 // Kabisilya Management Auth Store
 
-import type { UserData } from "../apis/user";
+import type { UserData } from "../apis/core/user";
 
 export interface KabUser extends UserData {
   permissions: string[];
   department?: string;
   employeeId?: string;
   displayName?: string;
-  shiftStatus?: 'active' | 'inactive';
+  shiftStatus?: "active" | "inactive";
 }
 
 export interface KabAuthData {
@@ -37,7 +37,10 @@ export class KabAuthStore {
       const expirationTime = Date.now() + data.expiresIn * 1000;
       localStorage.setItem(this.ACCESS_TOKEN_KEY, data.token);
       localStorage.setItem(this.USER_DATA_KEY, JSON.stringify(data.user));
-      localStorage.setItem(this.TOKEN_EXPIRATION_KEY, expirationTime.toString());
+      localStorage.setItem(
+        this.TOKEN_EXPIRATION_KEY,
+        expirationTime.toString(),
+      );
 
       this.notifyAuthChange();
       console.log("Kab Auth saved for user:", data.user.username);
@@ -93,27 +96,27 @@ export class KabAuthStore {
   }
 
   // Get user role
-  getRole(): 'admin' | 'manager' | 'user' | '' {
+  getRole(): "admin" | "manager" | "user" | "" {
     const user = this.getUser();
-    return user?.role || '';
+    return user?.role || "";
   }
 
   // Check if user is admin
   isAdmin(): boolean {
     const role = this.getRole();
-    return role === 'admin';
+    return role === "admin";
   }
 
   // Check if user is manager or admin
   isManagerOrAdmin(): boolean {
     const role = this.getRole();
-    return role === 'admin' || role === 'manager';
+    return role === "admin" || role === "manager";
   }
 
   // Check if user is regular user
   isUser(): boolean {
     const role = this.getRole();
-    return role === 'user';
+    return role === "user";
   }
 
   // Check if authenticated
@@ -127,7 +130,7 @@ export class KabAuthStore {
   isTokenExpired(): boolean {
     const exp = localStorage.getItem(this.TOKEN_EXPIRATION_KEY);
     if (!exp) return true;
-    
+
     try {
       const expirationTime = parseInt(exp, 10);
       if (isNaN(expirationTime)) return true;
@@ -149,7 +152,7 @@ export class KabAuthStore {
   // Logout and redirect
   logout(): void {
     this.clearAuth();
-    window.location.href = '/login';
+    window.location.href = "/login";
   }
 
   // Notify auth state changes
@@ -181,52 +184,52 @@ export class KabAuthStore {
   // Extended user info methods for Kabisilya dashboard
   getUserInitials(): string {
     const user = this.getUser();
-    if (!user?.username) return 'U';
-    
+    if (!user?.username) return "U";
+
     if (user.displayName) {
       return user.displayName
-        .split(' ')
-        .map(n => n[0])
-        .join('')
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
         .toUpperCase()
         .substring(0, 2);
     }
-    
+
     return user.username
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   }
 
   getUserColorScheme(): { bg: string; text: string } {
     const role = this.getRole();
-    
-    if (role === 'admin') {
-      return { 
-        bg: 'var(--gradient-primary)',
-        text: 'white'
+
+    if (role === "admin") {
+      return {
+        bg: "var(--gradient-primary)",
+        text: "white",
       };
     }
-    
-    if (role === 'manager') {
-      return { 
-        bg: 'var(--gradient-success)',
-        text: 'white'
+
+    if (role === "manager") {
+      return {
+        bg: "var(--gradient-success)",
+        text: "white",
       };
     }
-    
-    if (role === 'user') {
-      return { 
-        bg: 'var(--gradient-earth)',
-        text: 'white'
+
+    if (role === "user") {
+      return {
+        bg: "var(--gradient-earth)",
+        text: "white",
       };
     }
-    
-    return { 
-      bg: 'var(--card-secondary-bg)',
-      text: 'var(--text-primary)'
+
+    return {
+      bg: "var(--card-secondary-bg)",
+      text: "var(--text-primary)",
     };
   }
 
@@ -244,16 +247,24 @@ export class KabAuthStore {
     const isAdmin = this.isAdmin();
     const isManager = this.isManagerOrAdmin();
     const isUser = this.isUser();
-    
+
     return {
-      canManageWorkers: isAdmin || isManager || this.hasPermission('can_manage_workers'),
-      canManageAssignments: isAdmin || isManager || this.hasPermission('can_manage_assignments'),
-      canManageDebts: isAdmin || isManager || this.hasPermission('can_manage_debts'),
-      canViewReports: isAdmin || isManager || this.hasPermission('can_view_reports'),
-      canManagePitaks: isAdmin || isManager || this.hasPermission('can_manage_pitaks'),
-      canManageKabisilyas: isAdmin || isManager || this.hasPermission('can_manage_kabisilyas'),
-      canManagePayments: isAdmin || isManager || this.hasPermission('can_manage_payments'),
-      canManageInventory: isAdmin || isManager || this.hasPermission('can_manage_inventory')
+      canManageWorkers:
+        isAdmin || isManager || this.hasPermission("can_manage_workers"),
+      canManageAssignments:
+        isAdmin || isManager || this.hasPermission("can_manage_assignments"),
+      canManageDebts:
+        isAdmin || isManager || this.hasPermission("can_manage_debts"),
+      canViewReports:
+        isAdmin || isManager || this.hasPermission("can_view_reports"),
+      canManagePitaks:
+        isAdmin || isManager || this.hasPermission("can_manage_pitaks"),
+      canManageKabisilyas:
+        isAdmin || isManager || this.hasPermission("can_manage_kabisilyas"),
+      canManagePayments:
+        isAdmin || isManager || this.hasPermission("can_manage_payments"),
+      canManageInventory:
+        isAdmin || isManager || this.hasPermission("can_manage_inventory"),
     };
   }
 
@@ -261,7 +272,7 @@ export class KabAuthStore {
   getUserDisplayInfo() {
     const user = this.getUser();
     if (!user) return null;
-    
+
     return {
       id: user.id,
       name: user.displayName || user.name || user.username,
@@ -274,7 +285,7 @@ export class KabAuthStore {
       colorScheme: this.getUserColorScheme(),
       isActive: user.isActive,
       lastLogin: user.lastLogin,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
     };
   }
 
@@ -282,63 +293,78 @@ export class KabAuthStore {
   canAccessModule(module: string): boolean {
     const user = this.getUser();
     if (!user) return false;
-    
+
     // Admin can access everything
     if (this.isAdmin()) return true;
-    
+
     const role = user.role;
     const permissions = user.permissions || [];
-    
+
     // Kabisilya Module-based permission checks
     switch (module) {
-      case 'dashboard':
+      case "dashboard":
         return true;
-        
-      case 'workers':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_workers') ||
-               permissions.includes('can_view_workers');
-               
-      case 'assignments':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_assignments') ||
-               permissions.includes('can_view_assignments');
-               
-      case 'debts':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_debts') ||
-               permissions.includes('can_view_debts');
-               
-      case 'pitaks':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_pitaks') ||
-               permissions.includes('can_view_pitaks');
-               
-      case 'kabisilyas':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_kabisilyas') ||
-               permissions.includes('can_view_kabisilyas');
-               
-      case 'payments':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_payments') ||
-               permissions.includes('can_view_payments');
-               
-      case 'reports':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_view_reports');
-               
-      case 'inventory':
-        return this.isManagerOrAdmin() || 
-               permissions.includes('can_manage_inventory') ||
-               permissions.includes('can_view_inventory');
-               
-      case 'settings':
-        return this.isAdmin() || permissions.includes('can_manage_users');
-        
-      case 'profile':
+
+      case "workers":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_workers") ||
+          permissions.includes("can_view_workers")
+        );
+
+      case "assignments":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_assignments") ||
+          permissions.includes("can_view_assignments")
+        );
+
+      case "debts":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_debts") ||
+          permissions.includes("can_view_debts")
+        );
+
+      case "pitaks":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_pitaks") ||
+          permissions.includes("can_view_pitaks")
+        );
+
+      case "kabisilyas":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_kabisilyas") ||
+          permissions.includes("can_view_kabisilyas")
+        );
+
+      case "payments":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_payments") ||
+          permissions.includes("can_view_payments")
+        );
+
+      case "reports":
+        return (
+          this.isManagerOrAdmin() || permissions.includes("can_view_reports")
+        );
+
+      case "inventory":
+        return (
+          this.isManagerOrAdmin() ||
+          permissions.includes("can_manage_inventory") ||
+          permissions.includes("can_view_inventory")
+        );
+
+      case "settings":
+        return this.isAdmin() || permissions.includes("can_manage_users");
+
+      case "profile":
         return true; // Everyone can access their own profile
-        
+
       default:
         return false;
     }
@@ -351,29 +377,35 @@ export class KabAuthStore {
   }
 
   // Validate session
-  validateSession(): { isValid: boolean; user: KabUser | null; reason?: string } {
+  validateSession(): {
+    isValid: boolean;
+    user: KabUser | null;
+    reason?: string;
+  } {
     if (!this.isAuthenticated()) {
-      return { isValid: false, user: null, reason: 'Not authenticated' };
+      return { isValid: false, user: null, reason: "Not authenticated" };
     }
-    
+
     const user = this.getUser();
     if (!user) {
-      return { isValid: false, user: null, reason: 'User data not found' };
+      return { isValid: false, user: null, reason: "User data not found" };
     }
-    
+
     // Check if user is active
     if (!user.isActive) {
-      return { isValid: false, user: null, reason: 'User account is inactive' };
+      return { isValid: false, user: null, reason: "User account is inactive" };
     }
-    
+
     return { isValid: true, user };
   }
 
   // Get shift status for Kabisilya
-  getShiftStatus(): 'active' | 'inactive' {
+  getShiftStatus(): "active" | "inactive" {
     const user = this.getUser();
     // If user has shiftStatus property, use it, otherwise assume active if authenticated
-    return user?.shiftStatus || (this.isAuthenticated() ? 'active' : 'inactive');
+    return (
+      user?.shiftStatus || (this.isAuthenticated() ? "active" : "inactive")
+    );
   }
 
   // Check if user can perform specific Kabisilya actions
@@ -386,62 +418,70 @@ export class KabAuthStore {
 
     switch (action) {
       // Worker Management
-      case 'create_worker':
-        return isAdmin || isManager || this.hasPermission('can_create_workers');
-      
-      case 'edit_worker':
-        return isAdmin || isManager || this.hasPermission('can_edit_workers');
-      
-      case 'delete_worker':
-        return isAdmin || this.hasPermission('can_delete_workers');
-      
+      case "create_worker":
+        return isAdmin || isManager || this.hasPermission("can_create_workers");
+
+      case "edit_worker":
+        return isAdmin || isManager || this.hasPermission("can_edit_workers");
+
+      case "delete_worker":
+        return isAdmin || this.hasPermission("can_delete_workers");
+
       // Assignment Management
-      case 'create_assignment':
-        return isAdmin || isManager || this.hasPermission('can_create_assignments');
-      
-      case 'edit_assignment':
-        return isAdmin || isManager || this.hasPermission('can_edit_assignments');
-      
-      case 'delete_assignment':
-        return isAdmin || this.hasPermission('can_delete_assignments');
-      
+      case "create_assignment":
+        return (
+          isAdmin || isManager || this.hasPermission("can_create_assignments")
+        );
+
+      case "edit_assignment":
+        return (
+          isAdmin || isManager || this.hasPermission("can_edit_assignments")
+        );
+
+      case "delete_assignment":
+        return isAdmin || this.hasPermission("can_delete_assignments");
+
       // Debt Management
-      case 'create_debt':
-        return isAdmin || isManager || this.hasPermission('can_create_debts');
-      
-      case 'adjust_debt':
-        return isAdmin || isManager || this.hasPermission('can_adjust_debts');
-      
-      case 'forgive_debt':
-        return isAdmin || this.hasPermission('can_forgive_debts');
-      
+      case "create_debt":
+        return isAdmin || isManager || this.hasPermission("can_create_debts");
+
+      case "adjust_debt":
+        return isAdmin || isManager || this.hasPermission("can_adjust_debts");
+
+      case "forgive_debt":
+        return isAdmin || this.hasPermission("can_forgive_debts");
+
       // Payment Management
-      case 'record_payment':
-        return isAdmin || isManager || this.hasPermission('can_record_payments');
-      
-      case 'edit_payment':
-        return isAdmin || isManager || this.hasPermission('can_edit_payments');
-      
-      case 'delete_payment':
-        return isAdmin || this.hasPermission('can_delete_payments');
-      
+      case "record_payment":
+        return (
+          isAdmin || isManager || this.hasPermission("can_record_payments")
+        );
+
+      case "edit_payment":
+        return isAdmin || isManager || this.hasPermission("can_edit_payments");
+
+      case "delete_payment":
+        return isAdmin || this.hasPermission("can_delete_payments");
+
       // Reports
-      case 'generate_reports':
-        return isAdmin || isManager || this.hasPermission('can_generate_reports');
-      
-      case 'export_data':
-        return isAdmin || isManager || this.hasPermission('can_export_data');
-      
+      case "generate_reports":
+        return (
+          isAdmin || isManager || this.hasPermission("can_generate_reports")
+        );
+
+      case "export_data":
+        return isAdmin || isManager || this.hasPermission("can_export_data");
+
       // System Actions
-      case 'manage_users':
-        return isAdmin || this.hasPermission('can_manage_users');
-      
-      case 'change_settings':
-        return isAdmin || this.hasPermission('can_change_settings');
-      
-      case 'backup_database':
-        return isAdmin || this.hasPermission('can_backup_database');
-      
+      case "manage_users":
+        return isAdmin || this.hasPermission("can_manage_users");
+
+      case "change_settings":
+        return isAdmin || this.hasPermission("can_change_settings");
+
+      case "backup_database":
+        return isAdmin || this.hasPermission("can_backup_database");
+
       default:
         return false;
     }
@@ -456,12 +496,12 @@ export class KabAuthStore {
       const updatedUser: KabUser = {
         ...currentUser,
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       localStorage.setItem(this.USER_DATA_KEY, JSON.stringify(updatedUser));
       this.notifyAuthChange();
-      
+
       console.log("User profile updated");
       return true;
     } catch (err: any) {
@@ -475,8 +515,11 @@ export class KabAuthStore {
     try {
       const expirationTime = Date.now() + expiresIn * 1000;
       localStorage.setItem(this.ACCESS_TOKEN_KEY, newToken);
-      localStorage.setItem(this.TOKEN_EXPIRATION_KEY, expirationTime.toString());
-      
+      localStorage.setItem(
+        this.TOKEN_EXPIRATION_KEY,
+        expirationTime.toString(),
+      );
+
       this.notifyAuthChange();
       console.log("Token refreshed");
       return true;
@@ -490,10 +533,11 @@ export class KabAuthStore {
   needsPasswordChange(daysThreshold: number = 90): boolean {
     const user = this.getUser();
     if (!user || !user.updatedAt) return false;
-    
+
     const lastUpdate = new Date(user.updatedAt);
-    const daysSinceUpdate = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
-    
+    const daysSinceUpdate =
+      (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
+
     return daysSinceUpdate >= daysThreshold;
   }
 
@@ -506,13 +550,17 @@ export class KabAuthStore {
   // Check if user has any of the given permissions
   hasAnyPermission(permissions: string[]): boolean {
     const userPermissions = this.getPermissions();
-    return permissions.some(permission => userPermissions.includes(permission));
+    return permissions.some((permission) =>
+      userPermissions.includes(permission),
+    );
   }
 
   // Check if user has all of the given permissions
   hasAllPermissions(permissions: string[]): boolean {
     const userPermissions = this.getPermissions();
-    return permissions.every(permission => userPermissions.includes(permission));
+    return permissions.every((permission) =>
+      userPermissions.includes(permission),
+    );
   }
 }
 

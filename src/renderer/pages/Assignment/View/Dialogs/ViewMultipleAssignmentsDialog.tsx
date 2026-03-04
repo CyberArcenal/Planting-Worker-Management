@@ -14,8 +14,8 @@ import {
 import type {
   Assignment,
   AssignmentFilters,
-} from "../../../../apis/assignment";
-import assignmentAPI from "../../../../apis/assignment";
+} from "../../../../apis/core/assignment";
+import assignmentAPI from "../../../../apis/core/assignment";
 import { dialogs } from "../../../../utils/dialogs";
 // import assignmentAPI, { Assignment, AssignmentFilters } from '../../../apis/assignment';
 

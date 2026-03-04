@@ -1,18 +1,24 @@
-import { useMemo } from 'react';
-import { type PaymentHistoryData, type PaymentHistoryItem } from '../../../apis/payment';
-import { type DebtHistoryData } from '../../../apis/debt';
-import { type HistoryStats } from '../types/history.types';
-import { calculatePaymentStats, calculateDebtStats } from '../utils/historyFormatters';
+import { useMemo } from "react";
+import {
+  type PaymentHistoryData,
+  type PaymentHistoryItem,
+} from "../../../apis/core/payment";
+import { type DebtHistoryData } from "../../../apis/core/debt";
+import { type HistoryStats } from "../types/history.types";
+import {
+  calculatePaymentStats,
+  calculateDebtStats,
+} from "../utils/historyFormatters";
 
 export const useHistoryStats = (
-  viewType: 'payment' | 'debt',
+  viewType: "payment" | "debt",
   paymentHistory: PaymentHistoryItem[],
-  debtHistory: DebtHistoryData[]
+  debtHistory: DebtHistoryData[],
 ) => {
   const stats = useMemo<HistoryStats | null>(() => {
-    if (viewType === 'payment' && paymentHistory.length > 0) {
+    if (viewType === "payment" && paymentHistory.length > 0) {
       return calculatePaymentStats(paymentHistory);
-    } else if (viewType === 'debt' && debtHistory.length > 0) {
+    } else if (viewType === "debt" && debtHistory.length > 0) {
       return calculateDebtStats(debtHistory);
     }
     return null;

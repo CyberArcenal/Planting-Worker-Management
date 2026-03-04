@@ -1,8 +1,12 @@
 // components/Debt/hooks/useDebtData.ts
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { DebtData, DebtStats, DebtFilters } from '../../../../apis/debt';
-import debtAPI from '../../../../apis/debt';
-import { showError } from '../../../../utils/notification';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type {
+  DebtData,
+  DebtStats,
+  DebtFilters,
+} from "../../../../apis/core/debt";
+import debtAPI from "../../../../apis/core/debt";
+import { showError } from "../../../../utils/notification";
 
 export const useDebtData = () => {
   const [loading, setLoading] = useState(true);
@@ -20,16 +24,16 @@ export const useDebtData = () => {
   const [limit] = useState(20);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [workerFilter, setWorkerFilter] = useState<number | null>(null);
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('dateIncurred');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("dateIncurred");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // View options
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedDebts, setSelectedDebts] = useState<number[]>([]);
 
   // Fetch debts
@@ -39,7 +43,7 @@ export const useDebtData = () => {
       setError(null);
 
       const filters: DebtFilters = {
-        status: statusFilter !== 'all' ? statusFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
         worker_id: workerFilter || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
@@ -59,14 +63,13 @@ export const useDebtData = () => {
         // update totals
         setTotalItems(data.length);
         setTotalPages(Math.ceil(data.length / limit));
-
       } else {
-        throw new Error(response.message || 'Failed to fetch debts');
+        throw new Error(response.message || "Failed to fetch debts");
       }
     } catch (err: any) {
       setError(err.message);
       showError(err.message);
-      console.error('Failed to fetch debts:', err);
+      console.error("Failed to fetch debts:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,26 +82,30 @@ export const useDebtData = () => {
     sorted.sort((a, b) => {
       let aValue: any, bValue: any;
       switch (sortBy) {
-        case 'dateIncurred':
+        case "dateIncurred":
           aValue = new Date(a.dateIncurred).getTime();
           bValue = new Date(b.dateIncurred).getTime();
           break;
-        case 'amount':
+        case "amount":
           aValue = a.amount || 0;
           bValue = b.amount || 0;
           break;
-        case 'status':
-          aValue = a.status || '';
-          bValue = b.status || '';
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
           break;
         default:
           aValue = a.id;
           bValue = b.id;
       }
       if (aValue === bValue) return 0;
-      return sortOrder === 'asc'
-        ? aValue > bValue ? 1 : -1
-        : aValue < bValue ? 1 : -1;
+      return sortOrder === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+          ? 1
+          : -1;
     });
     return sorted;
   }, [allDebts, sortBy, sortOrder]);
@@ -118,7 +125,7 @@ export const useDebtData = () => {
         setStats(response.data);
       }
     } catch (err) {
-      console.error('Failed to fetch debt stats:', err);
+      console.error("Failed to fetch debt stats:", err);
     }
   }, []);
 
@@ -130,11 +137,11 @@ export const useDebtData = () => {
 
   // Clear filters
   const clearFilters = () => {
-    setStatusFilter('all');
+    setStatusFilter("all");
     setWorkerFilter(null);
-    setDateFrom('');
-    setDateTo('');
-    setSearchQuery('');
+    setDateFrom("");
+    setDateTo("");
+    setSearchQuery("");
     setCurrentPage(1);
   };
 

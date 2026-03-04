@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import UserActionsDropdown from "./UserActionsDropdown";
 import { formatDate } from "../../../../utils/formatters";
-import type { UserData } from "../../../../apis/user";
+import type { UserData } from "../../../../apis/core/user";
 
 interface UserTableRowProps {
   user: UserData;

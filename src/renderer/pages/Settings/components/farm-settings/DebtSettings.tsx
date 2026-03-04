@@ -1,14 +1,14 @@
-import React from 'react';
-import type { FarmDebtSettings } from '../../../../apis/system_config';
+import React from "react";
+import type { FarmDebtSettings } from "../../../../apis/core/system_config";
 
 interface DebtSettingsProps {
   settings: FarmDebtSettings;
   onChange: (field: keyof FarmDebtSettings, value: any) => void;
 }
 
-export const DebtSettings: React.FC<DebtSettingsProps> = ({ 
-  settings, 
-  onChange 
+export const DebtSettings: React.FC<DebtSettingsProps> = ({
+  settings,
+  onChange,
 }) => {
   const updateField = (field: keyof FarmDebtSettings, value: any) => {
     onChange(field, value);
@@ -22,8 +22,10 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
             Debt Allocation Strategy
           </label>
           <select
-            value={settings.debt_allocation_strategy || 'auto'}
-            onChange={(e) => updateField('debt_allocation_strategy', e.target.value)}
+            value={settings.debt_allocation_strategy || "auto"}
+            onChange={(e) =>
+              updateField("debt_allocation_strategy", e.target.value)
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           >
             <option value="auto">Auto</option>
@@ -40,7 +42,12 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
             type="number"
             step="0.1"
             value={settings.default_interest_rate || 0}
-            onChange={(e) => updateField('default_interest_rate', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              updateField(
+                "default_interest_rate",
+                parseFloat(e.target.value) || 0,
+              )
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
         </div>
@@ -52,7 +59,9 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
           <input
             type="number"
             value={settings.payment_term_days || 0}
-            onChange={(e) => updateField('payment_term_days', parseInt(e.target.value) || 0)}
+            onChange={(e) =>
+              updateField("payment_term_days", parseInt(e.target.value) || 0)
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
         </div>
@@ -64,7 +73,9 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
           <input
             type="number"
             value={settings.grace_period_days || 0}
-            onChange={(e) => updateField('grace_period_days', parseInt(e.target.value) || 0)}
+            onChange={(e) =>
+              updateField("grace_period_days", parseInt(e.target.value) || 0)
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
         </div>
@@ -76,7 +87,9 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
           <input
             type="number"
             value={settings.debt_limit || 0}
-            onChange={(e) => updateField('debt_limit', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              updateField("debt_limit", parseFloat(e.target.value) || 0)
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
         </div>
@@ -87,7 +100,9 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
           <input
             type="checkbox"
             checked={settings.require_debt_reason || false}
-            onChange={(e) => updateField('require_debt_reason', e.target.checked)}
+            onChange={(e) =>
+              updateField("require_debt_reason", e.target.checked)
+            }
             className="rounded border-gray-300"
           />
           <span className="text-sm text-gray-700">Require Debt Reason</span>
@@ -97,7 +112,9 @@ export const DebtSettings: React.FC<DebtSettingsProps> = ({
           <input
             type="checkbox"
             checked={settings.auto_apply_interest || false}
-            onChange={(e) => updateField('auto_apply_interest', e.target.checked)}
+            onChange={(e) =>
+              updateField("auto_apply_interest", e.target.checked)
+            }
             className="rounded border-gray-300"
           />
           <span className="text-sm text-gray-700">Auto Apply Interest</span>

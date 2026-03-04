@@ -18,7 +18,7 @@ import {
   Tag,
 } from "lucide-react";
 import { formatDate } from "../../../../utils/formatters";
-import type { BukidData, BukidSummaryData } from "../../../../apis/bukid";
+import type { BukidData, BukidSummaryData } from "../../../../apis/core/bukid";
 import BukidActionsDropdown from "./BukidActionsDropdown";
 
 interface BukidTableRowProps {

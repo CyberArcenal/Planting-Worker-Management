@@ -20,9 +20,10 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import systemConfigAPI from "../../apis/system_config";
+import systemConfigAPI from "../../apis/core/system_config";
 import { kabAuthStore } from "../../lib/kabAuthStore";
 import { useDynamicWeather } from "../../hooks/useDynamicWeather";
+import UpdateNotifier from "./UpdateNotifier";
 
 interface TopBarProps {
   toggleSidebar: () => void;
@@ -61,25 +62,25 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
     refreshLocation,
     getWeatherForSavedLocation,
     getWeatherIcon,
-    getWeatherColorScheme
+    getWeatherColorScheme,
   } = useDynamicWeather();
 
   // Weather icon component
   const WeatherIcon = React.useMemo(() => {
     if (!weather) return Sun;
-    
+
     const iconName = getWeatherIcon(weather.condition);
     const iconMap: { [key: string]: any } = {
-      'Sun': Sun,
-      'Cloud': Cloud,
-      'CloudRain': CloudRain,
-      'CloudLightning': CloudLightning,
-      'CloudFog': CloudFog,
-      'CloudDrizzle': CloudRain,
-      'CloudSnow': Cloud,
-      'Snowflake': Cloud,
+      Sun: Sun,
+      Cloud: Cloud,
+      CloudRain: CloudRain,
+      CloudLightning: CloudLightning,
+      CloudFog: CloudFog,
+      CloudDrizzle: CloudRain,
+      CloudSnow: Cloud,
+      Snowflake: Cloud,
     };
-    
+
     return iconMap[iconName] || Sun;
   }, [weather, getWeatherIcon]);
 
@@ -101,12 +102,12 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
 
   // Format location name for display
   const formatLocationName = (location: any) => {
-    if (!location) return 'Getting location...';
-    
+    if (!location) return "Getting location...";
+
     if (location.isCurrentLocation) {
       return `📍 ${location.city || location.name}`;
     }
-    
+
     return location.name;
   };
 
@@ -258,13 +259,13 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
     const colorScheme = getWeatherColorScheme(weather.condition);
 
     return (
-      <div 
+      <div
         className="flex items-center justify-between w-full cursor-pointer"
         onClick={() => setShowLocationMenu(!showLocationMenu)}
       >
         <div className="flex items-center gap-3">
-          <WeatherIcon 
-            className="w-5 h-5 flex-shrink-0" 
+          <WeatherIcon
+            className="w-5 h-5 flex-shrink-0"
             style={{ color: colorScheme.icon }}
           />
           <div>
@@ -277,9 +278,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-1">
             <Droplets className="w-3 h-3 text-white/80" />
-            <span className="text-xs text-white/80">
-              {weather.humidity}%
-            </span>
+            <span className="text-xs text-white/80">{weather.humidity}%</span>
           </div>
           <button
             onClick={(e) => {
@@ -321,7 +320,6 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             <Menu className="w-5 h-5" />
           </button>
 
-      
           {/* Default Session Display */}
           <div
             className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg"
@@ -551,10 +549,12 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-3">
                     {weather && (
-                      <WeatherIcon 
-                        className="w-5 h-5 flex-shrink-0" 
-                        style={{ 
-                          color: weather ? getWeatherColorScheme(weather.condition).icon : "white" 
+                      <WeatherIcon
+                        className="w-5 h-5 flex-shrink-0"
+                        style={{
+                          color: weather
+                            ? getWeatherColorScheme(weather.condition).icon
+                            : "white",
                         }}
                       />
                     )}
@@ -563,7 +563,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                         {weather ? `${weather.temperature}°C` : "--°C"}
                       </div>
                       <div className="text-xs text-white/80 truncate max-w-[120px]">
-                        {weather 
+                        {weather
                           ? `${weather.condition} • ${currentLocation?.city || currentLocation?.name || "Unknown"}`
                           : "No weather data"}
                       </div>
@@ -604,7 +604,9 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-blue-500" />
                       <div>
-                        <div className="text-sm font-medium">Current Location</div>
+                        <div className="text-sm font-medium">
+                          Current Location
+                        </div>
                         {currentLocation && (
                           <div className="text-xs text-gray-500 truncate">
                             {currentLocation.city || currentLocation.name}
@@ -627,9 +629,12 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm font-medium">{location.name}</div>
+                          <div className="text-sm font-medium">
+                            {location.name}
+                          </div>
                           <div className="text-xs text-gray-500 truncate">
-                            {location.city && `${location.city}, `}{location.province}
+                            {location.city && `${location.city}, `}
+                            {location.province}
                           </div>
                         </div>
                         {currentLocation?.lat === location.lat &&
@@ -660,7 +665,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             />
             <span className="hidden md:inline text-sm">Refresh</span>
           </button>
-
+          <UpdateNotifier />
           {/* Notification Bell */}
           <button
             className="relative windows-btn p-2 rounded-lg"

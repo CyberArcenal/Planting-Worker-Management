@@ -1,7 +1,7 @@
 // components/User/hooks/useUserData.ts
 import { useState, useCallback, useEffect, useMemo } from "react";
-import userAPI from "../../../../apis/user";
-import type { UserData, UserStatsData } from "../../../../apis/user";
+import userAPI from "../../../../apis/core/user";
+import type { UserData, UserStatsData } from "../../../../apis/core/user";
 import { showError } from "../../../../utils/notification";
 
 type UserApiShape =

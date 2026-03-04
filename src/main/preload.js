@@ -140,4 +140,10 @@ contextBridge.exposeInMainWorld("backendAPI", {
   restoreBackup: (payload) => ipcRenderer.invoke("restore-backup", payload),
   onBackupComplete: (callback) =>
     ipcRenderer.on("backup:complete", (event, data) => callback(data)),
+
+    updater: (payload) => ipcRenderer.invoke("updater", payload),
+  on: (event, callback) => {
+    ipcRenderer.on(event, callback);
+    return () => ipcRenderer.removeListener(event, callback);
+  },
 });

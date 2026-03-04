@@ -1,35 +1,50 @@
 {
-  "name": "farm-laborer-management",
+  "name": "farmtrac",
   "private": true,
-  "version": "1.1.1",
+  "version": "v1.1.2",
   "main": "src/main/index.js",
+  "author": {
+    "name": "CyberArcenal",
+    "email": "cyberarcenal1@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CyberArcenal/Kabisilya-Farm-Laborer-Management-System-FLMS.git"
+  },
   "build": {
-    "appId": "com.CyberArcenal.farm-laborer-management.app",
-    "productName": "Farm Laborer Management",
+    "appId": "com.CyberArcenal.farmtrac.app",
+    "productName": "FarmTrac",
     "directories": {
       "output": "release"
     },
     "win": {
       "icon": "build/icon.ico",
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "target": "dmg",
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "linux": {
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "artifactName": "${productName}-${version}.${ext}"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "CyberArcenal",
-        "repo": "Kabisilya-Farm-Laborer-Management-System-FLMS"
-      }
-    ]
+    "publish": {
+      "provider": "github",
+      "owner": "CyberArcenal",
+      "repo": "Kabisilya-Farm-Laborer-Management-System-FLMS",
+      "releaseType": "release"
+    }
   },
   "scripts": {
     "dev": "cross-env NODE_ENV=development concurrently \"vite\" \"electron ./src/main/index.js\"",
-    "build": "vite build && electron-builder",
+    "build": "vite build && electron-builder --publish never",
     "electron:dev": "electron ./src/main/index.js",
     "electron:build": "electron-builder",
     "migration:generate": "npx typeorm migration:generate src/migrations/InitSchema -d src/main/db/dataSource.js --outputJs",
@@ -48,6 +63,7 @@
     "csv-parser": "^3.2.0",
     "csv-stringify": "^6.6.0",
     "decimal.js": "^10.6.0",
+    "electron-updater": "^6.8.3",
     "exceljs": "^4.4.0",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.3",
@@ -77,6 +93,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
+    "electron": "^40.6.1",
     "electron-builder": "^26.4.0",
     "electron-rebuild": "^3.2.9",
     "eslint": "^9.39.1",

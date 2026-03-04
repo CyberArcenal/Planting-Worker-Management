@@ -6,8 +6,8 @@ import {
   showSuccess,
   showToast,
 } from "../../../../utils/notification";
-import pitakAPI, { type PitakWithDetails } from "../../../../apis/pitak";
-import assignmentAPI from "../../../../apis/assignment";
+import pitakAPI, { type PitakWithDetails } from "../../../../apis/core/pitak";
+import assignmentAPI from "../../../../apis/core/assignment";
 import { formatNumber } from "../../../../utils/formatters";
 
 export interface AssignmentDialogData {
@@ -573,7 +573,6 @@ export const usePitakActions = (
     setShowViewDialog,
     selectedViewPitakId,
     setSelectedViewPitakId,
-
 
     showAssignedWorkersDialog,
     setShowAssignedWorkersDialog,

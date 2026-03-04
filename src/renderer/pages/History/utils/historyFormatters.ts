@@ -1,7 +1,10 @@
 // components/History/utils/historyFormatters.ts
 
-import type { DebtHistoryData } from "../../../apis/debt";
-import type { PaymentHistoryData, PaymentHistoryItem } from "../../../apis/payment";
+import type { DebtHistoryData } from "../../../apis/core/debt";
+import type {
+  PaymentHistoryData,
+  PaymentHistoryItem,
+} from "../../../apis/core/payment";
 import type { HistoryStats } from "../types/history.types";
 
 export const calculatePaymentStats = (

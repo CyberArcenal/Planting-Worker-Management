@@ -11,7 +11,7 @@ import {
   FileText,
   Layers,
 } from "lucide-react";
-import type { Assignment } from "../../../../apis/assignment";
+import type { Assignment } from "../../../../apis/core/assignment";
 
 interface AssignmentActionsDropdownProps {
   assignment: Assignment;

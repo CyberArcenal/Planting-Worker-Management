@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import PaymentActionsDropdown from "./PaymentActionsDropdown";
 import { formatDate, formatCurrency } from "../../../../utils/formatters";
-import type { PaymentData } from "../../../../apis/payment";
+import type { PaymentData } from "../../../../apis/core/payment";
 
 interface PaymentTableRowProps {
   payment: PaymentData;

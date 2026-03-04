@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { type HistoryType } from '../types/history.types';
-import type { PaymentHistoryItem as PaymentHistoryData } from "../../../apis/payment";
-import { type DebtHistoryItem as DebtHistoryData } from '../../../apis/debt';
-import PaymentHistoryItem from './PaymentHistoryItem';
-import DebtHistoryItem from './DebtHistoryItem';
+import React, { useState } from "react";
+import { type HistoryType } from "../types/history.types";
+import type { PaymentHistoryItem as PaymentHistoryData } from "../../../apis/core/payment";
+import { type DebtHistoryItem as DebtHistoryData } from "../../../apis/core/debt";
+import PaymentHistoryItem from "./PaymentHistoryItem";
+import DebtHistoryItem from "./DebtHistoryItem";
 
 interface HistoryListProps {
   viewType: HistoryType;
@@ -11,18 +11,18 @@ interface HistoryListProps {
   debtHistory: DebtHistoryData[];
 }
 
-const HistoryList: React.FC<HistoryListProps> = ({ 
-  viewType, 
-  paymentHistory, 
-  debtHistory 
+const HistoryList: React.FC<HistoryListProps> = ({
+  viewType,
+  paymentHistory,
+  debtHistory,
 }) => {
   const [expandedRecord, setExpandedRecord] = useState<number | null>(null);
 
   const toggleRecordExpansion = (id: number) => {
-    setExpandedRecord(prev => prev === id ? null : id);
+    setExpandedRecord((prev) => (prev === id ? null : id));
   };
 
-  if (viewType === 'payment') {
+  if (viewType === "payment") {
     return (
       <div className="space-y-4">
         {paymentHistory.map((record) => (

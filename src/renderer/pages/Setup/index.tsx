@@ -18,7 +18,7 @@ import {
   Sprout,
   Package,
 } from "lucide-react";
-import userAPI from "../../apis/user";
+import userAPI from "../../apis/core/user";
 import { kabAuthStore } from "../../lib/kabAuthStore";
 
 const KabisilyaFirstRunSetup: React.FC = () => {

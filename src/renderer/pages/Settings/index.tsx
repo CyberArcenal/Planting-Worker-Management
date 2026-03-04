@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useFarmManagementSettings } from "./hooks/useFarmManagementSettings";
 import { SessionSettings } from "./components/farm-settings/SessionSettings";
-import systemConfigAPI from "../../apis/system_config";
+import systemConfigAPI from "../../apis/core/system_config";
 import { PitakSettings } from "./components/farm-settings/PitakSettings";
 import { AssignmentSettings } from "./components/farm-settings/AssignmentSettings";
 import { PaymentSettings } from "./components/farm-settings/PaymentSettings";
@@ -362,7 +362,7 @@ const FarmManagementSettingsPage: React.FC = () => {
               onChange={(field, value) =>
                 handleCategoryChange("farm_session", field, value)
               }
-              onCreateSession={()=> {
+              onCreateSession={() => {
                 setIsSessionFormOpen(true);
               }}
             />
@@ -433,14 +433,18 @@ const FarmManagementSettingsPage: React.FC = () => {
         />
       )}
 
-          {/* Session Form Dialog */}
+      {/* Session Form Dialog */}
       {isSessionFormOpen && (
         <SessionFormDialog
           id={undefined}
           mode={"add"}
-          onClose={() => {setIsSessionFormOpen(false)}}
-          onSuccess={ async () => {
-            await dialogs.success("Session Created, New session has been created successfully.");
+          onClose={() => {
+            setIsSessionFormOpen(false);
+          }}
+          onSuccess={async () => {
+            await dialogs.success(
+              "Session Created, New session has been created successfully.",
+            );
             setIsSessionFormOpen(false);
             handleRefresh();
           }}

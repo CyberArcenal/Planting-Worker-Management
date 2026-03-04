@@ -1,12 +1,12 @@
 // components/Payment/hooks/usePaymentData.ts
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import paymentAPI from "../../../../apis/payment";
+import paymentAPI from "../../../../apis/core/payment";
 import type {
   PaymentData,
   PaymentStatsData,
   PaymentSummaryData,
   PaymentPaginationData,
-} from "../../../../apis/payment";
+} from "../../../../apis/core/payment";
 import { showError } from "../../../../utils/notification";
 
 export const usePaymentData = () => {

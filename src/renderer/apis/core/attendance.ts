@@ -1,7 +1,7 @@
 // src/api/attendanceAPI.ts
 // Similar structure to kabisilyaAPI.ts
 
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 
 // 📋 Core Types
 
@@ -356,7 +356,7 @@ export interface AttendanceFilterParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }
 
 // 📋 Response Types
@@ -385,7 +385,8 @@ class AttendanceAPI {
       const user = kabAuthStore.getUser();
       if (user && user.id) {
         // Ensure we return a number
-        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
         return isNaN(userId) ? null : userId;
       }
       return null;
@@ -406,16 +407,21 @@ class AttendanceAPI {
   /**
    * Get attendance records by specific date
    */
-  async getByDate(date: string, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<{
-    date: string;
-    total_records: number;
-    summary: {
-      total_workers: number;
-      active_workers: number;
-      total_luwang: number;
-    };
-    records: AttendanceRecord[];
-  }>> {
+  async getByDate(
+    date: string,
+    filters: AttendanceFilterParams = {},
+  ): Promise<
+    AttendanceResponse<{
+      date: string;
+      total_records: number;
+      summary: {
+        total_workers: number;
+        active_workers: number;
+        total_luwang: number;
+      };
+      records: AttendanceRecord[];
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -441,10 +447,10 @@ class AttendanceAPI {
           summary: {
             total_workers: 0,
             active_workers: 0,
-            total_luwang: 0
+            total_luwang: 0,
           },
-          records: []
-        }
+          records: [],
+        },
       };
     }
   }
@@ -452,21 +458,27 @@ class AttendanceAPI {
   /**
    * Get attendance records by date range
    */
-  async getByDateRange(startDate: string, endDate: string, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<{
-    date_range: {
-      start_date: string;
-      end_date: string;
-      total_days: number;
-    };
-    summary: {
-      total_assignments: number;
-      total_luwang: number;
-      average_workers_per_day: number;
-      average_luwang_per_day: number;
-    };
-    daily_summaries: DailyAttendanceSummary[];
-    raw_assignments: AttendanceRecord[];
-  }>> {
+  async getByDateRange(
+    startDate: string,
+    endDate: string,
+    filters: AttendanceFilterParams = {},
+  ): Promise<
+    AttendanceResponse<{
+      date_range: {
+        start_date: string;
+        end_date: string;
+        total_days: number;
+      };
+      summary: {
+        total_assignments: number;
+        total_luwang: number;
+        average_workers_per_day: number;
+        average_luwang_per_day: number;
+      };
+      daily_summaries: DailyAttendanceSummary[];
+      raw_assignments: AttendanceRecord[];
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -480,7 +492,9 @@ class AttendanceAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get attendance by date range");
+      throw new Error(
+        response.message || "Failed to get attendance by date range",
+      );
     } catch (error: any) {
       console.error("Error getting attendance by date range:", error);
       return {
@@ -490,17 +504,17 @@ class AttendanceAPI {
           date_range: {
             start_date: startDate,
             end_date: endDate,
-            total_days: 0
+            total_days: 0,
           },
           summary: {
             total_assignments: 0,
             total_luwang: 0,
             average_workers_per_day: 0,
-            average_luwang_per_day: 0
+            average_luwang_per_day: 0,
           },
           daily_summaries: [],
-          raw_assignments: []
-        }
+          raw_assignments: [],
+        },
       };
     }
   }
@@ -508,37 +522,42 @@ class AttendanceAPI {
   /**
    * Get attendance records for a specific worker
    */
-  async getByWorker(workerId: number, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<{
-    worker: {
-      id: number;
-      name: string;
-      contact: string | null;
-      email: string | null;
-      status: string;
-      hire_date: string | null;
-      kabisilya: string | null;
-    };
-    statistics: {
-      total_assignments: number;
-      total_luwang: number;
-      active_assignments: number;
-      completed_assignments: number;
-      cancelled_assignments: number;
-    };
-    assignments: AttendanceRecord[];
-    monthly_summary: Array<{
-      month: string;
-      assignments_count: number;
-      total_luwang: number;
+  async getByWorker(
+    workerId: number,
+    filters: AttendanceFilterParams = {},
+  ): Promise<
+    AttendanceResponse<{
+      worker: {
+        id: number;
+        name: string;
+        contact: string | null;
+        email: string | null;
+        status: string;
+        hire_date: string | null;
+        kabisilya: string | null;
+      };
+      statistics: {
+        total_assignments: number;
+        total_luwang: number;
+        active_assignments: number;
+        completed_assignments: number;
+        cancelled_assignments: number;
+      };
       assignments: AttendanceRecord[];
-    }>;
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      total_pages: number;
-    };
-  }>> {
+      monthly_summary: Array<{
+        month: string;
+        assignments_count: number;
+        total_luwang: number;
+        assignments: AttendanceRecord[];
+      }>;
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        total_pages: number;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -561,19 +580,19 @@ class AttendanceAPI {
         data: {
           worker: {
             id: workerId,
-            name: '',
+            name: "",
             contact: null,
             email: null,
-            status: '',
+            status: "",
             hire_date: null,
-            kabisilya: null
+            kabisilya: null,
           },
           statistics: {
             total_assignments: 0,
             total_luwang: 0,
             active_assignments: 0,
             completed_assignments: 0,
-            cancelled_assignments: 0
+            cancelled_assignments: 0,
           },
           assignments: [],
           monthly_summary: [],
@@ -581,9 +600,9 @@ class AttendanceAPI {
             page: 1,
             limit: 50,
             total: 0,
-            total_pages: 0
-          }
-        }
+            total_pages: 0,
+          },
+        },
       };
     }
   }
@@ -591,7 +610,10 @@ class AttendanceAPI {
   /**
    * Get attendance records for a specific pitak
    */
-  async getByPitak(pitakId: number, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<AttendanceByPitakData>> {
+  async getByPitak(
+    pitakId: number,
+    filters: AttendanceFilterParams = {},
+  ): Promise<AttendanceResponse<AttendanceByPitakData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -616,19 +638,19 @@ class AttendanceAPI {
             id: pitakId,
             location: null,
             total_luwang: 0,
-            status: '',
-            bukid: null
+            status: "",
+            bukid: null,
           },
           statistics: {
             total_assignments: 0,
             total_luwang: 0,
             unique_workers: 0,
             work_days: 0,
-            average_luwang_per_assignment: 0
+            average_luwang_per_assignment: 0,
           },
           attendance_by_date: [],
-          all_assignments: []
-        }
+          all_assignments: [],
+        },
       };
     }
   }
@@ -636,7 +658,10 @@ class AttendanceAPI {
   /**
    * Get attendance records for a specific bukid
    */
-  async getByBukid(bukidId: number, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<AttendanceByBukidData>> {
+  async getByBukid(
+    bukidId: number,
+    filters: AttendanceFilterParams = {},
+  ): Promise<AttendanceResponse<AttendanceByBukidData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -659,10 +684,10 @@ class AttendanceAPI {
         data: {
           bukid: {
             id: bukidId,
-            name: '',
+            name: "",
             location: null,
-            status: '',
-            kabisilya: null
+            status: "",
+            kabisilya: null,
           },
           pitaks: [],
           statistics: {
@@ -670,11 +695,11 @@ class AttendanceAPI {
             total_assignments: 0,
             total_luwang: 0,
             unique_workers: 0,
-            average_luwang_per_assignment: 0
+            average_luwang_per_assignment: 0,
           },
           assignments_by_pitak: [],
-          all_assignments: []
-        }
+          all_assignments: [],
+        },
       };
     }
   }
@@ -682,7 +707,10 @@ class AttendanceAPI {
   /**
    * Get attendance records for a specific kabisilya
    */
-  async getByKabisilya(kabisilyaId: number, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<AttendanceByKabisilyaData>> {
+  async getByKabisilya(
+    kabisilyaId: number,
+    filters: AttendanceFilterParams = {},
+  ): Promise<AttendanceResponse<AttendanceByKabisilyaData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -696,7 +724,9 @@ class AttendanceAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get attendance by kabisilya");
+      throw new Error(
+        response.message || "Failed to get attendance by kabisilya",
+      );
     } catch (error: any) {
       console.error("Error getting attendance by kabisilya:", error);
       return {
@@ -705,7 +735,7 @@ class AttendanceAPI {
         data: {
           kabisilya: {
             id: kabisilyaId,
-            name: ''
+            name: "",
           },
           workers: [],
           statistics: {
@@ -715,11 +745,11 @@ class AttendanceAPI {
             total_assignments: 0,
             total_luwang: 0,
             average_assignments_per_worker: 0,
-            average_luwang_per_worker: 0
+            average_luwang_per_worker: 0,
           },
           attendance_by_worker: [],
-          all_assignments: []
-        }
+          all_assignments: [],
+        },
       };
     }
   }
@@ -727,7 +757,10 @@ class AttendanceAPI {
   /**
    * Get attendance summary for a worker
    */
-  async getWorkerSummary(workerId: number, dateRange: DateRange = {}): Promise<AttendanceResponse<WorkerAttendanceSummary>> {
+  async getWorkerSummary(
+    workerId: number,
+    dateRange: DateRange = {},
+  ): Promise<AttendanceResponse<WorkerAttendanceSummary>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -735,13 +768,18 @@ class AttendanceAPI {
 
       const response = await window.backendAPI.attendance({
         method: "getWorkerAttendanceSummary",
-        params: this.enrichParams({ worker_id: workerId, date_range: dateRange }),
+        params: this.enrichParams({
+          worker_id: workerId,
+          date_range: dateRange,
+        }),
       });
 
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get worker attendance summary");
+      throw new Error(
+        response.message || "Failed to get worker attendance summary",
+      );
     } catch (error: any) {
       console.error("Error getting worker attendance summary:", error);
       return {
@@ -750,30 +788,30 @@ class AttendanceAPI {
         data: {
           worker: {
             id: workerId,
-            name: '',
-            status: '',
+            name: "",
+            status: "",
             hire_date: null,
-            kabisilya: null
+            kabisilya: null,
           },
           summary: {
             total_assignments: 0,
-            total_luwang: '0.00',
-            average_luwang_per_assignment: '0.00',
-            attendance_rate: '0%'
+            total_luwang: "0.00",
+            average_luwang_per_assignment: "0.00",
+            attendance_rate: "0%",
           },
           status_breakdown: {
             active: 0,
             completed: 0,
-            cancelled: 0
+            cancelled: 0,
           },
           performance: {
             current_streak: 0,
             longest_streak: 0,
             most_frequent_pitak: null,
-            unique_pitaks_count: 0
+            unique_pitaks_count: 0,
           },
-          recent_assignments: []
-        }
+          recent_assignments: [],
+        },
       };
     }
   }
@@ -781,7 +819,10 @@ class AttendanceAPI {
   /**
    * Get daily attendance report
    */
-  async getDailyReport(date?: string, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<DailyAttendanceReport>> {
+  async getDailyReport(
+    date?: string,
+    filters: AttendanceFilterParams = {},
+  ): Promise<AttendanceResponse<DailyAttendanceReport>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -795,26 +836,28 @@ class AttendanceAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get daily attendance report");
+      throw new Error(
+        response.message || "Failed to get daily attendance report",
+      );
     } catch (error: any) {
       console.error("Error getting daily attendance report:", error);
       return {
         status: false,
         message: error.message || "Failed to get daily attendance report",
         data: {
-          report_date: date || new Date().toISOString().split('T')[0],
+          report_date: date || new Date().toISOString().split("T")[0],
           summary: {
             total_active_workers: 0,
             workers_present: 0,
             workers_absent: 0,
-            attendance_rate: '0%',
-            total_luwang: 0
+            attendance_rate: "0%",
+            total_luwang: 0,
           },
           attendance_by_kabisilya: [],
           present_workers: [],
           absent_workers: [],
-          detailed_assignments: []
-        }
+          detailed_assignments: [],
+        },
       };
     }
   }
@@ -822,7 +865,11 @@ class AttendanceAPI {
   /**
    * Get monthly attendance summary
    */
-  async getMonthlySummary(year: number, month: number, filters: AttendanceFilterParams = {}): Promise<AttendanceResponse<MonthlyAttendanceSummary>> {
+  async getMonthlySummary(
+    year: number,
+    month: number,
+    filters: AttendanceFilterParams = {},
+  ): Promise<AttendanceResponse<MonthlyAttendanceSummary>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -836,13 +883,18 @@ class AttendanceAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get monthly attendance summary");
+      throw new Error(
+        response.message || "Failed to get monthly attendance summary",
+      );
     } catch (error: any) {
       console.error("Error getting monthly attendance summary:", error);
-      const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long' });
+      const monthName = new Date(year, month - 1, 1).toLocaleDateString(
+        "en-US",
+        { month: "long" },
+      );
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0);
-      
+
       return {
         status: false,
         message: error.message || "Failed to get monthly attendance summary",
@@ -850,14 +902,14 @@ class AttendanceAPI {
           year,
           month,
           month_name: monthName,
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
           days_in_month: endDate.getDate(),
           work_days: 0,
           daily_summary: [],
           kabisilya_summary: [],
-          top_performers: []
-        }
+          top_performers: [],
+        },
       };
     }
   }
@@ -865,7 +917,9 @@ class AttendanceAPI {
   /**
    * Get attendance statistics
    */
-  async getStatistics(dateRange: DateRange = {}): Promise<AttendanceResponse<AttendanceStatistics>> {
+  async getStatistics(
+    dateRange: DateRange = {},
+  ): Promise<AttendanceResponse<AttendanceStatistics>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -879,7 +933,9 @@ class AttendanceAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get attendance statistics");
+      throw new Error(
+        response.message || "Failed to get attendance statistics",
+      );
     } catch (error: any) {
       console.error("Error getting attendance statistics:", error);
       return {
@@ -887,10 +943,10 @@ class AttendanceAPI {
         message: error.message || "Failed to get attendance statistics",
         data: {
           date_range: {
-            start_date: dateRange.startDate || '',
-            end_date: dateRange.endDate || '',
+            start_date: dateRange.startDate || "",
+            end_date: dateRange.endDate || "",
             total_days: 0,
-            work_days: 0
+            work_days: 0,
           },
           overview: {
             total_active_workers: 0,
@@ -898,32 +954,32 @@ class AttendanceAPI {
             total_luwang: 0,
             average_assignments_per_day: 0,
             average_luwang_per_day: 0,
-            average_luwang_per_assignment: 0
+            average_luwang_per_assignment: 0,
           },
           trends: {
-            assignment_change: '0%',
-            luwang_change: '0%',
+            assignment_change: "0%",
+            luwang_change: "0%",
             previous_period: {
-              start_date: '',
-              end_date: '',
+              start_date: "",
+              end_date: "",
               total_assignments: 0,
-              total_luwang: 0
-            }
+              total_luwang: 0,
+            },
           },
           status_breakdown: {},
           worker_statistics: {
             total_workers: 0,
             average_assignments_per_worker: 0,
             average_luwang_per_worker: 0,
-            top_performers: []
+            top_performers: [],
           },
           daily_activity: {
             most_active_days: [],
-            busiest_day: null
+            busiest_day: null,
           },
           kabisilya_statistics: [],
-          pitak_statistics: []
-        }
+          pitak_statistics: [],
+        },
       };
     }
   }
@@ -931,7 +987,9 @@ class AttendanceAPI {
   /**
    * Search attendance records
    */
-  async search(searchQuery: SearchAttendanceParams): Promise<AttendanceResponse<SearchAttendanceResult>> {
+  async search(
+    searchQuery: SearchAttendanceParams,
+  ): Promise<AttendanceResponse<SearchAttendanceResult>> {
     try {
       if (!window.backendAPI || !window.backendAPI.attendance) {
         throw new Error("Electron API not available");
@@ -945,7 +1003,9 @@ class AttendanceAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to search attendance records");
+      throw new Error(
+        response.message || "Failed to search attendance records",
+      );
     } catch (error: any) {
       console.error("Error searching attendance records:", error);
       return {
@@ -959,9 +1019,9 @@ class AttendanceAPI {
             page: searchQuery.page || 1,
             limit: searchQuery.limit || 50,
             total: 0,
-            total_pages: 0
-          }
-        }
+            total_pages: 0,
+          },
+        },
       };
     }
   }
@@ -972,14 +1032,16 @@ class AttendanceAPI {
    * Get today's attendance report
    */
   async getTodayReport(): Promise<AttendanceResponse<DailyAttendanceReport>> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
     return this.getDailyReport(today);
   }
 
   /**
    * Get current month's summary
    */
-  async getCurrentMonthSummary(): Promise<AttendanceResponse<MonthlyAttendanceSummary>> {
+  async getCurrentMonthSummary(): Promise<
+    AttendanceResponse<MonthlyAttendanceSummary>
+  > {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
@@ -989,54 +1051,58 @@ class AttendanceAPI {
   /**
    * Get attendance for last 7 days
    */
-  async getLastWeekAttendance(): Promise<AttendanceResponse<{
-    date_range: {
-      start_date: string;
-      end_date: string;
-      total_days: number;
-    };
-    summary: {
-      total_assignments: number;
-      total_luwang: number;
-      average_workers_per_day: number;
-      average_luwang_per_day: number;
-    };
-    daily_summaries: DailyAttendanceSummary[];
-  }>> {
+  async getLastWeekAttendance(): Promise<
+    AttendanceResponse<{
+      date_range: {
+        start_date: string;
+        end_date: string;
+        total_days: number;
+      };
+      summary: {
+        total_assignments: number;
+        total_luwang: number;
+        average_workers_per_day: number;
+        average_luwang_per_day: number;
+      };
+      daily_summaries: DailyAttendanceSummary[];
+    }>
+  > {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 7);
-    
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
-    
+
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
     return this.getByDateRange(startDateStr, endDateStr);
   }
 
   /**
    * Get attendance for last 30 days
    */
-  async getLastMonthAttendance(): Promise<AttendanceResponse<{
-    date_range: {
-      start_date: string;
-      end_date: string;
-      total_days: number;
-    };
-    summary: {
-      total_assignments: number;
-      total_luwang: number;
-      average_workers_per_day: number;
-      average_luwang_per_day: number;
-    };
-    daily_summaries: DailyAttendanceSummary[];
-  }>> {
+  async getLastMonthAttendance(): Promise<
+    AttendanceResponse<{
+      date_range: {
+        start_date: string;
+        end_date: string;
+        total_days: number;
+      };
+      summary: {
+        total_assignments: number;
+        total_luwang: number;
+        average_workers_per_day: number;
+        average_luwang_per_day: number;
+      };
+      daily_summaries: DailyAttendanceSummary[];
+    }>
+  > {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
-    
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
-    
+
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
     return this.getByDateRange(startDateStr, endDateStr);
   }
 
@@ -1047,18 +1113,20 @@ class AttendanceAPI {
     try {
       const dateObj = new Date(date);
       const isValid = !isNaN(dateObj.getTime()) && dateObj <= new Date();
-      
+
       return {
         status: true,
-        message: isValid ? "Date is valid" : "Invalid date or date is in the future",
-        data: isValid
+        message: isValid
+          ? "Date is valid"
+          : "Invalid date or date is in the future",
+        data: isValid,
       };
     } catch (error: any) {
       console.error("Error validating date:", error);
       return {
         status: false,
         message: error.message || "Failed to validate date",
-        data: false
+        data: false,
       };
     }
   }
@@ -1066,24 +1134,28 @@ class AttendanceAPI {
   /**
    * Validate date range
    */
-  async validateDateRange(startDate: string, endDate: string): Promise<ValidationResponse> {
+  async validateDateRange(
+    startDate: string,
+    endDate: string,
+  ): Promise<ValidationResponse> {
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
-      const isValid = !isNaN(start.getTime()) && !isNaN(end.getTime()) && start <= end;
-      
+
+      const isValid =
+        !isNaN(start.getTime()) && !isNaN(end.getTime()) && start <= end;
+
       return {
         status: true,
         message: isValid ? "Date range is valid" : "Invalid date range",
-        data: isValid
+        data: isValid,
       };
     } catch (error: any) {
       console.error("Error validating date range:", error);
       return {
         status: false,
         message: error.message || "Failed to validate date range",
-        data: false
+        data: false,
       };
     }
   }
@@ -1091,75 +1163,106 @@ class AttendanceAPI {
   /**
    * Get attendance overview for dashboard
    */
-  async getDashboardOverview(): Promise<AttendanceResponse<{
-    today: {
-      present: number;
-      absent: number;
-      total_luwang: number;
-      attendance_rate: string;
-    };
-    this_week: {
-      total_assignments: number;
-      total_luwang: number;
-      average_daily_attendance: number;
-    };
-    this_month: {
-      work_days: number;
-      total_assignments: number;
-      total_luwang: number;
-      top_performer: {
-        worker_id: number;
-        worker_name: string;
+  async getDashboardOverview(): Promise<
+    AttendanceResponse<{
+      today: {
+        present: number;
+        absent: number;
         total_luwang: number;
-      } | null;
-    };
-    recent_activity: Array<{
-      date: string;
-      activity: string;
-      details: string;
-    }>;
-  }>> {
+        attendance_rate: string;
+      };
+      this_week: {
+        total_assignments: number;
+        total_luwang: number;
+        average_daily_attendance: number;
+      };
+      this_month: {
+        work_days: number;
+        total_assignments: number;
+        total_luwang: number;
+        top_performer: {
+          worker_id: number;
+          worker_name: string;
+          total_luwang: number;
+        } | null;
+      };
+      recent_activity: Array<{
+        date: string;
+        activity: string;
+        details: string;
+      }>;
+    }>
+  > {
     try {
       // Get today's report
       const todayReport = await this.getTodayReport();
       const lastWeek = await this.getLastWeekAttendance();
       const lastMonth = await this.getLastMonthAttendance();
       const stats = await this.getStatistics({
-        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0]
+        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          .toISOString()
+          .split("T")[0],
+        endDate: new Date().toISOString().split("T")[0],
       });
 
       const overview = {
         today: {
-          present: todayReport.status ? todayReport.data.summary.workers_present : 0,
-          absent: todayReport.status ? todayReport.data.summary.workers_absent : 0,
-          total_luwang: todayReport.status ? todayReport.data.summary.total_luwang : 0,
-          attendance_rate: todayReport.status ? todayReport.data.summary.attendance_rate : '0%'
+          present: todayReport.status
+            ? todayReport.data.summary.workers_present
+            : 0,
+          absent: todayReport.status
+            ? todayReport.data.summary.workers_absent
+            : 0,
+          total_luwang: todayReport.status
+            ? todayReport.data.summary.total_luwang
+            : 0,
+          attendance_rate: todayReport.status
+            ? todayReport.data.summary.attendance_rate
+            : "0%",
         },
         this_week: {
-          total_assignments: lastWeek.status ? lastWeek.data.summary.total_assignments : 0,
-          total_luwang: lastWeek.status ? lastWeek.data.summary.total_luwang : 0,
-          average_daily_attendance: lastWeek.status ? lastWeek.data.summary.average_workers_per_day : 0
+          total_assignments: lastWeek.status
+            ? lastWeek.data.summary.total_assignments
+            : 0,
+          total_luwang: lastWeek.status
+            ? lastWeek.data.summary.total_luwang
+            : 0,
+          average_daily_attendance: lastWeek.status
+            ? lastWeek.data.summary.average_workers_per_day
+            : 0,
         },
         this_month: {
-          work_days: lastMonth.status ? lastMonth.data.daily_summaries.filter(day => day.total_workers > 0).length : 0,
-          total_assignments: lastMonth.status ? lastMonth.data.summary.total_assignments : 0,
-          total_luwang: lastMonth.status ? lastMonth.data.summary.total_luwang : 0,
-          top_performer: stats.status && stats.data.worker_statistics.top_performers.length > 0 
-            ? {
-                worker_id: stats.data.worker_statistics.top_performers[0].worker_id,
-                worker_name: stats.data.worker_statistics.top_performers[0].worker_name,
-                total_luwang: stats.data.worker_statistics.top_performers[0].total_luwang
-              }
-            : null
+          work_days: lastMonth.status
+            ? lastMonth.data.daily_summaries.filter(
+                (day) => day.total_workers > 0,
+              ).length
+            : 0,
+          total_assignments: lastMonth.status
+            ? lastMonth.data.summary.total_assignments
+            : 0,
+          total_luwang: lastMonth.status
+            ? lastMonth.data.summary.total_luwang
+            : 0,
+          top_performer:
+            stats.status &&
+            stats.data.worker_statistics.top_performers.length > 0
+              ? {
+                  worker_id:
+                    stats.data.worker_statistics.top_performers[0].worker_id,
+                  worker_name:
+                    stats.data.worker_statistics.top_performers[0].worker_name,
+                  total_luwang:
+                    stats.data.worker_statistics.top_performers[0].total_luwang,
+                }
+              : null,
         },
-        recent_activity: []
+        recent_activity: [],
       };
 
       return {
         status: true,
         message: "Dashboard overview retrieved",
-        data: overview
+        data: overview,
       };
     } catch (error: any) {
       console.error("Error getting dashboard overview:", error);
@@ -1171,21 +1274,21 @@ class AttendanceAPI {
             present: 0,
             absent: 0,
             total_luwang: 0,
-            attendance_rate: '0%'
+            attendance_rate: "0%",
           },
           this_week: {
             total_assignments: 0,
             total_luwang: 0,
-            average_daily_attendance: 0
+            average_daily_attendance: 0,
           },
           this_month: {
             work_days: 0,
             total_assignments: 0,
             total_luwang: 0,
-            top_performer: null
+            top_performer: null,
           },
-          recent_activity: []
-        }
+          recent_activity: [],
+        },
       };
     }
   }
@@ -1198,44 +1301,53 @@ class AttendanceAPI {
   async exportToCSV(params: {
     startDate?: string;
     endDate?: string;
-    format?: 'csv' | 'excel';
+    format?: "csv" | "excel";
     includeHeaders?: boolean;
-  }): Promise<AttendanceResponse<{
-    csvData: string;
-    filename: string;
-    recordCount: number;
-  }>> {
+  }): Promise<
+    AttendanceResponse<{
+      csvData: string;
+      filename: string;
+      recordCount: number;
+    }>
+  > {
     try {
       // This would typically call a backend export method
       // For now, we'll simulate by getting the data and converting to CSV
-      
+
       const dateRange = {
-        startDate: params.startDate || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
-        endDate: params.endDate || new Date().toISOString().split('T')[0]
+        startDate:
+          params.startDate ||
+          new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0],
+        endDate: params.endDate || new Date().toISOString().split("T")[0],
       };
 
-      const response = await this.getByDateRange(dateRange.startDate, dateRange.endDate);
-      
+      const response = await this.getByDateRange(
+        dateRange.startDate,
+        dateRange.endDate,
+      );
+
       if (!response.status) {
         throw new Error(response.message);
       }
 
       // Simple CSV conversion (in a real app, use a library like papaparse)
-      let csvContent = params.includeHeaders !== false ? 
-        "Date,Worker Name,Worker Contact,Pitak Location,Bukid Name,Luwang Count,Status,Notes\n" : "";
-      
-      response.data.raw_assignments.forEach(record => {
+      let csvContent =
+        params.includeHeaders !== false
+          ? "Date,Worker Name,Worker Contact,Pitak Location,Bukid Name,Luwang Count,Status,Notes\n"
+          : "";
+
+      response.data.raw_assignments.forEach((record) => {
         const row = [
-          record.assignment_date.split('T')[0],
+          record.assignment_date.split("T")[0],
           `"${record.worker.name}"`,
-          `"${record.worker.contact || ''}"`,
-          `"${record.pitak.location || ''}"`,
-          `"${record.bukid.name || ''}"`,
+          `"${record.worker.contact || ""}"`,
+          `"${record.pitak.location || ""}"`,
+          `"${record.bukid.name || ""}"`,
           record.luwang_count,
           record.status,
-          `"${record.notes || ''}"`
-        ].join(',');
-        csvContent += row + '\n';
+          `"${record.notes || ""}"`,
+        ].join(",");
+        csvContent += row + "\n";
       });
 
       const filename = `attendance_${dateRange.startDate}_to_${dateRange.endDate}.csv`;
@@ -1246,8 +1358,8 @@ class AttendanceAPI {
         data: {
           csvData: csvContent,
           filename,
-          recordCount: response.data.raw_assignments.length
-        }
+          recordCount: response.data.raw_assignments.length,
+        },
       };
     } catch (error: any) {
       console.error("Error exporting to CSV:", error);
@@ -1255,10 +1367,10 @@ class AttendanceAPI {
         status: false,
         message: error.message || "Failed to export data",
         data: {
-          csvData: '',
-          filename: '',
-          recordCount: 0
-        }
+          csvData: "",
+          filename: "",
+          recordCount: 0,
+        },
       };
     }
   }
@@ -1267,28 +1379,30 @@ class AttendanceAPI {
    * Generate attendance report PDF
    */
   async generatePDFReport(params: {
-    type: 'daily' | 'weekly' | 'monthly' | 'custom';
+    type: "daily" | "weekly" | "monthly" | "custom";
     date?: string;
     startDate?: string;
     endDate?: string;
     workerId?: number;
     pitakId?: number;
-  }): Promise<AttendanceResponse<{
-    success: boolean;
-    reportUrl?: string;
-    message: string;
-  }>> {
+  }): Promise<
+    AttendanceResponse<{
+      success: boolean;
+      reportUrl?: string;
+      message: string;
+    }>
+  > {
     try {
       // This would typically call a backend PDF generation service
       // For now, return a simulated response
-      
+
       return {
         status: true,
         message: `PDF report for ${params.type} attendance generated successfully`,
         data: {
           success: true,
-          message: `Report for ${params.type} attendance has been queued for generation`
-        }
+          message: `Report for ${params.type} attendance has been queued for generation`,
+        },
       };
     } catch (error: any) {
       console.error("Error generating PDF report:", error);
@@ -1297,8 +1411,8 @@ class AttendanceAPI {
         message: error.message || "Failed to generate PDF report",
         data: {
           success: false,
-          message: "Failed to generate report"
-        }
+          message: "Failed to generate report",
+        },
       };
     }
   }
@@ -1308,40 +1422,42 @@ class AttendanceAPI {
   /**
    * Get attendance trends over time
    */
-  async getTrends(timeframe: 'week' | 'month' | 'quarter' | 'year'): Promise<AttendanceResponse<{
-    timeframe: string;
-    data: Array<{
-      period: string;
-      assignments: number;
-      total_luwang: number;
-      average_attendance: number;
-    }>;
-    trend_direction: 'up' | 'down' | 'stable';
-    percentage_change: number;
-  }>> {
+  async getTrends(timeframe: "week" | "month" | "quarter" | "year"): Promise<
+    AttendanceResponse<{
+      timeframe: string;
+      data: Array<{
+        period: string;
+        assignments: number;
+        total_luwang: number;
+        average_attendance: number;
+      }>;
+      trend_direction: "up" | "down" | "stable";
+      percentage_change: number;
+    }>
+  > {
     try {
       // Calculate date range based on timeframe
       const endDate = new Date();
       let startDate = new Date();
-      
+
       switch (timeframe) {
-        case 'week':
+        case "week":
           startDate.setDate(startDate.getDate() - 7);
           break;
-        case 'month':
+        case "month":
           startDate.setMonth(startDate.getMonth() - 1);
           break;
-        case 'quarter':
+        case "quarter":
           startDate.setMonth(startDate.getMonth() - 3);
           break;
-        case 'year':
+        case "year":
           startDate.setFullYear(startDate.getFullYear() - 1);
           break;
       }
 
       const response = await this.getByDateRange(
-        startDate.toISOString().split('T')[0],
-        endDate.toISOString().split('T')[0]
+        startDate.toISOString().split("T")[0],
+        endDate.toISOString().split("T")[0],
       );
 
       if (!response.status) {
@@ -1350,28 +1466,34 @@ class AttendanceAPI {
 
       // Analyze trend (simplified)
       const data = response.data.daily_summaries.slice(-10); // Last 10 periods
-      const trend = data.length >= 2 
-        ? data[data.length - 1].total_workers > data[0].total_workers ? 'up' : 'down'
-        : 'stable';
-      
-      const percentageChange = data.length >= 2 
-        ? ((data[data.length - 1].total_workers - data[0].total_workers) / data[0].total_workers * 100)
-        : 0;
+      const trend =
+        data.length >= 2
+          ? data[data.length - 1].total_workers > data[0].total_workers
+            ? "up"
+            : "down"
+          : "stable";
+
+      const percentageChange =
+        data.length >= 2
+          ? ((data[data.length - 1].total_workers - data[0].total_workers) /
+              data[0].total_workers) *
+            100
+          : 0;
 
       return {
         status: true,
         message: `Trend analysis for ${timeframe}`,
         data: {
           timeframe,
-          data: data.map(day => ({
+          data: data.map((day) => ({
             period: day.date,
             assignments: day.total_workers,
             total_luwang: day.total_luwang,
-            average_attendance: day.total_workers
+            average_attendance: day.total_workers,
           })),
           trend_direction: trend,
-          percentage_change: percentageChange
-        }
+          percentage_change: percentageChange,
+        },
       };
     } catch (error: any) {
       console.error("Error getting attendance trends:", error);
@@ -1381,9 +1503,9 @@ class AttendanceAPI {
         data: {
           timeframe,
           data: [],
-          trend_direction: 'stable',
-          percentage_change: 0
-        }
+          trend_direction: "stable",
+          percentage_change: 0,
+        },
       };
     }
   }
@@ -1398,18 +1520,20 @@ class AttendanceAPI {
       // This would typically validate against the worker database
       // For now, we'll assume it's valid if we can get attendance data
       const response = await this.getByWorker(workerId, { limit: 1 });
-      
+
       return {
         status: true,
-        message: response.status ? "Worker is valid" : "Worker not found or inactive",
-        data: response.status
+        message: response.status
+          ? "Worker is valid"
+          : "Worker not found or inactive",
+        data: response.status,
       };
     } catch (error: any) {
       console.error("Error validating worker:", error);
       return {
         status: false,
         message: error.message || "Failed to validate worker",
-        data: false
+        data: false,
       };
     }
   }
@@ -1420,18 +1544,20 @@ class AttendanceAPI {
   async validatePitak(pitakId: number): Promise<ValidationResponse> {
     try {
       const response = await this.getByPitak(pitakId, { limit: 1 });
-      
+
       return {
         status: true,
-        message: response.status ? "Pitak is valid" : "Pitak not found or inactive",
-        data: response.status
+        message: response.status
+          ? "Pitak is valid"
+          : "Pitak not found or inactive",
+        data: response.status,
       };
     } catch (error: any) {
       console.error("Error validating pitak:", error);
       return {
         status: false,
         message: error.message || "Failed to validate pitak",
-        data: false
+        data: false,
       };
     }
   }
@@ -1447,7 +1573,9 @@ class AttendanceAPI {
     console.log("onDailyReportGenerated event listener registered");
   }
 
-  onMonthlySummaryGenerated(callback: (summary: MonthlyAttendanceSummary) => void) {
+  onMonthlySummaryGenerated(
+    callback: (summary: MonthlyAttendanceSummary) => void,
+  ) {
     // Implement if IPC supports events
     console.log("onMonthlySummaryGenerated event listener registered");
   }

@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { PitakFilters, PitakStatsData, PitakWithDetails } from '../../../../apis/pitak';
-import pitakAPI from '../../../../apis/pitak';
-import workerAPI from '../../../../apis/worker';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type {
+  PitakFilters,
+  PitakStatsData,
+  PitakWithDetails,
+} from "../../../../apis/core/pitak";
+import pitakAPI from "../../../../apis/core/pitak";
+import workerAPI from "../../../../apis/core/worker";
 
 export const usePitakData = () => {
   const [loading, setLoading] = useState(true);
@@ -20,14 +24,14 @@ export const usePitakData = () => {
   const [limit] = useState(20);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [bukidFilter, setBukidFilter] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<string>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // View options
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedPitaks, setSelectedPitaks] = useState<number[]>([]);
 
   // Fetch pitaks
@@ -37,7 +41,7 @@ export const usePitakData = () => {
       setError(null);
 
       const filters: PitakFilters = {
-        status: statusFilter !== 'all' ? statusFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
         bukidId: bukidFilter || undefined,
       };
 
@@ -58,11 +62,11 @@ export const usePitakData = () => {
           setStats(response.meta.stats);
         }
       } else {
-        throw new Error(response.message || 'Failed to fetch pitak data');
+        throw new Error(response.message || "Failed to fetch pitak data");
       }
     } catch (err: any) {
       setError(err.message);
-      console.error('Failed to fetch pitak data:', err);
+      console.error("Failed to fetch pitak data:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -75,22 +79,26 @@ export const usePitakData = () => {
     sorted.sort((a, b) => {
       let aValue: any, bValue: any;
       switch (sortBy) {
-        case 'createdAt':
+        case "createdAt":
           aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           break;
-        case 'status':
-          aValue = a.status || '';
-          bValue = b.status || '';
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
           break;
         default:
           aValue = a.id;
           bValue = b.id;
       }
       if (aValue === bValue) return 0;
-      return sortOrder === 'asc'
-        ? aValue > bValue ? 1 : -1
-        : aValue < bValue ? 1 : -1;
+      return sortOrder === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+          ? 1
+          : -1;
     });
     return sorted;
   }, [allPitaks, sortBy, sortOrder]);
@@ -110,7 +118,7 @@ export const usePitakData = () => {
         setStats(response.data);
       }
     } catch (err) {
-      console.error('Failed to fetch pitak stats:', err);
+      console.error("Failed to fetch pitak stats:", err);
     }
   };
 
@@ -122,7 +130,7 @@ export const usePitakData = () => {
         setAvailableWorkers(response.data.workers);
       }
     } catch (err) {
-      console.error('Failed to fetch workers:', err);
+      console.error("Failed to fetch workers:", err);
     }
   };
 
@@ -142,14 +150,14 @@ export const usePitakData = () => {
   const handleSort = useCallback(
     (field: string) => {
       if (sortBy === field) {
-        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
       } else {
         setSortBy(field);
-        setSortOrder('asc');
+        setSortOrder("asc");
       }
       setCurrentPage(1);
     },
-    [sortBy, sortOrder]
+    [sortBy, sortOrder],
   );
 
   // Initial load
@@ -174,8 +182,8 @@ export const usePitakData = () => {
   }, [currentPage]);
 
   return {
-      bukidFilter,
-  setBukidFilter,
+    bukidFilter,
+    setBukidFilter,
     pitaks: paginatedPitaks,
     allPitaks,
     stats,

@@ -23,8 +23,8 @@ import ViewSingleAssignmentDialog from "../View/Dialogs/ViewSingleAssignmentDial
 import AssignmentFormDialog from "../Dialogs/Form";
 import AddAssignmentNoteDialog from "../Dialogs/AddAssignmentNoteDialog";
 import UpdateLuWangCountDialog from "../Dialogs/UpdateLuWangCountDialog";
-import type { Assignment } from "../../../apis/assignment";
-import assignmentAPI from "../../../apis/assignment";
+import type { Assignment } from "../../../apis/core/assignment";
+import assignmentAPI from "../../../apis/core/assignment";
 import { showApiError } from "../../../utils/notification";
 
 const AssignmentTablePage: React.FC = () => {

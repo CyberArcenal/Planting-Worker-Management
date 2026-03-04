@@ -1,14 +1,14 @@
-import React from 'react';
-import type { FarmPaymentSettings } from '../../../../apis/system_config';
+import React from "react";
+import type { FarmPaymentSettings } from "../../../../apis/core/system_config";
 
 interface PaymentSettingsProps {
   settings: FarmPaymentSettings;
   onChange: (field: keyof FarmPaymentSettings, value: any) => void;
 }
 
-export const PaymentSettings: React.FC<PaymentSettingsProps> = ({ 
-  settings, 
-  onChange 
+export const PaymentSettings: React.FC<PaymentSettingsProps> = ({
+  settings,
+  onChange,
 }) => {
   const updateField = (field: keyof FarmPaymentSettings, value: any) => {
     onChange(field, value);
@@ -25,7 +25,9 @@ export const PaymentSettings: React.FC<PaymentSettingsProps> = ({
             type="number"
             step="0.01"
             value={settings.rate_per_luwang || 0}
-            onChange={(e) => updateField('rate_per_luwang', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              updateField("rate_per_luwang", parseFloat(e.target.value) || 0)
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
         </div>

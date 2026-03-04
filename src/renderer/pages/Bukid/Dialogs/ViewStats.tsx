@@ -1,14 +1,25 @@
 // src/components/Dialogs/ViewStatsDialog.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  X, BarChart2, Home, MapPin, Package, Users,
-  Calendar, TrendingUp, PieChart, Hash,
-  CheckCircle, XCircle, Clock, AlertCircle,
+  X,
+  BarChart2,
+  Home,
+  MapPin,
+  Package,
+  Users,
+  Calendar,
+  TrendingUp,
+  PieChart,
+  Hash,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
   FileText,
-  Edit
-} from 'lucide-react';
-import bukidAPI from '../../../apis/bukid';
-import { showError } from '../../../utils/notification';
+  Edit,
+} from "lucide-react";
+import bukidAPI from "../../../apis/core/bukid";
+import { showError } from "../../../utils/notification";
 
 interface ViewStatsDialogProps {
   id: number;
@@ -19,7 +30,7 @@ interface ViewStatsDialogProps {
 const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
   id,
   onClose,
-  onEdit
+  onEdit,
 }) => {
   const [loading, setLoading] = useState(true);
   const [bukid, setBukid] = useState<any>(null);
@@ -51,11 +62,10 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
         if (summaryResponse.status) {
           setSummary(summaryResponse.data.summary);
         }
-
       } catch (err: any) {
-        console.error('Error fetching bukid stats:', err);
-        setError(err.message || 'Failed to load bukid statistics');
-        showError('Failed to load bukid statistics');
+        console.error("Error fetching bukid stats:", err);
+        setError(err.message || "Failed to load bukid statistics");
+        showError("Failed to load bukid statistics");
       } finally {
         setLoading(false);
       }
@@ -68,12 +78,12 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -96,7 +106,9 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
         <div className="bg-white rounded-lg w-full max-w-md shadow-xl border border-gray-200">
           <div className="p-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Error Loading Statistics</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">
+              Error Loading Statistics
+            </h3>
             <p className="text-sm text-gray-600 mb-4">{error}</p>
             <button
               onClick={onClose}
@@ -120,7 +132,9 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
               <BarChart2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Bukid Statistics</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Bukid Statistics
+              </h3>
               <div className="text-xs text-gray-600 flex items-center gap-2">
                 <span className="flex items-center gap-1">
                   <Home className="w-3 h-3" /> {bukid?.name}
@@ -153,7 +167,9 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
                     <div className="text-2xl font-bold text-gray-900">
                       {summary?.assignmentCount || 0}
                     </div>
-                    <div className="text-sm text-gray-600">Total Assignments</div>
+                    <div className="text-sm text-gray-600">
+                      Total Assignments
+                    </div>
                   </div>
                 </div>
                 <div className="text-xs text-blue-700">
@@ -185,13 +201,14 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-gray-900">
-                      {bukid?.status?.charAt(0).toUpperCase() + bukid?.status?.slice(1) || 'Active'}
+                      {bukid?.status?.charAt(0).toUpperCase() +
+                        bukid?.status?.slice(1) || "Active"}
                     </div>
                     <div className="text-sm text-gray-600">Current Status</div>
                   </div>
                 </div>
                 <div className="text-xs text-amber-700">
-                  {bukid?.status === 'active' ? (
+                  {bukid?.status === "active" ? (
                     <span className="flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" /> Operational
                     </span>
@@ -215,22 +232,26 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Name:</span>
-                    <span className="text-sm font-medium text-gray-900">{bukid?.name}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {bukid?.name}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Location:</span>
-                    <span className="text-sm text-gray-900">{bukid?.location || 'Not specified'}</span>
+                    <span className="text-sm text-gray-900">
+                      {bukid?.location || "Not specified"}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Created:</span>
                     <span className="text-sm text-gray-900">
-                      {bukid?.createdAt ? formatDate(bukid.createdAt) : 'N/A'}
+                      {bukid?.createdAt ? formatDate(bukid.createdAt) : "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Last Updated:</span>
                     <span className="text-sm text-gray-900">
-                      {bukid?.updatedAt ? formatDate(bukid.updatedAt) : 'N/A'}
+                      {bukid?.updatedAt ? formatDate(bukid.updatedAt) : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -244,27 +265,45 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
                 </h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Average Luwang per Pitak:</span>
+                    <span className="text-sm text-gray-600">
+                      Average Luwang per Pitak:
+                    </span>
                     <span className="text-sm font-medium text-gray-900">
-                      {summary?.pitakCount ? 
-                        Math.round(summary.totalLuwang / summary.pitakCount) : 0
-                      }
+                      {summary?.pitakCount
+                        ? Math.round(summary.totalLuwang / summary.pitakCount)
+                        : 0}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Productivity Score:</span>
+                    <span className="text-sm text-gray-600">
+                      Productivity Score:
+                    </span>
                     <span className="text-sm font-medium text-gray-900">
-                      {summary?.assignmentCount ? 
-                        Math.min(Math.round((summary.activeAssignments / summary.assignmentCount) * 100), 100) : 0
-                      }%
+                      {summary?.assignmentCount
+                        ? Math.min(
+                            Math.round(
+                              (summary.activeAssignments /
+                                summary.assignmentCount) *
+                                100,
+                            ),
+                            100,
+                          )
+                        : 0}
+                      %
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Utilization Rate:</span>
+                    <span className="text-sm text-gray-600">
+                      Utilization Rate:
+                    </span>
                     <span className="text-sm font-medium text-gray-900">
-                      {summary?.totalLuwang ? 
-                        Math.min(Math.round((summary.totalLuwang / 100) * 100), 100) : 0
-                      }%
+                      {summary?.totalLuwang
+                        ? Math.min(
+                            Math.round((summary.totalLuwang / 100) * 100),
+                            100,
+                          )
+                        : 0}
+                      %
                     </span>
                   </div>
                 </div>
@@ -291,7 +330,8 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-600 flex items-center gap-2">
               <Clock className="w-3 h-3" />
-              Last updated: {bukid?.updatedAt ? formatDate(bukid.updatedAt) : 'N/A'}
+              Last updated:{" "}
+              {bukid?.updatedAt ? formatDate(bukid.updatedAt) : "N/A"}
             </div>
             <div className="flex items-center gap-2">
               {onEdit && (

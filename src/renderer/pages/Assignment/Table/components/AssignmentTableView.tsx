@@ -1,7 +1,7 @@
 // components/Assignment/components/AssignmentTableView.tsx
 import React, { useState } from "react";
 import { ChevronRight as ChevronRightIcon } from "lucide-react";
-import type { Assignment } from "../../../../apis/assignment";
+import type { Assignment } from "../../../../apis/core/assignment";
 import AssignmentTableRow from "./AssignmentTableRow";
 
 interface AssignmentTableViewProps {

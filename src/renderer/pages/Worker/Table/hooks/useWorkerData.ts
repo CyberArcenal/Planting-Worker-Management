@@ -1,12 +1,12 @@
 // components/Worker/hooks/useWorkerData.ts
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import workerAPI, { 
-  type WorkerData, 
-  type WorkerListResponse, 
-  type WorkerResponse, 
+import workerAPI, {
+  type WorkerData,
+  type WorkerListResponse,
+  type WorkerResponse,
   type WorkerStats,
-  type WorkerSearchParams 
-} from "../../../../apis/worker";
+  type WorkerSearchParams,
+} from "../../../../apis/core/worker";
 import { showError } from "../../../../utils/notification";
 
 export const useWorkerData = () => {
@@ -52,7 +52,7 @@ export const useWorkerData = () => {
       };
 
       let response: WorkerResponse<WorkerListResponse>;
-      
+
       if (searchQuery.trim()) {
         // Use search endpoint when there's a query
         response = await workerAPI.searchWorkers(searchParams);
@@ -60,7 +60,7 @@ export const useWorkerData = () => {
         // Use status filter endpoint
         response = await workerAPI.getWorkerByStatus(statusFilter, {
           page: currentPage,
-          limit
+          limit,
         });
       } else {
         // Get all workers
@@ -79,11 +79,11 @@ export const useWorkerData = () => {
       if (response.data) {
         const items = response.data.workers;
         const pagination = response.data.pagination;
-        
+
         setAllWorkers(items);
         setTotalItems(pagination.total);
         setTotalPages(pagination.totalPages);
-        
+
         // Update stats if available in response
         if (response.data.stats) {
           setStats(response.data.stats);
@@ -97,14 +97,7 @@ export const useWorkerData = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [
-    currentPage,
-    limit,
-    searchQuery,
-    statusFilter,
-    sortBy,
-    sortOrder,
-  ]);
+  }, [currentPage, limit, searchQuery, statusFilter, sortBy, sortOrder]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -207,29 +200,32 @@ export const useWorkerData = () => {
   );
 
   // Handle page change with fetch
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    fetchWorkers();
-  }, [fetchWorkers]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      fetchWorkers();
+    },
+    [fetchWorkers],
+  );
 
   return {
     // Data
     workers,
     allWorkers,
     stats,
-    
+
     // Loading states
     loading,
     refreshing,
     error,
-    
+
     // Pagination
     currentPage,
     totalPages,
     totalItems,
     limit,
     handlePageChange,
-    
+
     // Filters
     searchQuery,
     setSearchQuery,
@@ -239,18 +235,18 @@ export const useWorkerData = () => {
     setKabisilyaFilter,
     viewMode,
     setViewMode,
-    
+
     // Selection
     selectedWorkers,
     setSelectedWorkers,
-    
+
     // Sorting
     sortBy,
     setSortBy,
     sortOrder,
     setSortOrder,
     handleSort,
-    
+
     // Actions
     fetchWorkers,
     handleRefresh,

@@ -1,7 +1,7 @@
 // components/Bukid/components/BukidGridView.tsx
-import React from 'react';
-import type { BukidData, BukidSummaryData } from '../../../../apis/bukid';
-import BukidGridCard from './BukidGridCard';
+import React from "react";
+import type { BukidData, BukidSummaryData } from "../../../../apis/core/bukid";
+import BukidGridCard from "./BukidGridCard";
 
 interface BukidGridViewProps {
   bukids: BukidData[];
@@ -22,12 +22,12 @@ const BukidGridView: React.FC<BukidGridViewProps> = ({
   onView,
   onEdit,
   onUpdateStatus,
-  onDelete
+  onDelete,
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {bukids.map((bukid) => {
-        const bukidSummary = summary.find(s => s.id === bukid.id);
+        const bukidSummary = summary.find((s) => s.id === bukid.id);
         return (
           <BukidGridCard
             key={bukid.id}

@@ -1,16 +1,16 @@
 // components/Payment/hooks/useWorkerPaymentData.ts
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import paymentAPI from "../../../../apis/payment";
-import workerAPI from "../../../../apis/worker";
+import paymentAPI from "../../../../apis/core/payment";
+import workerAPI from "../../../../apis/core/worker";
 import type {
   PaymentData,
   PaymentStatsData,
   PaymentSummaryData,
   PaymentPaginationData,
   WorkerPaymentSummaryData,
-} from "../../../../apis/payment";
+} from "../../../../apis/core/payment";
 import { showError } from "../../../../utils/notification";
-import debtAPI from "../../../../apis/debt";
+import debtAPI from "../../../../apis/core/debt";
 
 export interface WorkerPaymentSummary {
   worker: any;
@@ -19,7 +19,7 @@ export interface WorkerPaymentSummary {
   totalNetPay: number;
   totalDeductions: number;
   pendingPayments: number;
-    totalPendingAmount: number;
+  totalPendingAmount: number;
   processingPayments: number;
   completedPayments: number;
   cancelledPayments: number;
@@ -78,78 +78,79 @@ export const useWorkerPaymentData = () => {
             if (paymentResponse.status) {
               const summaryData = paymentResponse.data;
 
-            // Kunin ang LAHAT ng pending payments para makuha ang total pending amount
-            const pendingPaymentsRes = await paymentAPI.getPaymentsByWorker(
-              worker.id,
-              {
-                statuses: ["pending", "partially_paid"],
-                limit: 100, // Kunin lahat ng pending
-                page: 1,
-              },
-            );
+              // Kunin ang LAHAT ng pending payments para makuha ang total pending amount
+              const pendingPaymentsRes = await paymentAPI.getPaymentsByWorker(
+                worker.id,
+                {
+                  statuses: ["pending", "partially_paid"],
+                  limit: 100, // Kunin lahat ng pending
+                  page: 1,
+                },
+              );
 
-            // Kalkulahin ang total pending amount
-            const totalPendingAmount = pendingPaymentsRes.data?.payments?.reduce(
-              (sum: number, payment: PaymentData) => sum + (payment.netPay || 0),
-              0
-            ) || 0;
+              // Kalkulahin ang total pending amount
+              const totalPendingAmount =
+                pendingPaymentsRes.data?.payments?.reduce(
+                  (sum: number, payment: PaymentData) =>
+                    sum + (payment.netPay || 0),
+                  0,
+                ) || 0;
 
-            // Kumuha ng recent payments para sa worker (mixed status)
-            const recentPaymentsRes = await paymentAPI.getPaymentsByWorker(
-              worker.id,
-              {
-                limit: 5,
-                page: 1,
-                status: statusFilter !== "all" ? statusFilter : undefined,
-              },
-            );
+              // Kumuha ng recent payments para sa worker (mixed status)
+              const recentPaymentsRes = await paymentAPI.getPaymentsByWorker(
+                worker.id,
+                {
+                  limit: 5,
+                  page: 1,
+                  status: statusFilter !== "all" ? statusFilter : undefined,
+                },
+              );
 
+              const workerSummary: WorkerPaymentSummary = {
+                worker,
+                totalPayments: summaryData.summary?.totalPayments || 0,
+                totalGrossPay: parseFloat(
+                  summaryData.summary?.totalGross?.toString() || "0",
+                ),
+                totalNetPay: parseFloat(
+                  summaryData.summary?.totalNet?.toString() || "0",
+                ),
+                totalDeductions: summaryData.summary?.totalDeductions || 0,
 
-             const workerSummary: WorkerPaymentSummary = {
-              worker,
-              totalPayments: summaryData.summary?.totalPayments || 0,
-              totalGrossPay: parseFloat(
-                summaryData.summary?.totalGross?.toString() || "0",
-              ),
-              totalNetPay: parseFloat(
-                summaryData.summary?.totalNet?.toString() || "0",
-              ),
-              totalDeductions: summaryData.summary?.totalDeductions || 0,
-              
-              // ADD THIS: Total pending amount
-              totalPendingAmount: totalPendingAmount,
-              
-              pendingPayments:
-                Object.entries(
-                  summaryData.summary?.statusDistribution || {},
-                ).find(([key]) => key.includes("pending"))?.[1] || 0,
-              processingPayments:
-                Object.entries(
-                  summaryData.summary?.statusDistribution || {},
-                ).find(([key]) => key.includes("processing"))?.[1] || 0,
-              completedPayments:
-                Object.entries(
-                  summaryData.summary?.statusDistribution || {},
-                ).find(([key]) => key.includes("completed"))?.[1] || 0,
-              cancelledPayments:
-                Object.entries(
-                  summaryData.summary?.statusDistribution || {},
-                ).find(([key]) => key.includes("cancelled"))?.[1] || 0,
-              partiallyPaidPayments:
-                Object.entries(
-                  summaryData.summary?.statusDistribution || {},
-                ).find(([key]) => key.includes("partially_paid"))?.[1] || 0,
-              totalDebt: debtResponse.data.debts.reduce(
-                (sum, p) => sum + p.balance || 0,
-                0,
-              ),
-              lastPaymentDate:
-                summaryData.recentPayments?.[0]?.paymentDate || null,
-              paymentMethods: new Set(),
-              payments: recentPaymentsRes.data?.payments || [],
-              recentPayments:
-                recentPaymentsRes.data?.payments?.slice(0, 3) || [],
-            };
+                // ADD THIS: Total pending amount
+                totalPendingAmount: totalPendingAmount,
+
+                pendingPayments:
+                  Object.entries(
+                    summaryData.summary?.statusDistribution || {},
+                  ).find(([key]) => key.includes("pending"))?.[1] || 0,
+                processingPayments:
+                  Object.entries(
+                    summaryData.summary?.statusDistribution || {},
+                  ).find(([key]) => key.includes("processing"))?.[1] || 0,
+                completedPayments:
+                  Object.entries(
+                    summaryData.summary?.statusDistribution || {},
+                  ).find(([key]) => key.includes("completed"))?.[1] || 0,
+                cancelledPayments:
+                  Object.entries(
+                    summaryData.summary?.statusDistribution || {},
+                  ).find(([key]) => key.includes("cancelled"))?.[1] || 0,
+                partiallyPaidPayments:
+                  Object.entries(
+                    summaryData.summary?.statusDistribution || {},
+                  ).find(([key]) => key.includes("partially_paid"))?.[1] || 0,
+                totalDebt: debtResponse.data.debts.reduce(
+                  (sum, p) => sum + p.balance || 0,
+                  0,
+                ),
+                lastPaymentDate:
+                  summaryData.recentPayments?.[0]?.paymentDate || null,
+                paymentMethods: new Set(),
+                payments: recentPaymentsRes.data?.payments || [],
+                recentPayments:
+                  recentPaymentsRes.data?.payments?.slice(0, 3) || [],
+              };
 
               // Kolektahin ang mga payment methods
               if (recentPaymentsRes.data?.payments) {

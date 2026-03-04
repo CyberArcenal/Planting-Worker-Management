@@ -1,4 +1,4 @@
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 import type { WorkerData } from "./worker";
 
 // Debt Management API - Similar structure to activationAPI.ts

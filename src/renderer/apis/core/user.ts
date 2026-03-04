@@ -1,4 +1,4 @@
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 
 // userAPI.ts - SIMILAR STRUCTURE TO activation.ts
 export interface UserData {

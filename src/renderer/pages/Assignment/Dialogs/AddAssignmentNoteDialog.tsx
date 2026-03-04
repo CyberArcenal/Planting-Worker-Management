@@ -1,8 +1,8 @@
 // src/components/Dialogs/AddAssignmentNoteDialog.tsx (Enhanced version)
-import React, { useState } from 'react';
-import { X, FileText, Save, Loader2, Tag } from 'lucide-react';
-import { showError, showSuccess } from '../../../utils/notification';
-import assignmentAPI from '../../../apis/assignment';
+import React, { useState } from "react";
+import { X, FileText, Save, Loader2, Tag } from "lucide-react";
+import { showError, showSuccess } from "../../../utils/notification";
+import assignmentAPI from "../../../apis/core/assignment";
 
 interface AddAssignmentNoteDialogProps {
   assignmentId: number;
@@ -23,31 +23,71 @@ const AddAssignmentNoteDialog: React.FC<AddAssignmentNoteDialogProps> = ({
   assignmentName,
   onClose,
   onSuccess,
-  initialNoteType = 'general'
+  initialNoteType = "general",
 }) => {
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [selectedNoteType, setSelectedNoteType] = useState(initialNoteType);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Note type options with colors
   const noteTypeOptions: NoteType[] = [
-    { value: 'general', label: 'General Note', color: 'bg-gray-100 text-gray-800' },
-    { value: 'status_change', label: 'Status Change', color: 'bg-blue-100 text-blue-800' },
-    { value: 'luwang_update', label: 'LuWang Update', color: 'bg-purple-100 text-purple-800' },
-    { value: 'worker_note', label: 'Worker Note', color: 'bg-amber-100 text-amber-800' },
-    { value: 'pitak_note', label: 'Pitak Note', color: 'bg-green-100 text-green-800' },
-    { value: 'quality_note', label: 'Quality Note', color: 'bg-emerald-100 text-emerald-800' },
-    { value: 'issue_note', label: 'Issue/Problem', color: 'bg-red-100 text-red-800' },
-    { value: 'resolution_note', label: 'Resolution', color: 'bg-teal-100 text-teal-800' },
-    { value: 'equipment_note', label: 'Equipment Note', color: 'bg-indigo-100 text-indigo-800' },
-    { value: 'weather_note', label: 'Weather Note', color: 'bg-cyan-100 text-cyan-800' }
+    {
+      value: "general",
+      label: "General Note",
+      color: "bg-gray-100 text-gray-800",
+    },
+    {
+      value: "status_change",
+      label: "Status Change",
+      color: "bg-blue-100 text-blue-800",
+    },
+    {
+      value: "luwang_update",
+      label: "LuWang Update",
+      color: "bg-purple-100 text-purple-800",
+    },
+    {
+      value: "worker_note",
+      label: "Worker Note",
+      color: "bg-amber-100 text-amber-800",
+    },
+    {
+      value: "pitak_note",
+      label: "Pitak Note",
+      color: "bg-green-100 text-green-800",
+    },
+    {
+      value: "quality_note",
+      label: "Quality Note",
+      color: "bg-emerald-100 text-emerald-800",
+    },
+    {
+      value: "issue_note",
+      label: "Issue/Problem",
+      color: "bg-red-100 text-red-800",
+    },
+    {
+      value: "resolution_note",
+      label: "Resolution",
+      color: "bg-teal-100 text-teal-800",
+    },
+    {
+      value: "equipment_note",
+      label: "Equipment Note",
+      color: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      value: "weather_note",
+      label: "Weather Note",
+      color: "bg-cyan-100 text-cyan-800",
+    },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!note.trim()) {
-      setError('Note cannot be empty');
+      setError("Note cannot be empty");
       return;
     }
 
@@ -55,25 +95,32 @@ const AddAssignmentNoteDialog: React.FC<AddAssignmentNoteDialogProps> = ({
     setError(null);
 
     try {
-      const response = await assignmentAPI.addAssignmentNote(assignmentId, note, selectedNoteType);
-      
+      const response = await assignmentAPI.addAssignmentNote(
+        assignmentId,
+        note,
+        selectedNoteType,
+      );
+
       if (response.status) {
-        showSuccess('Note added successfully to assignment');
+        showSuccess("Note added successfully to assignment");
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        setError(response.message || 'Failed to add note to assignment');
+        setError(response.message || "Failed to add note to assignment");
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to add note to assignment');
-      showError('Failed to add note to assignment');
+      setError(err.message || "Failed to add note to assignment");
+      showError("Failed to add note to assignment");
     } finally {
       setLoading(false);
     }
   };
 
   const getCurrentNoteType = () => {
-    return noteTypeOptions.find(opt => opt.value === selectedNoteType) || noteTypeOptions[0];
+    return (
+      noteTypeOptions.find((opt) => opt.value === selectedNoteType) ||
+      noteTypeOptions[0]
+    );
   };
 
   return (
@@ -86,8 +133,12 @@ const AddAssignmentNoteDialog: React.FC<AddAssignmentNoteDialogProps> = ({
               <FileText className="w-4 h-4 text-green-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Add Note to Assignment</h3>
-              <p className="text-xs text-gray-600">Assignment: {assignmentName}</p>
+              <h3 className="text-base font-semibold text-gray-900">
+                Add Note to Assignment
+              </h3>
+              <p className="text-xs text-gray-600">
+                Assignment: {assignmentName}
+              </p>
             </div>
           </div>
           <button
@@ -120,17 +171,21 @@ const AddAssignmentNoteDialog: React.FC<AddAssignmentNoteDialogProps> = ({
                   type="button"
                   onClick={() => setSelectedNoteType(type.value)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    selectedNoteType === type.value 
-                      ? `${type.color} ring-2 ring-offset-1 ring-gray-300` 
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                    selectedNoteType === type.value
+                      ? `${type.color} ring-2 ring-offset-1 ring-gray-300`
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   {type.label}
                 </button>
               ))}
             </div>
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md ${getCurrentNoteType().color}`}>
-              <span className="text-xs font-medium">Selected: {getCurrentNoteType().label}</span>
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md ${getCurrentNoteType().color}`}
+            >
+              <span className="text-xs font-medium">
+                Selected: {getCurrentNoteType().label}
+              </span>
             </div>
           </div>
 
@@ -153,16 +208,19 @@ const AddAssignmentNoteDialog: React.FC<AddAssignmentNoteDialogProps> = ({
                 Characters: {note.length}/2000
               </div>
               <div className="text-xs text-gray-500">
-                Lines: {note.split('\n').length}
+                Lines: {note.split("\n").length}
               </div>
             </div>
           </div>
 
           {/* Context Information */}
           <div className="mb-6 p-4 bg-gray-50 rounded-md border border-gray-200">
-            <h4 className="text-xs font-semibold text-gray-700 mb-2">Assignment Context</h4>
+            <h4 className="text-xs font-semibold text-gray-700 mb-2">
+              Assignment Context
+            </h4>
             <p className="text-xs text-gray-600 mb-3">
-              Adding a note to assignment: <span className="font-medium">{assignmentName}</span>
+              Adding a note to assignment:{" "}
+              <span className="font-medium">{assignmentName}</span>
             </p>
             <div className="text-xs text-gray-500">
               <p>• Notes are recorded in assignment history</p>
@@ -174,7 +232,8 @@ const AddAssignmentNoteDialog: React.FC<AddAssignmentNoteDialogProps> = ({
           {/* Footer */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <div className="text-xs text-gray-500">
-              <span className="font-medium">Tip:</span> Be specific and include relevant details
+              <span className="font-medium">Tip:</span> Be specific and include
+              relevant details
             </div>
             <div className="flex items-center gap-2">
               <button

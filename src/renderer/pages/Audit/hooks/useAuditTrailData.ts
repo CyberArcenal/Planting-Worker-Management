@@ -1,8 +1,12 @@
 // components/AuditTrail/hooks/useAuditTrailData.ts
-import { useState, useEffect, useCallback } from 'react';
-import type { AuditTrailRecord, AuditTrailStatsData, FilterParams } from '../../../apis/audit';
-import auditAPI from '../../../apis/audit';
-import { showError } from '../../../utils/notification';
+import { useState, useEffect, useCallback } from "react";
+import type {
+  AuditTrailRecord,
+  AuditTrailStatsData,
+  FilterParams,
+} from "../../../apis/core/audit";
+import auditAPI from "../../../apis/core/audit";
+import { showError } from "../../../utils/notification";
 
 export const useAuditTrailData = () => {
   const [auditTrails, setAuditTrails] = useState<AuditTrailRecord[]>([]);
@@ -18,17 +22,17 @@ export const useAuditTrailData = () => {
   const [limit] = useState(20);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [actionFilter, setActionFilter] = useState<string>('all');
-  const [actorFilter, setActorFilter] = useState<string>('');
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('timestamp');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [actionFilter, setActionFilter] = useState<string>("all");
+  const [actorFilter, setActorFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("timestamp");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
 
   // View options
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedTrails, setSelectedTrails] = useState<number[]>([]);
 
   // Fetch audit trails
@@ -38,14 +42,14 @@ export const useAuditTrailData = () => {
       setError(null);
 
       const filters: FilterParams = {
-        action: actionFilter !== 'all' ? actionFilter : undefined,
+        action: actionFilter !== "all" ? actionFilter : undefined,
         actor: actorFilter || undefined,
         startDate: dateFrom || undefined,
         endDate: dateTo || undefined,
         page: currentPage,
         limit,
         sortBy,
-        sortOrder: sortOrder === 'asc' ? 'ASC' : 'DESC',
+        sortOrder: sortOrder === "asc" ? "ASC" : "DESC",
       };
 
       let response;
@@ -55,7 +59,7 @@ export const useAuditTrailData = () => {
           page: currentPage,
           limit,
           sortBy,
-          sortOrder: sortOrder === 'asc' ? 'ASC' : 'DESC',
+          sortOrder: sortOrder === "asc" ? "ASC" : "DESC",
         });
       } else {
         response = await auditAPI.filterAuditTrails(filters);
@@ -66,7 +70,7 @@ export const useAuditTrailData = () => {
         setTotalPages(response.data.pagination.totalPages || 1);
         setTotalItems(response.data.pagination.total || 0);
       } else {
-        throw new Error(response.message || 'Failed to fetch audit trails');
+        throw new Error(response.message || "Failed to fetch audit trails");
       }
     } catch (err: any) {
       setError(err.message);
@@ -75,7 +79,18 @@ export const useAuditTrailData = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [currentPage, limit, searchQuery, actionFilter, actorFilter, dateFrom, dateTo, sortBy, sortOrder, severityFilter]);
+  }, [
+    currentPage,
+    limit,
+    searchQuery,
+    actionFilter,
+    actorFilter,
+    dateFrom,
+    dateTo,
+    sortBy,
+    sortOrder,
+    severityFilter,
+  ]);
 
   // Fetch stats separately
   const fetchStats = useCallback(async () => {
@@ -85,7 +100,7 @@ export const useAuditTrailData = () => {
         setStats(statsResponse.data);
       }
     } catch (err) {
-      console.error('Failed to fetch audit trail stats:', err);
+      console.error("Failed to fetch audit trail stats:", err);
     }
   }, []);
 

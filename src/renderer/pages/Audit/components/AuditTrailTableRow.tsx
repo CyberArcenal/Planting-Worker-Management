@@ -1,7 +1,7 @@
 // components/AuditTrail/components/AuditTrailTableRow.tsx
 import React, { useState } from "react";
 import { Clock, Users, ChevronRight, Eye, FileText } from "lucide-react";
-import type { AuditTrailRecord } from "../../../apis/audit";
+import type { AuditTrailRecord } from "../../../apis/core/audit";
 import { formatDate } from "../../../utils/formatters";
 import AuditTrailActionsDropdown from "./AuditTrailActionsDropdown";
 

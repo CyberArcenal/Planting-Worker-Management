@@ -6,11 +6,11 @@ import type {
   LiveDashboardData,
   WorkersOverviewData,
 } from "../../../apis/dashboard";
-import type { DefaultSessionData } from "../../../apis/system_config";
+import type { DefaultSessionData } from "../../../apis/core/system_config";
 import { workerPerformanceAPI } from "../../../apis/analytics/workerPerformance";
 import { financialAPI } from "../../../apis/analytics/financial";
 import dashboardAPI from "../../../apis/dashboard";
-import systemConfigAPI from "../../../apis/system_config";
+import systemConfigAPI from "../../../apis/core/system_config";
 
 export const useDashboardData = () => {
   const [loading, setLoading] = useState(true);

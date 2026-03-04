@@ -1,18 +1,33 @@
 // components/Debt/Dialogs/DebtFormDialog.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  X, Save, DollarSign, User, Calendar, Percent, Clock,
-  AlertCircle, CheckCircle, Loader, FileText, Shield, Calculator,
-  TrendingUp, Info, Hash, Phone, Mail
-} from 'lucide-react';
-import debtAPI from '../../../../apis/debt';
-import workerAPI from '../../../../apis/worker';
-import { showError, showSuccess } from '../../../../utils/notification';
-import { dialogs } from '../../../../utils/dialogs';
+  X,
+  Save,
+  DollarSign,
+  User,
+  Calendar,
+  Percent,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  Loader,
+  FileText,
+  Shield,
+  Calculator,
+  TrendingUp,
+  Info,
+  Hash,
+  Phone,
+  Mail,
+} from "lucide-react";
+import debtAPI from "../../../../apis/core/debt";
+import workerAPI from "../../../../apis/core/worker";
+import { showError, showSuccess } from "../../../../utils/notification";
+import { dialogs } from "../../../../utils/dialogs";
 
 interface DebtFormDialogProps {
   id?: number;
-  mode: 'add' | 'edit';
+  mode: "add" | "edit";
   onClose: () => void;
   onSuccess?: (debt: any) => void;
 }
@@ -40,18 +55,18 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
   id,
   mode,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
-  const [loading, setLoading] = useState(mode === 'edit');
+  const [loading, setLoading] = useState(mode === "edit");
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     worker_id: null,
     amount: 0,
-    reason: '',
-    dueDate: '',
+    reason: "",
+    dueDate: "",
     interestRate: 0,
-    paymentTerm: '30',
-    notes: ''
+    paymentTerm: "30",
+    notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [workers, setWorkers] = useState<any[]>([]);
@@ -66,27 +81,27 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
     message: string;
   }>({
     isValid: false,
-    message: ''
+    message: "",
   });
 
   // Common payment terms
   const paymentTerms = [
-    { value: '7', label: '7 days (1 week)' },
-    { value: '14', label: '14 days (2 weeks)' },
-    { value: '30', label: '30 days (1 month)' },
-    { value: '60', label: '60 days (2 months)' },
-    { value: '90', label: '90 days (3 months)' },
-    { value: '180', label: '180 days (6 months)' },
-    { value: '365', label: '365 days (1 year)' }
+    { value: "7", label: "7 days (1 week)" },
+    { value: "14", label: "14 days (2 weeks)" },
+    { value: "30", label: "30 days (1 month)" },
+    { value: "60", label: "60 days (2 months)" },
+    { value: "90", label: "90 days (3 months)" },
+    { value: "180", label: "180 days (6 months)" },
+    { value: "365", label: "365 days (1 year)" },
   ];
 
   // Common interest rates
   const interestRates = [
-    { value: 0, label: '0% (No interest)' },
-    { value: 5, label: '5% (Low)' },
-    { value: 10, label: '10% (Standard)' },
-    { value: 15, label: '15% (High)' },
-    { value: 20, label: '20% (Premium)' }
+    { value: 0, label: "0% (No interest)" },
+    { value: 5, label: "5% (Low)" },
+    { value: 10, label: "10% (Standard)" },
+    { value: 15, label: "15% (High)" },
+    { value: 20, label: "20% (Premium)" },
   ];
 
   // Fetch initial data
@@ -99,13 +114,14 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
         const workerResponse = await workerAPI.getAllWorkers({ limit: 1000 });
         if (workerResponse.status && workerResponse.data?.workers) {
           const activeWorkers = workerResponse.data.workers.filter(
-            worker => worker.status === 'active' || worker.status === 'on-leave'
+            (worker) =>
+              worker.status === "active" || worker.status === "on-leave",
           );
           setWorkers(activeWorkers);
         }
 
         // Fetch debt data if in edit mode
-        if (mode === 'edit' && id) {
+        if (mode === "edit" && id) {
           const debtId = parseInt(id.toString());
           const response = await debtAPI.getById(debtId);
 
@@ -114,52 +130,55 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
             setFormData({
               worker_id: debtData.worker.id,
               amount: debtData.amount,
-              reason: debtData.reason || '',
-              dueDate: debtData.dueDate ? debtData.dueDate.split('T')[0] : '',
+              reason: debtData.reason || "",
+              dueDate: debtData.dueDate ? debtData.dueDate.split("T")[0] : "",
               interestRate: debtData.interestRate,
-              paymentTerm: debtData.paymentTerm || '30',
-              notes: debtData.notes || ''
+              paymentTerm: debtData.paymentTerm || "30",
+              notes: debtData.notes || "",
             });
 
             // Find and set selected worker
-            const worker = workers.find(w => w.id === debtData.worker.id);
+            const worker = workers.find((w) => w.id === debtData.worker.id);
             if (worker) setSelectedWorker(worker);
 
             // Calculate interest preview
             if (debtData.interestRate > 0 && debtData.dueDate) {
               const dueDate = new Date(debtData.dueDate);
               const incurredDate = new Date(debtData.dateIncurred);
-              const daysDiff = Math.ceil((dueDate.getTime() - incurredDate.getTime()) / (1000 * 60 * 60 * 24));
-              
+              const daysDiff = Math.ceil(
+                (dueDate.getTime() - incurredDate.getTime()) /
+                  (1000 * 60 * 60 * 24),
+              );
+
               const interestCalc = await debtAPI.calculateInterest({
                 principal: debtData.amount,
                 interestRate: debtData.interestRate,
-                days: daysDiff > 0 ? daysDiff : 0
+                days: daysDiff > 0 ? daysDiff : 0,
               });
-              
+
               if (interestCalc.status) {
                 setInterestPreview({
                   interest: interestCalc.data.interest,
-                  totalAmount: interestCalc.data.totalAmount
+                  totalAmount: interestCalc.data.totalAmount,
                 });
               }
             }
           } else {
-            showError('Debt record not found');
+            showError("Debt record not found");
             onClose();
           }
         } else {
           // Set default due date to 30 days from now for new debts
           const defaultDueDate = new Date();
           defaultDueDate.setDate(defaultDueDate.getDate() + 30);
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            dueDate: defaultDueDate.toISOString().split('T')[0]
+            dueDate: defaultDueDate.toISOString().split("T")[0],
           }));
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        showError('Failed to load form data');
+        console.error("Error fetching data:", error);
+        showError("Failed to load form data");
       } finally {
         setLoading(false);
       }
@@ -169,31 +188,34 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
   }, [id, mode, onClose]);
 
   // Handle form input changes
-  const handleChange = (field: keyof FormData, value: string | number | null) => {
+  const handleChange = (
+    field: keyof FormData,
+    value: string | number | null,
+  ) => {
     const newFormData = {
       ...formData,
-      [field]: value
+      [field]: value,
     };
-    
+
     setFormData(newFormData);
 
     // Clear error for this field when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
 
     // Recalculate limit check if worker or amount changes
-    if ((field === 'worker_id' && value) || field === 'amount') {
+    if ((field === "worker_id" && value) || field === "amount") {
       if (newFormData.worker_id && newFormData.amount > 0) {
         checkDebtLimit(newFormData.worker_id, newFormData.amount);
       }
     }
 
     // Calculate interest preview if amount, interest rate, or due date changes
-    if (field === 'amount' || field === 'interestRate' || field === 'dueDate') {
+    if (field === "amount" || field === "interestRate" || field === "dueDate") {
       calculateInterestPreview(newFormData);
     }
 
@@ -204,51 +226,51 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
   // Handle worker selection
   const handleWorkerSelect = (workerId: number | null) => {
     if (workerId) {
-      const worker = workers.find(w => w.id === workerId);
+      const worker = workers.find((w) => w.id === workerId);
       setSelectedWorker(worker);
-      handleChange('worker_id', workerId);
+      handleChange("worker_id", workerId);
     } else {
       setSelectedWorker(null);
-      handleChange('worker_id', null);
+      handleChange("worker_id", null);
     }
   };
 
   // Validate individual field
   const validateField = (field: keyof FormData, value: any) => {
     let isValid = true;
-    let message = '';
+    let message = "";
 
     switch (field) {
-      case 'amount':
+      case "amount":
         if (!value || value <= 0) {
           isValid = false;
-          message = 'Amount must be greater than 0';
+          message = "Amount must be greater than 0";
         } else if (value > 1000000) {
           isValid = false;
-          message = 'Amount cannot exceed 1,000,000';
+          message = "Amount cannot exceed 1,000,000";
         }
         break;
-      case 'reason':
+      case "reason":
         if (!value || value.trim().length === 0) {
           isValid = false;
-          message = 'Reason is required';
+          message = "Reason is required";
         } else if (value.length > 500) {
           isValid = false;
-          message = 'Reason must be less than 500 characters';
+          message = "Reason must be less than 500 characters";
         }
         break;
-      case 'dueDate':
+      case "dueDate":
         if (!value) {
           isValid = false;
-          message = 'Due date is required';
+          message = "Due date is required";
         } else {
           const dueDate = new Date(value);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
+
           if (dueDate < today) {
             isValid = false;
-            message = 'Due date cannot be in the past';
+            message = "Due date cannot be in the past";
           }
         }
         break;
@@ -256,7 +278,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
 
     setValidationState({
       isValid,
-      message
+      message,
     });
 
     return isValid;
@@ -270,7 +292,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
         setLimitCheck(response.data);
       }
     } catch (error) {
-      console.error('Error checking debt limit:', error);
+      console.error("Error checking debt limit:", error);
     }
   };
 
@@ -280,35 +302,37 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
       try {
         const dueDate = new Date(data.dueDate);
         const today = new Date();
-        const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
+        const daysDiff = Math.ceil(
+          (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
         if (daysDiff > 0) {
           const response = await debtAPI.calculateInterest({
             principal: data.amount,
             interestRate: data.interestRate,
             days: daysDiff,
-            compoundingPeriod: 'daily'
+            compoundingPeriod: "daily",
           });
-          
+
           if (response.status) {
             setInterestPreview({
               interest: response.data.interest,
-              totalAmount: response.data.totalAmount
+              totalAmount: response.data.totalAmount,
             });
           }
         } else {
           setInterestPreview({
             interest: 0,
-            totalAmount: data.amount
+            totalAmount: data.amount,
           });
         }
       } catch (error) {
-        console.error('Error calculating interest:', error);
+        console.error("Error calculating interest:", error);
       }
     } else {
       setInterestPreview({
         interest: 0,
-        totalAmount: data.amount
+        totalAmount: data.amount,
       });
     }
   };
@@ -318,43 +342,43 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.worker_id) {
-      newErrors.worker_id = 'Please select a worker';
+      newErrors.worker_id = "Please select a worker";
     }
 
     if (!formData.amount || formData.amount <= 0) {
-      newErrors.amount = 'Amount must be greater than 0';
+      newErrors.amount = "Amount must be greater than 0";
     } else if (formData.amount > 1000000) {
-      newErrors.amount = 'Amount cannot exceed 1,000,000';
+      newErrors.amount = "Amount cannot exceed 1,000,000";
     }
 
     if (!formData.reason.trim()) {
-      newErrors.reason = 'Please provide a reason for the debt';
+      newErrors.reason = "Please provide a reason for the debt";
     } else if (formData.reason.length > 500) {
-      newErrors.reason = 'Reason must be less than 500 characters';
+      newErrors.reason = "Reason must be less than 500 characters";
     }
 
     if (!formData.dueDate) {
-      newErrors.dueDate = 'Please select a due date';
+      newErrors.dueDate = "Please select a due date";
     } else {
       const dueDate = new Date(formData.dueDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (dueDate < today) {
-        newErrors.dueDate = 'Due date cannot be in the past';
+        newErrors.dueDate = "Due date cannot be in the past";
       }
     }
 
     if (formData.interestRate < 0 || formData.interestRate > 100) {
-      newErrors.interestRate = 'Interest rate must be between 0 and 100';
+      newErrors.interestRate = "Interest rate must be between 0 and 100";
     }
 
     if (formData.paymentTerm && parseInt(formData.paymentTerm) <= 0) {
-      newErrors.paymentTerm = 'Payment term must be greater than 0';
+      newErrors.paymentTerm = "Payment term must be greater than 0";
     }
 
     if (formData.notes.length > 1000) {
-      newErrors.notes = 'Notes must be less than 1000 characters';
+      newErrors.notes = "Notes must be less than 1000 characters";
     }
 
     // Check debt limit
@@ -371,14 +395,17 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
     e.preventDefault();
 
     if (!validateForm()) {
-      showError('Please fix the errors in the form');
+      showError("Please fix the errors in the form");
       return;
     }
 
-    if (!await dialogs.confirm({
-      title: mode === 'add' ? 'Create Debt' : 'Update Debt',
-      message: `Are you sure you want to ${mode === 'add' ? 'create' : 'update'} this debt?`
-    })) return;
+    if (
+      !(await dialogs.confirm({
+        title: mode === "add" ? "Create Debt" : "Update Debt",
+        message: `Are you sure you want to ${mode === "add" ? "create" : "update"} this debt?`,
+      }))
+    )
+      return;
 
     try {
       setSubmitting(true);
@@ -389,7 +416,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
         amount: parseFloat(formData.amount.toFixed(2)),
         reason: formData.reason.trim(),
         dueDate: formData.dueDate,
-        interestRate: parseFloat(formData.interestRate.toFixed(2))
+        interestRate: parseFloat(formData.interestRate.toFixed(2)),
       };
 
       // Add optional fields if they have values
@@ -403,10 +430,10 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
 
       let response;
 
-      if (mode === 'add') {
+      if (mode === "add") {
         // Create new debt with validation
         response = await debtAPI.validateAndCreateDebt(debtData);
-      } else if (mode === 'edit' && id) {
+      } else if (mode === "edit" && id) {
         // Update existing debt
         debtData.id = parseInt(id.toString());
         response = await debtAPI.update(debtData);
@@ -414,9 +441,9 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
 
       if (response?.status) {
         showSuccess(
-          mode === 'add'
-            ? 'Debt created successfully!'
-            : 'Debt updated successfully!'
+          mode === "add"
+            ? "Debt created successfully!"
+            : "Debt updated successfully!",
         );
 
         if (onSuccess) {
@@ -424,11 +451,11 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
         }
         onClose();
       } else {
-        throw new Error(response?.message || 'Failed to save debt');
+        throw new Error(response?.message || "Failed to save debt");
       }
     } catch (error: any) {
-      console.error('Error submitting form:', error);
-      showError(error.message || 'Failed to save debt');
+      console.error("Error submitting form:", error);
+      showError(error.message || "Failed to save debt");
     } finally {
       setSubmitting(false);
     }
@@ -445,17 +472,26 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 windows-title">
-                {mode === 'add' ? 'Create New Debt' : 'Edit Debt'}
+                {mode === "add" ? "Create New Debt" : "Edit Debt"}
               </h3>
               <div className="text-sm text-gray-600 windows-text">
-                {mode === 'add' 
-                  ? 'Record a new debt for a worker' 
-                  : `Editing Debt #${id || ''}`}
+                {mode === "add"
+                  ? "Record a new debt for a worker"
+                  : `Editing Debt #${id || ""}`}
               </div>
             </div>
           </div>
           <button
-             onClick={async() => {if(!await dialogs.confirm({title: "Exit", message: "Are you sure do you want to exit?"}))return; onClose()}}
+            onClick={async () => {
+              if (
+                !(await dialogs.confirm({
+                  title: "Exit",
+                  message: "Are you sure do you want to exit?",
+                }))
+              )
+                return;
+              onClose();
+            }}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors windows-button-secondary"
             title="Close"
           >
@@ -469,7 +505,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-sm text-gray-600 windows-text">
-                {mode === 'add' ? 'Loading form...' : 'Loading debt data...'}
+                {mode === "add" ? "Loading form..." : "Loading debt data..."}
               </p>
             </div>
           ) : (
@@ -489,15 +525,19 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                           Select Worker <span className="text-red-500">*</span>
                         </label>
                         <select
-                          value={formData.worker_id || ''}
-                          onChange={(e) => handleWorkerSelect(e.target.value ? parseInt(e.target.value) : null)}
-                          className={`windows-input ${errors.worker_id ? 'border-red-500' : ''}`}
-                          disabled={submitting || mode === 'edit'}
+                          value={formData.worker_id || ""}
+                          onChange={(e) =>
+                            handleWorkerSelect(
+                              e.target.value ? parseInt(e.target.value) : null,
+                            )
+                          }
+                          className={`windows-input ${errors.worker_id ? "border-red-500" : ""}`}
+                          disabled={submitting || mode === "edit"}
                         >
                           <option value="">Select a worker...</option>
                           {workers.map((worker) => (
                             <option key={worker.id} value={worker.id}>
-                              {worker.name} ({worker.contact || 'No contact'})
+                              {worker.name} ({worker.contact || "No contact"})
                             </option>
                           ))}
                         </select>
@@ -522,13 +562,17 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                                 {selectedWorker.contact && (
                                   <div className="flex items-center gap-1 text-xs">
                                     <Phone className="w-3 h-3 text-gray-500" />
-                                    <span className="text-gray-600 windows-text">{selectedWorker.contact}</span>
+                                    <span className="text-gray-600 windows-text">
+                                      {selectedWorker.contact}
+                                    </span>
                                   </div>
                                 )}
                                 {selectedWorker.email && (
                                   <div className="flex items-center gap-1 text-xs">
                                     <Mail className="w-3 h-3 text-gray-500" />
-                                    <span className="text-gray-600 windows-text">{selectedWorker.email}</span>
+                                    <span className="text-gray-600 windows-text">
+                                      {selectedWorker.email}
+                                    </span>
                                   </div>
                                 )}
                                 <div className="col-span-2">
@@ -552,12 +596,17 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                     </h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 windows-text" htmlFor="amount">
+                        <label
+                          className="block text-sm font-medium mb-2 text-gray-700 windows-text"
+                          htmlFor="amount"
+                        >
                           Amount <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                            <span className="text-gray-500 windows-text">₱</span>
+                            <span className="text-gray-500 windows-text">
+                              ₱
+                            </span>
                           </div>
                           <input
                             id="amount"
@@ -565,9 +614,14 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                             min="0.01"
                             max="1000000"
                             step="0.01"
-                            value={formData.amount || ''}
-                            onChange={(e) => handleChange('amount', parseFloat(e.target.value) || 0)}
-                            className={`windows-input pl-8! ${errors.amount ? 'border-red-500' : ''}`}
+                            value={formData.amount || ""}
+                            onChange={(e) =>
+                              handleChange(
+                                "amount",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            className={`windows-input pl-8! ${errors.amount ? "border-red-500" : ""}`}
                             placeholder="0.00"
                             required
                             disabled={submitting}
@@ -576,7 +630,10 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                             <div className="mt-2 flex items-center gap-1.5">
                               <CheckCircle className="w-4 h-4 text-green-500" />
                               <span className="text-xs text-green-600 windows-text">
-                                {formData.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+                                {formData.amount.toLocaleString("en-PH", {
+                                  style: "currency",
+                                  currency: "PHP",
+                                })}
                               </span>
                             </div>
                           )}
@@ -591,15 +648,21 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
 
                       {/* Debt Limit Check */}
                       {limitCheck && (
-                        <div className={`p-4 rounded-lg border ${
-                          limitCheck.canProceed 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'bg-red-50 border-red-200'
-                        }`}>
+                        <div
+                          className={`p-4 rounded-lg border ${
+                            limitCheck.canProceed
+                              ? "bg-green-50 border-green-200"
+                              : "bg-red-50 border-red-200"
+                          }`}
+                        >
                           <div className="flex items-center gap-2 mb-2">
-                            <Shield className={`w-4 h-4 ${
-                              limitCheck.canProceed ? 'text-green-600' : 'text-red-600'
-                            }`} />
+                            <Shield
+                              className={`w-4 h-4 ${
+                                limitCheck.canProceed
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}
+                            />
                             <h3 className="text-sm font-medium windows-title">
                               Debt Limit Check
                             </h3>
@@ -607,13 +670,21 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                           <div className="grid grid-cols-2 gap-3 text-xs windows-text">
                             <div>
                               <div className="text-gray-600">Current Debt</div>
-                              <div className="font-medium">₱{limitCheck.currentDebt.toLocaleString()}</div>
+                              <div className="font-medium">
+                                ₱{limitCheck.currentDebt.toLocaleString()}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-gray-600">Remaining Limit</div>
-                              <div className={`font-medium ${
-                                limitCheck.remainingLimit < 0 ? 'text-red-600' : 'text-green-600'
-                              }`}>
+                              <div className="text-gray-600">
+                                Remaining Limit
+                              </div>
+                              <div
+                                className={`font-medium ${
+                                  limitCheck.remainingLimit < 0
+                                    ? "text-red-600"
+                                    : "text-green-600"
+                                }`}
+                              >
                                 ₱{limitCheck.remainingLimit.toLocaleString()}
                               </div>
                             </div>
@@ -634,7 +705,10 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                     </h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 windows-text" htmlFor="dueDate">
+                        <label
+                          className="block text-sm font-medium mb-2 text-gray-700 windows-text"
+                          htmlFor="dueDate"
+                        >
                           Due Date <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -645,9 +719,11 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                             id="dueDate"
                             type="date"
                             value={formData.dueDate}
-                            onChange={(e) => handleChange('dueDate', e.target.value)}
-                            min={new Date().toISOString().split('T')[0]}
-                            className={`windows-input pl-10! ${errors.dueDate ? 'border-red-500' : ''}`}
+                            onChange={(e) =>
+                              handleChange("dueDate", e.target.value)
+                            }
+                            min={new Date().toISOString().split("T")[0]}
+                            className={`windows-input pl-10! ${errors.dueDate ? "border-red-500" : ""}`}
                             required
                             disabled={submitting}
                           />
@@ -661,14 +737,19 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 windows-text" htmlFor="reason">
+                        <label
+                          className="block text-sm font-medium mb-2 text-gray-700 windows-text"
+                          htmlFor="reason"
+                        >
                           Reason <span className="text-red-500">*</span>
                         </label>
                         <textarea
                           id="reason"
                           value={formData.reason}
-                          onChange={(e) => handleChange('reason', e.target.value)}
-                          className={`windows-input min-h-[100px] resize-y ${errors.reason ? 'border-red-500' : ''}`}
+                          onChange={(e) =>
+                            handleChange("reason", e.target.value)
+                          }
+                          className={`windows-input min-h-[100px] resize-y ${errors.reason ? "border-red-500" : ""}`}
                           placeholder="Enter the reason for this debt..."
                           required
                           disabled={submitting}
@@ -682,7 +763,11 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                         )}
                         <div className="mt-2 text-xs text-gray-500 windows-text flex justify-between">
                           <span>Be descriptive to help track the purpose</span>
-                          <span className={formData.reason.length > 500 ? 'text-red-600' : ''}>
+                          <span
+                            className={
+                              formData.reason.length > 500 ? "text-red-600" : ""
+                            }
+                          >
                             {formData.reason.length}/500
                           </span>
                         </div>
@@ -699,7 +784,10 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2 text-gray-700 windows-text" htmlFor="interestRate">
+                          <label
+                            className="block text-sm font-medium mb-2 text-gray-700 windows-text"
+                            htmlFor="interestRate"
+                          >
                             Interest Rate (%)
                           </label>
                           <div className="relative">
@@ -713,8 +801,13 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                               max="100"
                               step="0.1"
                               value={formData.interestRate}
-                              onChange={(e) => handleChange('interestRate', parseFloat(e.target.value) || 0)}
-                              className={`windows-input pl-10! ${errors.interestRate ? 'border-red-500' : ''}`}
+                              onChange={(e) =>
+                                handleChange(
+                                  "interestRate",
+                                  parseFloat(e.target.value) || 0,
+                                )
+                              }
+                              className={`windows-input pl-10! ${errors.interestRate ? "border-red-500" : ""}`}
                               placeholder="0.0"
                               disabled={submitting}
                             />
@@ -728,14 +821,19 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium mb-2 text-gray-700 windows-text" htmlFor="paymentTerm">
+                          <label
+                            className="block text-sm font-medium mb-2 text-gray-700 windows-text"
+                            htmlFor="paymentTerm"
+                          >
                             Payment Term (days)
                           </label>
                           <select
                             id="paymentTerm"
                             value={formData.paymentTerm}
-                            onChange={(e) => handleChange('paymentTerm', e.target.value)}
-                            className={`windows-input ${errors.paymentTerm ? 'border-red-500' : ''}`}
+                            onChange={(e) =>
+                              handleChange("paymentTerm", e.target.value)
+                            }
+                            className={`windows-input ${errors.paymentTerm ? "border-red-500" : ""}`}
                             disabled={submitting}
                           >
                             {paymentTerms.map((term) => (
@@ -763,11 +861,13 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                             <button
                               key={rate.value}
                               type="button"
-                              onClick={() => handleChange('interestRate', rate.value)}
+                              onClick={() =>
+                                handleChange("interestRate", rate.value)
+                              }
                               className={`p-2 rounded-lg text-sm text-left transition-all ${
                                 formData.interestRate === rate.value
-                                  ? 'bg-purple-100 border-2 border-purple-600'
-                                  : 'bg-gray-50 border border-gray-200 hover:border-purple-400'
+                                  ? "bg-purple-100 border-2 border-purple-600"
+                                  : "bg-gray-50 border border-gray-200 hover:border-purple-400"
                               }`}
                               disabled={submitting}
                             >
@@ -775,7 +875,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                                 {rate.value}%
                               </div>
                               <div className="text-xs mt-1 text-gray-600 windows-text">
-                                {rate.label.split('(')[1].replace(')', '')}
+                                {rate.label.split("(")[1].replace(")", "")}
                               </div>
                             </button>
                           ))}
@@ -783,40 +883,43 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                       </div>
 
                       {/* Interest Preview */}
-                      {interestPreview && formData.amount > 0 && formData.interestRate > 0 && (
-                        <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 border border-gray-200">
-                          <h5 className="text-sm font-medium mb-3 text-gray-700 windows-text flex items-center gap-2">
-                            <Calculator className="w-4 h-4" />
-                            Interest Calculation Preview
-                          </h5>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center">
-                              <div className="text-lg font-bold text-green-600">
-                                ₱{formData.amount.toLocaleString()}
+                      {interestPreview &&
+                        formData.amount > 0 &&
+                        formData.interestRate > 0 && (
+                          <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 border border-gray-200">
+                            <h5 className="text-sm font-medium mb-3 text-gray-700 windows-text flex items-center gap-2">
+                              <Calculator className="w-4 h-4" />
+                              Interest Calculation Preview
+                            </h5>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="text-center">
+                                <div className="text-lg font-bold text-green-600">
+                                  ₱{formData.amount.toLocaleString()}
+                                </div>
+                                <div className="text-xs mt-1 text-gray-600 windows-text">
+                                  Principal
+                                </div>
                               </div>
-                              <div className="text-xs mt-1 text-gray-600 windows-text">
-                                Principal
+                              <div className="text-center">
+                                <div className="text-lg font-bold text-purple-600">
+                                  ₱{interestPreview.interest.toLocaleString()}
+                                </div>
+                                <div className="text-xs mt-1 text-gray-600 windows-text">
+                                  Interest
+                                </div>
                               </div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-lg font-bold text-purple-600">
-                                ₱{interestPreview.interest.toLocaleString()}
-                              </div>
-                              <div className="text-xs mt-1 text-gray-600 windows-text">
-                                Interest
-                              </div>
-                            </div>
-                            <div className="col-span-2 text-center pt-4 border-t border-gray-200">
-                              <div className="text-xl font-bold text-blue-600">
-                                ₱{interestPreview.totalAmount.toLocaleString()}
-                              </div>
-                              <div className="text-xs mt-1 text-gray-600 windows-text">
-                                Total Amount Due
+                              <div className="col-span-2 text-center pt-4 border-t border-gray-200">
+                                <div className="text-xl font-bold text-blue-600">
+                                  ₱
+                                  {interestPreview.totalAmount.toLocaleString()}
+                                </div>
+                                <div className="text-xs mt-1 text-gray-600 windows-text">
+                                  Total Amount Due
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   </div>
                 </div>
@@ -832,8 +935,8 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                   <textarea
                     id="notes"
                     value={formData.notes}
-                    onChange={(e) => handleChange('notes', e.target.value)}
-                    className={`windows-input min-h-[100px] resize-y ${errors.notes ? 'border-red-500' : ''}`}
+                    onChange={(e) => handleChange("notes", e.target.value)}
+                    className={`windows-input min-h-[100px] resize-y ${errors.notes ? "border-red-500" : ""}`}
                     placeholder="Enter any additional notes about this debt..."
                     disabled={submitting}
                     rows={3}
@@ -845,8 +948,14 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                     </p>
                   )}
                   <div className="mt-2 text-xs text-gray-500 windows-text flex justify-between">
-                    <span>Add detailed information for better debt management</span>
-                    <span className={formData.notes.length > 1000 ? 'text-red-600' : ''}>
+                    <span>
+                      Add detailed information for better debt management
+                    </span>
+                    <span
+                      className={
+                        formData.notes.length > 1000 ? "text-red-600" : ""
+                      }
+                    >
                       {formData.notes.length}/1000
                     </span>
                   </div>
@@ -854,12 +963,14 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
               </div>
 
               {/* Information Section */}
-              {mode === 'add' && (
+              {mode === "add" && (
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-start gap-3">
                     <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-blue-700 windows-text">
-                      <p className="font-medium mb-2">Debt Management Information</p>
+                      <p className="font-medium mb-2">
+                        Debt Management Information
+                      </p>
                       <p>A debt record allows you to:</p>
                       <ul className="list-disc list-inside mt-1 ml-1 space-y-1">
                         <li>Track worker loans and advances</li>
@@ -881,12 +992,24 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-gray-600 windows-text">
               <AlertCircle className="w-4 h-4" />
-              <span>Fields marked with <span className="text-red-500">*</span> are required</span>
+              <span>
+                Fields marked with <span className="text-red-500">*</span> are
+                required
+              </span>
             </div>
             <div className="flex gap-3">
               <button
                 type="button"
-                 onClick={async() => {if(!await dialogs.confirm({title: "Exit", message: "Are you sure do you want to exit?"}))return; onClose()}}
+                onClick={async () => {
+                  if (
+                    !(await dialogs.confirm({
+                      title: "Exit",
+                      message: "Are you sure do you want to exit?",
+                    }))
+                  )
+                    return;
+                  onClose();
+                }}
                 className="windows-button windows-button-secondary"
                 disabled={submitting}
               >
@@ -901,12 +1024,12 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
                 {submitting ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
-                    {mode === 'add' ? 'Creating...' : 'Updating...'}
+                    {mode === "add" ? "Creating..." : "Updating..."}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    {mode === 'add' ? 'Create Debt' : 'Update Debt'}
+                    {mode === "add" ? "Create Debt" : "Update Debt"}
                   </>
                 )}
               </button>

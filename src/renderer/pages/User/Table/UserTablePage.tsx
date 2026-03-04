@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useUserData } from "./hooks/useUserData";
 import { showError, showSuccess, showToast } from "../../../utils/notification";
-import userAPI from "../../../apis/user";
+import userAPI from "../../../apis/core/user";
 import { useUserActions } from "./hooks/useUserActions";
 import UserFilters from "./components/UserFilters";
 import UserStats from "./components/UserStats";

@@ -1,20 +1,39 @@
 // pages/DebtFormPage.tsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Save, X, User, DollarSign, Calendar, AlertCircle,
-  CheckCircle, XCircle, Loader, FileText, Percent, Hash,
-  Clock, Info, TrendingUp, Calculator, Shield
-} from 'lucide-react';
-import type { WorkerData } from '../../../apis/worker';
-import type { DebtData, DebtCreationRequest, DebtUpdateRequest } from '../../../apis/debt';
-import debtAPI from '../../../apis/debt';
-import workerAPI from '../../../apis/worker';
-import { showError, showSuccess } from '../../../utils/notification';
-import { dialogs } from '../../../utils/dialogs';
-import WorkerSelect from '../../../components/Selects/Worker';
+  ArrowLeft,
+  Save,
+  X,
+  User,
+  DollarSign,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Loader,
+  FileText,
+  Percent,
+  Hash,
+  Clock,
+  Info,
+  TrendingUp,
+  Calculator,
+  Shield,
+} from "lucide-react";
+import type { WorkerData } from "../../../apis/core/worker";
+import type {
+  DebtData,
+  DebtCreationRequest,
+  DebtUpdateRequest,
+} from "../../../apis/core/debt";
+import debtAPI from "../../../apis/core/debt";
+import workerAPI from "../../../apis/core/worker";
+import { showError, showSuccess } from "../../../utils/notification";
+import { dialogs } from "../../../utils/dialogs";
+import WorkerSelect from "../../../components/Selects/Worker";
 
-interface DebtFormPageProps { }
+interface DebtFormPageProps {}
 
 interface FormData {
   worker_id: number | null;
@@ -34,11 +53,11 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
   const [formData, setFormData] = useState<FormData>({
     worker_id: null,
     amount: 0,
-    reason: '',
-    dueDate: '',
+    reason: "",
+    dueDate: "",
     interestRate: 0,
-    paymentTerm: '30',
-    notes: ''
+    paymentTerm: "30",
+    notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [workers, setWorkers] = useState<WorkerData[]>([]);
@@ -56,26 +75,26 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
     totalAmount: number;
   } | null>(null);
 
-  const mode = id ? 'edit' : 'add';
+  const mode = id ? "edit" : "add";
 
   // Common payment terms
   const paymentTerms = [
-    { value: '7', label: '7 days (1 week)' },
-    { value: '14', label: '14 days (2 weeks)' },
-    { value: '30', label: '30 days (1 month)' },
-    { value: '60', label: '60 days (2 months)' },
-    { value: '90', label: '90 days (3 months)' },
-    { value: '180', label: '180 days (6 months)' },
-    { value: '365', label: '365 days (1 year)' }
+    { value: "7", label: "7 days (1 week)" },
+    { value: "14", label: "14 days (2 weeks)" },
+    { value: "30", label: "30 days (1 month)" },
+    { value: "60", label: "60 days (2 months)" },
+    { value: "90", label: "90 days (3 months)" },
+    { value: "180", label: "180 days (6 months)" },
+    { value: "365", label: "365 days (1 year)" },
   ];
 
   // Common interest rates
   const interestRates = [
-    { value: 0, label: '0% (No interest)' },
-    { value: 5, label: '5% (Low)' },
-    { value: 10, label: '10% (Standard)' },
-    { value: 15, label: '15% (High)' },
-    { value: 20, label: '20% (Premium)' }
+    { value: 0, label: "0% (No interest)" },
+    { value: 5, label: "5% (Low)" },
+    { value: 10, label: "10% (Standard)" },
+    { value: 15, label: "15% (High)" },
+    { value: 20, label: "20% (Premium)" },
   ];
 
   // Fetch initial data
@@ -89,13 +108,14 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
         if (workerResponse.status && workerResponse.data?.workers) {
           // Filter active workers only
           const activeWorkers = workerResponse.data.workers.filter(
-            worker => worker.status === 'active' || worker.status === 'on-leave'
+            (worker) =>
+              worker.status === "active" || worker.status === "on-leave",
           );
           setWorkers(activeWorkers);
         }
 
         // Fetch debt data if in edit mode
-        if (mode === 'edit' && id) {
+        if (mode === "edit" && id) {
           const debtId = parseInt(id);
           const response = await debtAPI.getById(debtId);
 
@@ -105,48 +125,51 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
             setFormData({
               worker_id: debtData.worker.id,
               amount: debtData.amount,
-              reason: debtData.reason || '',
-              dueDate: debtData.dueDate ? debtData.dueDate.split('T')[0] : '',
+              reason: debtData.reason || "",
+              dueDate: debtData.dueDate ? debtData.dueDate.split("T")[0] : "",
               interestRate: debtData.interestRate,
-              paymentTerm: debtData.paymentTerm || '30',
-              notes: ''
+              paymentTerm: debtData.paymentTerm || "30",
+              notes: "",
             });
 
             // Calculate interest preview
             if (debtData.interestRate > 0 && debtData.dueDate) {
               const dueDate = new Date(debtData.dueDate);
               const incurredDate = new Date(debtData.dateIncurred);
-              const daysDiff = Math.ceil((dueDate.getTime() - incurredDate.getTime()) / (1000 * 60 * 60 * 24));
-              
+              const daysDiff = Math.ceil(
+                (dueDate.getTime() - incurredDate.getTime()) /
+                  (1000 * 60 * 60 * 24),
+              );
+
               const interestCalc = await debtAPI.calculateInterest({
                 principal: debtData.amount,
                 interestRate: debtData.interestRate,
-                days: daysDiff > 0 ? daysDiff : 0
+                days: daysDiff > 0 ? daysDiff : 0,
               });
-              
+
               if (interestCalc.status) {
                 setInterestPreview({
                   interest: interestCalc.data.interest,
-                  totalAmount: interestCalc.data.totalAmount
+                  totalAmount: interestCalc.data.totalAmount,
                 });
               }
             }
           } else {
-            showError('Debt record not found');
-            navigate('/finances/debts');
+            showError("Debt record not found");
+            navigate("/finances/debts");
           }
         } else {
           // Set default due date to 30 days from now for new debts
           const defaultDueDate = new Date();
           defaultDueDate.setDate(defaultDueDate.getDate() + 30);
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            dueDate: defaultDueDate.toISOString().split('T')[0]
+            dueDate: defaultDueDate.toISOString().split("T")[0],
           }));
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        showError('Failed to load form data');
+        console.error("Error fetching data:", error);
+        showError("Failed to load form data");
       } finally {
         setLoading(false);
       }
@@ -156,38 +179,41 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
   }, [id, mode, navigate]);
 
   // Handle form input changes
-  const handleChange = (field: keyof FormData, value: string | number | null) => {
+  const handleChange = (
+    field: keyof FormData,
+    value: string | number | null,
+  ) => {
     const newFormData = {
       ...formData,
-      [field]: value
+      [field]: value,
     };
-    
+
     setFormData(newFormData);
 
     // Clear error for this field when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
 
     // Recalculate limit check if worker or amount changes
-    if ((field === 'worker_id' && value) || field === 'amount') {
+    if ((field === "worker_id" && value) || field === "amount") {
       if (newFormData.worker_id && newFormData.amount > 0) {
         checkDebtLimit(newFormData.worker_id, newFormData.amount);
       }
     }
 
     // Calculate interest preview if amount, interest rate, or due date changes
-    if (field === 'amount' || field === 'interestRate' || field === 'dueDate') {
+    if (field === "amount" || field === "interestRate" || field === "dueDate") {
       calculateInterestPreview(newFormData);
     }
   };
 
   // Handle worker selection
   const handleWorkerSelect = (workerId: number | null) => {
-    handleChange('worker_id', workerId);
+    handleChange("worker_id", workerId);
   };
 
   // Check debt limit for selected worker
@@ -198,7 +224,7 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
         setLimitCheck(response.data);
       }
     } catch (error) {
-      console.error('Error checking debt limit:', error);
+      console.error("Error checking debt limit:", error);
     }
   };
 
@@ -208,35 +234,37 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
       try {
         const dueDate = new Date(data.dueDate);
         const today = new Date();
-        const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
+        const daysDiff = Math.ceil(
+          (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
         if (daysDiff > 0) {
           const response = await debtAPI.calculateInterest({
             principal: data.amount,
             interestRate: data.interestRate,
             days: daysDiff,
-            compoundingPeriod: 'daily'
+            compoundingPeriod: "daily",
           });
-          
+
           if (response.status) {
             setInterestPreview({
               interest: response.data.interest,
-              totalAmount: response.data.totalAmount
+              totalAmount: response.data.totalAmount,
             });
           }
         } else {
           setInterestPreview({
             interest: 0,
-            totalAmount: data.amount
+            totalAmount: data.amount,
           });
         }
       } catch (error) {
-        console.error('Error calculating interest:', error);
+        console.error("Error calculating interest:", error);
       }
     } else {
       setInterestPreview({
         interest: 0,
-        totalAmount: data.amount
+        totalAmount: data.amount,
       });
     }
   };
@@ -246,43 +274,43 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.worker_id) {
-      newErrors.worker_id = 'Please select a worker';
+      newErrors.worker_id = "Please select a worker";
     }
 
     if (!formData.amount || formData.amount <= 0) {
-      newErrors.amount = 'Amount must be greater than 0';
+      newErrors.amount = "Amount must be greater than 0";
     } else if (formData.amount > 1000000) {
-      newErrors.amount = 'Amount cannot exceed 1,000,000';
+      newErrors.amount = "Amount cannot exceed 1,000,000";
     }
 
     if (!formData.reason.trim()) {
-      newErrors.reason = 'Please provide a reason for the debt';
+      newErrors.reason = "Please provide a reason for the debt";
     } else if (formData.reason.length > 500) {
-      newErrors.reason = 'Reason must be less than 500 characters';
+      newErrors.reason = "Reason must be less than 500 characters";
     }
 
     if (!formData.dueDate) {
-      newErrors.dueDate = 'Please select a due date';
+      newErrors.dueDate = "Please select a due date";
     } else {
       const dueDate = new Date(formData.dueDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (dueDate < today) {
-        newErrors.dueDate = 'Due date cannot be in the past';
+        newErrors.dueDate = "Due date cannot be in the past";
       }
     }
 
     if (formData.interestRate < 0 || formData.interestRate > 100) {
-      newErrors.interestRate = 'Interest rate must be between 0 and 100';
+      newErrors.interestRate = "Interest rate must be between 0 and 100";
     }
 
     if (formData.paymentTerm && parseInt(formData.paymentTerm) <= 0) {
-      newErrors.paymentTerm = 'Payment term must be greater than 0';
+      newErrors.paymentTerm = "Payment term must be greater than 0";
     }
 
     if (formData.notes.length > 1000) {
-      newErrors.notes = 'Notes must be less than 1000 characters';
+      newErrors.notes = "Notes must be less than 1000 characters";
     }
 
     // Check debt limit
@@ -299,7 +327,7 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      showError('Please fix the errors in the form');
+      showError("Please fix the errors in the form");
       return;
     }
 
@@ -312,7 +340,7 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
         amount: parseFloat(formData.amount.toFixed(2)),
         reason: formData.reason.trim(),
         dueDate: formData.dueDate,
-        interestRate: parseFloat(formData.interestRate.toFixed(2))
+        interestRate: parseFloat(formData.interestRate.toFixed(2)),
       };
 
       // Add optional fields if they have values
@@ -326,10 +354,10 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
 
       let response;
 
-      if (mode === 'add') {
+      if (mode === "add") {
         // Create new debt with validation
         response = await debtAPI.validateAndCreateDebt(debtData);
-      } else if (mode === 'edit' && id) {
+      } else if (mode === "edit" && id) {
         // Update existing debt
         debtData.id = parseInt(id);
         response = await debtAPI.update(debtData);
@@ -337,32 +365,33 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
 
       if (response?.status) {
         showSuccess(
-          mode === 'add'
-            ? 'Debt created successfully!'
-            : 'Debt updated successfully!'
+          mode === "add"
+            ? "Debt created successfully!"
+            : "Debt updated successfully!",
         );
 
         const view = await dialogs.confirm({
-          title: 'Success',
-          message: mode === 'add'
-            ? 'Debt created successfully!'
-            : 'Debt updated successfully!',
-          cancelText: 'Return to List',
-          confirmText: 'View Debt',
-          icon: 'success'
+          title: "Success",
+          message:
+            mode === "add"
+              ? "Debt created successfully!"
+              : "Debt updated successfully!",
+          cancelText: "Return to List",
+          confirmText: "View Debt",
+          icon: "success",
         });
 
         if (view) {
           navigate(`/finances/debts/${response.data.id}`);
         } else {
-          navigate('/finances/debts');
+          navigate("/finances/debts");
         }
       } else {
-        throw new Error(response?.message || 'Failed to save debt');
+        throw new Error(response?.message || "Failed to save debt");
       }
     } catch (error: any) {
-      console.error('Error submitting form:', error);
-      showError(error.message || 'Failed to save debt');
+      console.error("Error submitting form:", error);
+      showError(error.message || "Failed to save debt");
     } finally {
       setSubmitting(false);
     }
@@ -371,20 +400,20 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
   // Handle cancel
   const handleCancel = async () => {
     const confirm = await dialogs.confirm({
-      title: 'Cancel Form',
-      message: 'Are you sure you want to cancel? All changes will be lost.',
-      cancelText: 'No',
-      confirmText: 'Yes',
-      icon: 'warning'
+      title: "Cancel Form",
+      message: "Are you sure you want to cancel? All changes will be lost.",
+      cancelText: "No",
+      confirmText: "Yes",
+      icon: "warning",
     });
 
     if (confirm) {
-      navigate('/finances/debts');
+      navigate("/finances/debts");
     }
   };
 
   // Get selected worker details
-  const selectedWorker = workers.find(w => w.id === formData.worker_id);
+  const selectedWorker = workers.find((w) => w.id === formData.worker_id);
 
   // Loading state
   if (loading) {
@@ -394,7 +423,7 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4 border-blue-600" />
             <p className="text-sm text-gray-600">
-              {mode === 'add' ? 'Loading form...' : 'Loading debt data...'}
+              {mode === "add" ? "Loading form..." : "Loading debt data..."}
             </p>
           </div>
         </div>
@@ -419,39 +448,47 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
                   <DollarSign className="w-6 h-6 text-blue-600" />
-                  {mode === 'add' ? 'Create New Debt' : 'Edit Debt'}
+                  {mode === "add" ? "Create New Debt" : "Edit Debt"}
                 </h1>
                 <p className="text-sm mt-1 text-gray-600">
-                  {mode === 'add'
-                    ? 'Record a new debt for a worker'
-                    : `Editing Debt #${debt?.id || ''} - ${debt?.worker?.name || 'Worker Debt'}`}
+                  {mode === "add"
+                    ? "Record a new debt for a worker"
+                    : `Editing Debt #${debt?.id || ""} - ${debt?.worker?.name || "Worker Debt"}`}
                 </p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div className="bg-white/80 p-3 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs font-medium text-gray-600">Worker</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Worker
+                  </span>
                 </div>
                 <p className="text-sm font-medium mt-1 text-gray-800">
-                  {selectedWorker?.name || 'Not selected'}
+                  {selectedWorker?.name || "Not selected"}
                 </p>
               </div>
               <div className="bg-white/80 p-3 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-green-600" />
-                  <span className="text-xs font-medium text-gray-600">Amount</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Amount
+                  </span>
                 </div>
                 <p className="text-sm font-medium mt-1 text-gray-800">
-                  {formData.amount > 0 ? `₱${formData.amount.toLocaleString()}` : 'Not set'}
+                  {formData.amount > 0
+                    ? `₱${formData.amount.toLocaleString()}`
+                    : "Not set"}
                 </p>
               </div>
               <div className="bg-white/80 p-3 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-2">
                   <Percent className="w-4 h-4 text-purple-600" />
-                  <span className="text-xs font-medium text-gray-600">Interest Rate</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Interest Rate
+                  </span>
                 </div>
                 <p className="text-sm font-medium mt-1 text-gray-800">
                   {formData.interestRate}%
@@ -487,7 +524,7 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                         value={formData.worker_id}
                         onChange={handleWorkerSelect}
                         placeholder="Search or select a worker..."
-                        disabled={mode === 'edit'}
+                        disabled={mode === "edit"}
                       />
                       {errors.worker_id && (
                         <p className="mt-2 text-xs flex items-center gap-1 text-red-600">
@@ -499,7 +536,10 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700" htmlFor="amount">
+                    <label
+                      className="block text-sm font-medium mb-2 text-gray-700"
+                      htmlFor="amount"
+                    >
                       Debt Amount <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -513,15 +553,20 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                           min="0.01"
                           max="1000000"
                           step="0.01"
-                          value={formData.amount || ''}
-                          onChange={(e) => handleChange('amount', parseFloat(e.target.value) || 0)}
+                          value={formData.amount || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              "amount",
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
                           className={`flex-1 pl-8 pr-3 py-3 rounded-lg text-sm ${
-                            errors.amount ? 'border-red-500' : ''
+                            errors.amount ? "border-red-500" : ""
                           }`}
                           style={{
-                            backgroundColor: 'var(--input-bg)',
-                            border: `1px solid ${errors.amount ? '#ef4444' : 'var(--input-border)'}`,
-                            color: 'var(--text-primary)'
+                            backgroundColor: "var(--input-bg)",
+                            border: `1px solid ${errors.amount ? "#ef4444" : "var(--input-border)"}`,
+                            color: "var(--text-primary)",
                           }}
                           placeholder="0.00"
                           required
@@ -538,15 +583,21 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
 
                   {/* Debt Limit Check */}
                   {limitCheck && (
-                    <div className={`p-4 rounded-lg border ${
-                      limitCheck.canProceed 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'bg-red-50 border-red-200'
-                    }`}>
+                    <div
+                      className={`p-4 rounded-lg border ${
+                        limitCheck.canProceed
+                          ? "bg-green-50 border-green-200"
+                          : "bg-red-50 border-red-200"
+                      }`}
+                    >
                       <div className="flex items-center gap-2 mb-2">
-                        <Shield className={`w-4 h-4 ${
-                          limitCheck.canProceed ? 'text-green-600' : 'text-red-600'
-                        }`} />
+                        <Shield
+                          className={`w-4 h-4 ${
+                            limitCheck.canProceed
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        />
                         <h3 className="text-sm font-medium">
                           Debt Limit Check
                         </h3>
@@ -554,13 +605,19 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         <div>
                           <div className="text-gray-600">Current Debt</div>
-                          <div className="font-medium">₱{limitCheck.currentDebt.toLocaleString()}</div>
+                          <div className="font-medium">
+                            ₱{limitCheck.currentDebt.toLocaleString()}
+                          </div>
                         </div>
                         <div>
                           <div className="text-gray-600">Remaining Limit</div>
-                          <div className={`font-medium ${
-                            limitCheck.remainingLimit < 0 ? 'text-red-600' : 'text-green-600'
-                          }`}>
+                          <div
+                            className={`font-medium ${
+                              limitCheck.remainingLimit < 0
+                                ? "text-red-600"
+                                : "text-green-600"
+                            }`}
+                          >
                             ₱{limitCheck.remainingLimit.toLocaleString()}
                           </div>
                         </div>
@@ -584,7 +641,10 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700" htmlFor="interestRate">
+                      <label
+                        className="block text-sm font-medium mb-2 text-gray-700"
+                        htmlFor="interestRate"
+                      >
                         Interest Rate (%)
                       </label>
                       <div className="relative">
@@ -595,14 +655,19 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                           max="100"
                           step="0.1"
                           value={formData.interestRate}
-                          onChange={(e) => handleChange('interestRate', parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            handleChange(
+                              "interestRate",
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
                           className={`w-full pl-8 pr-3 py-3 rounded-lg text-sm ${
-                            errors.interestRate ? 'border-red-500' : ''
+                            errors.interestRate ? "border-red-500" : ""
                           }`}
                           style={{
-                            backgroundColor: 'var(--input-bg)',
-                            border: `1px solid ${errors.interestRate ? '#ef4444' : 'var(--input-border)'}`,
-                            color: 'var(--text-primary)'
+                            backgroundColor: "var(--input-bg)",
+                            border: `1px solid ${errors.interestRate ? "#ef4444" : "var(--input-border)"}`,
+                            color: "var(--text-primary)",
                           }}
                           placeholder="0.0"
                         />
@@ -617,20 +682,25 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700" htmlFor="paymentTerm">
+                      <label
+                        className="block text-sm font-medium mb-2 text-gray-700"
+                        htmlFor="paymentTerm"
+                      >
                         Payment Term (days)
                       </label>
                       <select
                         id="paymentTerm"
                         value={formData.paymentTerm}
-                        onChange={(e) => handleChange('paymentTerm', e.target.value)}
+                        onChange={(e) =>
+                          handleChange("paymentTerm", e.target.value)
+                        }
                         className={`w-full p-3 rounded-lg text-sm ${
-                          errors.paymentTerm ? 'border-red-500' : ''
+                          errors.paymentTerm ? "border-red-500" : ""
                         }`}
                         style={{
-                          backgroundColor: 'var(--input-bg)',
-                          border: `1px solid ${errors.paymentTerm ? '#ef4444' : 'var(--input-border)'}`,
-                          color: 'var(--text-primary)'
+                          backgroundColor: "var(--input-bg)",
+                          border: `1px solid ${errors.paymentTerm ? "#ef4444" : "var(--input-border)"}`,
+                          color: "var(--text-primary)",
                         }}
                       >
                         {paymentTerms.map((term) => (
@@ -658,18 +728,20 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                         <button
                           key={index}
                           type="button"
-                          onClick={() => handleChange('interestRate', rate.value)}
+                          onClick={() =>
+                            handleChange("interestRate", rate.value)
+                          }
                           className={`p-3 rounded-lg text-sm text-left transition-all ${
                             formData.interestRate === rate.value
-                              ? 'bg-purple-100 border-2 border-purple-600'
-                              : 'bg-gray-50 border border-gray-200 hover:border-purple-400'
+                              ? "bg-purple-100 border-2 border-purple-600"
+                              : "bg-gray-50 border border-gray-200 hover:border-purple-400"
                           }`}
                         >
                           <div className="font-medium text-gray-800">
                             {rate.value}%
                           </div>
                           <div className="text-xs mt-1 text-gray-600">
-                            {rate.label.split('(')[1].replace(')', '')}
+                            {rate.label.split("(")[1].replace(")", "")}
                           </div>
                         </button>
                       ))}
@@ -730,7 +802,10 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                 </div>
                 <div className="p-6 space-y-6">
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700" htmlFor="dueDate">
+                    <label
+                      className="block text-sm font-medium mb-2 text-gray-700"
+                      htmlFor="dueDate"
+                    >
                       Due Date <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -738,15 +813,17 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                         id="dueDate"
                         type="date"
                         value={formData.dueDate}
-                        onChange={(e) => handleChange('dueDate', e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) =>
+                          handleChange("dueDate", e.target.value)
+                        }
+                        min={new Date().toISOString().split("T")[0]}
                         className={`w-full p-3 rounded-lg text-sm ${
-                          errors.dueDate ? 'border-red-500' : ''
+                          errors.dueDate ? "border-red-500" : ""
                         }`}
                         style={{
-                          backgroundColor: 'var(--input-bg)',
-                          border: `1px solid ${errors.dueDate ? '#ef4444' : 'var(--input-border)'}`,
-                          color: 'var(--text-primary)'
+                          backgroundColor: "var(--input-bg)",
+                          border: `1px solid ${errors.dueDate ? "#ef4444" : "var(--input-border)"}`,
+                          color: "var(--text-primary)",
                         }}
                         required
                       />
@@ -760,21 +837,24 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700" htmlFor="reason">
+                    <label
+                      className="block text-sm font-medium mb-2 text-gray-700"
+                      htmlFor="reason"
+                    >
                       Reason for Debt <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <textarea
                         id="reason"
                         value={formData.reason}
-                        onChange={(e) => handleChange('reason', e.target.value)}
+                        onChange={(e) => handleChange("reason", e.target.value)}
                         className={`w-full p-3 rounded-lg text-sm min-h-[100px] resize-y ${
-                          errors.reason ? 'border-red-500' : ''
+                          errors.reason ? "border-red-500" : ""
                         }`}
                         style={{
-                          backgroundColor: 'var(--input-bg)',
-                          border: `1px solid ${errors.reason ? '#ef4444' : 'var(--input-border)'}`,
-                          color: 'var(--text-primary)'
+                          backgroundColor: "var(--input-bg)",
+                          border: `1px solid ${errors.reason ? "#ef4444" : "var(--input-border)"}`,
+                          color: "var(--text-primary)",
                         }}
                         placeholder="Enter the reason for this debt... 
 • Salary advance
@@ -794,9 +874,13 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                         <p className="text-xs text-gray-500">
                           Be descriptive to help track the purpose of this debt
                         </p>
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
-                          formData.reason.length > 500 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span
+                          className={`text-xs font-medium px-2 py-1 rounded ${
+                            formData.reason.length > 500
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {formData.reason.length}/500
                         </span>
                       </div>
@@ -825,19 +909,30 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Days Remaining:</span>
-                          <span className={`font-medium ${
-                            (() => {
+                          <span
+                            className={`font-medium ${(() => {
                               const dueDate = new Date(formData.dueDate);
                               const today = new Date();
-                              const daysRemaining = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                              return daysRemaining <= 7 ? 'text-red-600' : daysRemaining <= 14 ? 'text-yellow-600' : 'text-green-600';
-                            })()
-                          }`}>
+                              const daysRemaining = Math.ceil(
+                                (dueDate.getTime() - today.getTime()) /
+                                  (1000 * 60 * 60 * 24),
+                              );
+                              return daysRemaining <= 7
+                                ? "text-red-600"
+                                : daysRemaining <= 14
+                                  ? "text-yellow-600"
+                                  : "text-green-600";
+                            })()}`}
+                          >
                             {(() => {
                               const dueDate = new Date(formData.dueDate);
                               const today = new Date();
-                              return Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                            })()} days
+                              return Math.ceil(
+                                (dueDate.getTime() - today.getTime()) /
+                                  (1000 * 60 * 60 * 24),
+                              );
+                            })()}{" "}
+                            days
                           </span>
                         </div>
                       </div>
@@ -863,14 +958,14 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                       <textarea
                         id="notes"
                         value={formData.notes}
-                        onChange={(e) => handleChange('notes', e.target.value)}
+                        onChange={(e) => handleChange("notes", e.target.value)}
                         className={`w-full p-4 rounded-lg text-sm min-h-[180px] resize-y ${
-                          errors.notes ? 'border-red-500' : ''
+                          errors.notes ? "border-red-500" : ""
                         }`}
                         style={{
-                          backgroundColor: 'var(--input-bg)',
-                          border: `1px solid ${errors.notes ? '#ef4444' : 'var(--input-border)'}`,
-                          color: 'var(--text-primary)'
+                          backgroundColor: "var(--input-bg)",
+                          border: `1px solid ${errors.notes ? "#ef4444" : "var(--input-border)"}`,
+                          color: "var(--text-primary)",
                         }}
                         placeholder="Enter any additional notes about this debt... 
 • Payment schedule details
@@ -890,9 +985,13 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                         <p className="text-xs text-gray-500">
                           Add detailed information for better debt management
                         </p>
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
-                          formData.notes.length > 1000 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span
+                          className={`text-xs font-medium px-2 py-1 rounded ${
+                            formData.notes.length > 1000
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {formData.notes.length}/1000
                         </span>
                       </div>
@@ -907,7 +1006,10 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
           <div className="flex justify-between items-center pt-8 border-t border-gray-200">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <AlertCircle className="w-4 h-4" />
-              <span>Fields marked with <span className="text-red-500">*</span> are required</span>
+              <span>
+                Fields marked with <span className="text-red-500">*</span> are
+                required
+              </span>
             </div>
             <div className="flex gap-3">
               <button
@@ -927,12 +1029,12 @@ const DebtFormPage: React.FC<DebtFormPageProps> = () => {
                 {submitting ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
-                    {mode === 'add' ? 'Creating Debt...' : 'Updating Debt...'}
+                    {mode === "add" ? "Creating Debt..." : "Updating Debt..."}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    {mode === 'add' ? 'Create Debt' : 'Update Debt'}
+                    {mode === "add" ? "Create Debt" : "Update Debt"}
                   </>
                 )}
               </button>

@@ -17,7 +17,7 @@ import {
   Camera,
 } from "lucide-react";
 import { kabAuthStore } from "../../../../../lib/kabAuthStore";
-import userAPI from "../../../../../apis/user";
+import userAPI from "../../../../../apis/core/user";
 import { showError, showSuccess } from "../../../../../utils/notification";
 import { formatDate } from "../../../../../utils/formatters";
 import { dialogs } from "../../../../../utils/dialogs";

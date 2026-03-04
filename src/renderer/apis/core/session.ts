@@ -1,7 +1,7 @@
 // src/api/sessionAPI.ts
 // Similar structure to kabisilyaAPI.ts
 
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 
 export interface SessionData {
   id: number;
@@ -427,7 +427,13 @@ class SessionAPI {
 
       const response = await window.backendAPI.session({
         method: "duplicateSession",
-        params: this.enrichParams({ sessionId, newName, newYear, copyBukidPitak, copyAssignments }),
+        params: this.enrichParams({
+          sessionId,
+          newName,
+          newYear,
+          copyBukidPitak,
+          copyAssignments,
+        }),
       });
 
       if (response.status) {

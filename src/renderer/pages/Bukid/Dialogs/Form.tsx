@@ -15,8 +15,8 @@ import {
   BarChart3,
 } from "lucide-react";
 import { showError, showSuccess } from "../../../utils/notification";
-import type { BukidData } from "../../../apis/bukid";
-import bukidAPI from "../../../apis/bukid";
+import type { BukidData } from "../../../apis/core/bukid";
+import bukidAPI from "../../../apis/core/bukid";
 import { dialogs } from "../../../utils/dialogs";
 
 interface BukidFormDialogProps {

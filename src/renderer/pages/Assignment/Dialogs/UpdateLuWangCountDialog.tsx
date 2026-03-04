@@ -15,7 +15,7 @@ import {
   Percent,
 } from "lucide-react";
 import { showError, showSuccess } from "../../../utils/notification";
-import assignmentAPI from "../../../apis/assignment";
+import assignmentAPI from "../../../apis/core/assignment";
 import { dialogs } from "../../../utils/dialogs";
 import { formatDecimalForInput } from "../utils/formats";
 interface UpdateLuWangCountDialogProps {

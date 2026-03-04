@@ -8,13 +8,17 @@ import {
   CreditCard,
 } from "lucide-react";
 import type { DebtPaymentDialogProps } from "./types/debt-payment.types";
-import type { DebtData } from "../../../../../../apis/debt";
+import type { DebtData } from "../../../../../../apis/core/debt";
 import type { FormData } from "./types/debt-payment.types";
-import workerAPI from "../../../../../../apis/worker";
-import paymentAPI from "../../../../../../apis/payment";
-import { showApiError, showError, showSuccess } from "../../../../../../utils/notification";
+import workerAPI from "../../../../../../apis/core/worker";
+import paymentAPI from "../../../../../../apis/core/payment";
+import {
+  showApiError,
+  showError,
+  showSuccess,
+} from "../../../../../../utils/notification";
 import { formatCurrency } from "../../../../../../utils/formatters";
-import debtAPI from "../../../../../../apis/debt";
+import debtAPI from "../../../../../../apis/core/debt";
 import PaymentInputSection from "./components/PaymentInputSection";
 import PaymentDetailsSection from "./components/PaymentDetailsSection";
 import ActiveDebtsSummary from "./components/ActiveDebtsSummary";
@@ -144,7 +148,14 @@ const DebtPaymentDialog: React.FC<DebtPaymentDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if(!await dialogs.confirm({title: "Debt Payment", message: "are you sure do you want to paid this debt?", icon: "warning"}))return;
+    if (
+      !(await dialogs.confirm({
+        title: "Debt Payment",
+        message: "are you sure do you want to paid this debt?",
+        icon: "warning",
+      }))
+    )
+      return;
 
     if (!validateForm()) return;
 
@@ -216,7 +227,16 @@ const DebtPaymentDialog: React.FC<DebtPaymentDialogProps> = ({
             </div>
           </div>
           <button
-            onClick={async() => {if(!await dialogs.confirm({title: "Exit", message: "Are you sure do you want to exit?"}))return; onClose()}}
+            onClick={async () => {
+              if (
+                !(await dialogs.confirm({
+                  title: "Exit",
+                  message: "Are you sure do you want to exit?",
+                }))
+              )
+                return;
+              onClose();
+            }}
             className="w-7 h-7 rounded flex items-center justify-center hover:bg-gray-200 transition-colors windows-button-secondary"
             title="Close"
             disabled={submitting}
@@ -458,7 +478,16 @@ const DebtPaymentDialog: React.FC<DebtPaymentDialogProps> = ({
             <div className="flex gap-2">
               <button
                 type="button"
-                 onClick={async() => {if(!await dialogs.confirm({title: "Exit", message: "Are you sure do you want to exit?"}))return; onClose()}}
+                onClick={async () => {
+                  if (
+                    !(await dialogs.confirm({
+                      title: "Exit",
+                      message: "Are you sure do you want to exit?",
+                    }))
+                  )
+                    return;
+                  onClose();
+                }}
                 className="px-3 py-1.5 rounded text-xs font-medium bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 windows-button-secondary"
                 disabled={submitting}
               >

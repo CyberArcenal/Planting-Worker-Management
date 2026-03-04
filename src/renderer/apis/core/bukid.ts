@@ -1,4 +1,4 @@
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 
 // bukid.ts
 export interface BukidData {
@@ -453,7 +453,7 @@ class BukidAPI {
   }
 
   // 🔗 RELATIONSHIP OPERATIONS
-  
+
   // REMOVED: assignToKabisilya method
   // REMOVED: removeFromKabisilya method
   // REMOVED: getKabisilyaInfo method

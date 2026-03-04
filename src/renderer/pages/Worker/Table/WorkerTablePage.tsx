@@ -20,7 +20,7 @@ import WorkerPagination from "./components/WorkerPagination";
 import WorkerGridView from "./components/WorkerGridView";
 import WorkerViewDialog from "./Dialogs/WorkerViewDialog";
 import { dialogs } from "../../../utils/dialogs";
-import workerAPI from "../../../apis/worker";
+import workerAPI from "../../../apis/core/worker";
 
 // Define type for worker with financial data
 export interface WorkerWithFinancial {
@@ -40,7 +40,9 @@ export interface WorkerWithFinancial {
 
 const WorkerTablePage: React.FC = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [workersWithFinancials, setWorkersWithFinancials] = useState<WorkerWithFinancial[]>([]);
+  const [workersWithFinancials, setWorkersWithFinancials] = useState<
+    WorkerWithFinancial[]
+  >([]);
   const [loadingFinancials, setLoadingFinancials] = useState(false);
 
   const {
@@ -103,11 +105,15 @@ const WorkerTablePage: React.FC = () => {
                 ...worker,
                 totalDebt: response.data.summary.financial.totalDebt || 0,
                 totalPaid: response.data.summary.financial.totalPaid || 0,
-                currentBalance: response.data.summary.financial.currentBalance || 0,
+                currentBalance:
+                  response.data.summary.financial.currentBalance || 0,
               };
             }
           } catch (error) {
-            console.error(`Failed to fetch financial data for worker ${worker.id}:`, error);
+            console.error(
+              `Failed to fetch financial data for worker ${worker.id}:`,
+              error,
+            );
           }
           return {
             ...worker,
@@ -115,17 +121,19 @@ const WorkerTablePage: React.FC = () => {
             totalPaid: 0,
             currentBalance: 0,
           };
-        })
+        }),
       );
       setWorkersWithFinancials(workersWithData);
     } catch (error) {
       console.error("Failed to fetch workers financial data:", error);
-      setWorkersWithFinancials(workers.map(w => ({
-        ...w,
-        totalDebt: 0,
-        totalPaid: 0,
-        currentBalance: 0,
-      })));
+      setWorkersWithFinancials(
+        workers.map((w) => ({
+          ...w,
+          totalDebt: 0,
+          totalPaid: 0,
+          currentBalance: 0,
+        })),
+      );
     } finally {
       setLoadingFinancials(false);
     }
@@ -136,12 +144,14 @@ const WorkerTablePage: React.FC = () => {
     if (!loading && workers.length > 0) {
       fetchWorkersFinancialData();
     } else {
-      setWorkersWithFinancials(workers.map(w => ({
-        ...w,
-        totalDebt: 0,
-        totalPaid: 0,
-        currentBalance: 0,
-      })));
+      setWorkersWithFinancials(
+        workers.map((w) => ({
+          ...w,
+          totalDebt: 0,
+          totalPaid: 0,
+          currentBalance: 0,
+        })),
+      );
     }
   }, [workers, loading, fetchWorkersFinancialData]);
 

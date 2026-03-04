@@ -20,7 +20,7 @@ import {
   Download,
 } from "lucide-react";
 import { formatDate, formatNumber } from "../../../../utils/formatters";
-import type { Assignment } from "../../../../apis/assignment";
+import type { Assignment } from "../../../../apis/core/assignment";
 import AssignmentActionsDropdown from "./AssignmentActionsDropdown";
 
 interface AssignmentTableRowProps {

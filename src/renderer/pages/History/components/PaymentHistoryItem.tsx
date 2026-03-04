@@ -14,9 +14,13 @@ import {
   FileText,
   CreditCard,
 } from "lucide-react";
-import { formatCurrency, formatDate, formatDateTime } from "../../../utils/formatters";
+import {
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+} from "../../../utils/formatters";
 import { getActionTypeConfig } from "../utils/historyFormatters";
-import type { PaymentHistoryItem as PaymentHistoryData } from "../../../apis/payment";
+import type { PaymentHistoryItem as PaymentHistoryData } from "../../../apis/core/payment";
 import {
   formatActionDescription,
   getFieldLabel,
@@ -78,9 +82,7 @@ const PaymentHistoryItem: React.FC<PaymentHistoryItemProps> = ({
   };
 
   const amountChange = getAmountChange();
-  const workerName = record.worker 
-    ? `${record.worker.name}`
-    : 'Unknown Worker';
+  const workerName = record.worker ? `${record.worker.name}` : "Unknown Worker";
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -100,7 +102,9 @@ const PaymentHistoryItem: React.FC<PaymentHistoryItemProps> = ({
                   <div className="flex items-center gap-4 mt-1">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{workerName}</span>
+                      <span className="text-sm text-gray-600">
+                        {workerName}
+                      </span>
                       {record.worker?.contact && (
                         <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">
                           Contact: {record.worker.contact}
@@ -291,7 +295,7 @@ const PaymentHistoryItem: React.FC<PaymentHistoryItemProps> = ({
                       <div>
                         <div className="text-xs text-blue-600">Reference:</div>
                         <div className="text-sm font-medium">
-                          {record.paymentInfo.referenceNumber || 'N/A'}
+                          {record.paymentInfo.referenceNumber || "N/A"}
                         </div>
                       </div>
                       <div>

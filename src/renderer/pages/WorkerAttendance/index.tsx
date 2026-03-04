@@ -35,8 +35,8 @@ import attendanceAPI, {
   type DateRange,
   type AttendanceStatistics,
   type AttendanceFilterParams,
-} from "../../apis/attendance";
-import workerAPI, { type WorkerData } from "../../apis/worker";
+} from "../../apis/core/attendance";
+import workerAPI, { type WorkerData } from "../../apis/core/worker";
 import { showError, showSuccess } from "../../utils/notification";
 import {
   formatCurrency,

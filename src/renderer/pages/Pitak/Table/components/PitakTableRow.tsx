@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import PitakActionsDropdown from "./PitakActionsDropdown";
 import { formatDate, formatNumber } from "../../../../utils/formatters";
-import assignmentAPI from "../../../../apis/assignment";
-import type { Assignment } from "../../../../apis/assignment";
-import paymentAPI from "../../../../apis/payment";
-import type { PaymentData } from "../../../../apis/payment";
+import assignmentAPI from "../../../../apis/core/assignment";
+import type { Assignment } from "../../../../apis/core/assignment";
+import paymentAPI from "../../../../apis/core/payment";
+import type { PaymentData } from "../../../../apis/core/payment";
 import { getStatusBadge } from "../expanded/utils/statusUtils";
 import ExpandedView from "../expanded/ExpandedView";
 
@@ -82,30 +82,32 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
         if (response.status && response.data.assignments) {
           const assignmentsData = response.data.assignments;
           setAssignments(assignmentsData);
-          
+
           // Calculate assignment statistics
           const totalLuWang = assignmentsData.reduce(
-            (sum: number, assignment: Assignment) => 
-              sum + (typeof assignment.luwangCount === 'string' ? 
-                parseFloat(assignment.luwangCount) : assignment.luwangCount || 0), 
-            0
+            (sum: number, assignment: Assignment) =>
+              sum +
+              (typeof assignment.luwangCount === "string"
+                ? parseFloat(assignment.luwangCount)
+                : assignment.luwangCount || 0),
+            0,
           );
-          
+
           const completedCount = assignmentsData.filter(
-            (a: Assignment) => a.status === 'completed'
+            (a: Assignment) => a.status === "completed",
           ).length;
-          
+
           const activeCount = assignmentsData.filter(
-            (a: Assignment) => a.status === 'active'
+            (a: Assignment) => a.status === "active",
           ).length;
-          
+
           setAssignmentStats({
             totalAssignments: assignmentsData.length,
             totalLuWang,
             completedCount,
-            activeCount
+            activeCount,
           });
-          
+
           // Calculate assigned workers
           const workersMap = new Map();
           assignmentsData.forEach((assignment: Assignment) => {
@@ -121,11 +123,13 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
                   assignments: [],
                 });
               }
-              
+
               const worker = workersMap.get(workerId);
               worker.totalAssignments += 1;
-              const luwangCount = typeof assignment.luwangCount === 'string' ? 
-                parseFloat(assignment.luwangCount) : assignment.luwangCount || 0;
+              const luwangCount =
+                typeof assignment.luwangCount === "string"
+                  ? parseFloat(assignment.luwangCount)
+                  : assignment.luwangCount || 0;
               worker.totalLuWang += luwangCount;
               worker.assignments.push({
                 id: assignment.id,
@@ -135,9 +139,9 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
               });
             }
           });
-          
+
           setAssignedWorkers(Array.from(workersMap.values()));
-          
+
           // Calculate payment details
           const LUWANG_RATE = 230;
           const totalGrossPay = totalLuWang * LUWANG_RATE;
@@ -152,8 +156,10 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
             totalPending,
             assignmentsCount: assignmentsData.length,
             completedCount,
-            averagePerAssignment: assignmentsData.length > 0 ? 
-              totalGrossPay / assignmentsData.length : 0,
+            averagePerAssignment:
+              assignmentsData.length > 0
+                ? totalGrossPay / assignmentsData.length
+                : 0,
           });
         }
       } catch (error) {
@@ -171,7 +177,7 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
     if (isExpanded && !paymentsFetchedRef.current) {
       setIsLoadingPayments(true);
       paymentsFetchedRef.current = true;
-      
+
       try {
         const response = await paymentAPI.getPaymentsByPitak(pitak.id);
         if (response.status && response.data.payments) {
@@ -189,7 +195,7 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
   // Use effect to fetch payments when expanded
   useEffect(() => {
     fetchPayments();
-    
+
     // Reset the fetched flag when collapsed
     if (!isExpanded) {
       paymentsFetchedRef.current = false;
@@ -205,7 +211,13 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
 
   return (
     <>
-      <tr className="hover:bg-gray-50 transition-colors border-b border-gray-200 pointer-events-auto cursor-pointer" onClick={(e) => {e.stopPropagation(); onToggleExpand()}}>
+      <tr
+        className="hover:bg-gray-50 transition-colors border-b border-gray-200 pointer-events-auto cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleExpand();
+        }}
+      >
         <td className="p-3">
           <input
             type="checkbox"
@@ -251,7 +263,9 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
                   </span>
                   <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     <CreditCard className="w-3 h-3 inline mr-1" />₱
-                    {paymentDetails ? formatNumber(paymentDetails.totalGrossPay) : "0"}
+                    {paymentDetails
+                      ? formatNumber(paymentDetails.totalGrossPay)
+                      : "0"}
                   </span>
                 </div>
               )}
@@ -287,9 +301,14 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
               className="text-xs mt-1"
               style={{ color: "var(--text-tertiary)" }}
             >
-              Used: {formatNumber(assignmentStats.totalLuWang)}{" "}
-              ({pitak.totalLuwang > 0 ? 
-                ((assignmentStats.totalLuWang / pitak.totalLuwang) * 100).toFixed(1) : "0"}%)
+              Used: {formatNumber(assignmentStats.totalLuWang)} (
+              {pitak.totalLuwang > 0
+                ? (
+                    (assignmentStats.totalLuWang / pitak.totalLuwang) *
+                    100
+                  ).toFixed(1)
+                : "0"}
+              %)
             </div>
           )}
         </td>
@@ -305,14 +324,20 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
         <td className="p-3">
           <div className="flex items-center gap-1">
             <button
-              onClick={(e) => {e.stopPropagation(); onView(pitak.id)}}
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(pitak.id);
+              }}
               className="p-1.5 rounded hover:bg-gray-100 transition-colors"
               title="View Details"
             >
               <Eye className="w-4 h-4" style={{ color: "var(--accent-sky)" }} />
             </button>
             <button
-              onClick={(e) => {e.stopPropagation(); onEdit(pitak.id)}}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(pitak.id);
+              }}
               className="p-1.5 rounded hover:bg-gray-100 transition-colors"
               title="Edit"
             >
@@ -337,7 +362,10 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
             />
 
             <button
-              onClick={(e) => {e.stopPropagation(); onToggleExpand()}}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+              }}
               className="p-1.5 rounded hover:bg-gray-100 transition-colors"
               title="More Details"
             >
@@ -365,7 +393,9 @@ const PitakTableRow: React.FC<PitakTableRowProps> = ({
                 payments={payments}
                 pitak={pitak}
                 onAssign={() => onAssign(pitak.id, pitak)}
-                onViewAssignedWorkers={() => onViewAssignedWorkers(pitak.id, pitak.location)}
+                onViewAssignedWorkers={() =>
+                  onViewAssignedWorkers(pitak.id, pitak.location)
+                }
                 onViewReport={() => onViewReport(pitak.id)}
                 onViewPitakAssignments={() => onViewPitakAssignments(pitak.id)}
                 onViewAssignment={onViewAssignment}

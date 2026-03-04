@@ -1,5 +1,5 @@
 // paymentAPI.ts - Payment Management API
-import { kabAuthStore } from "../lib/kabAuthStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 import { Buffer } from "buffer";
 export interface PaymentData {
   id: number;

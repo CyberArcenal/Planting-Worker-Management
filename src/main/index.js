@@ -1,233 +1,350 @@
 // src/main/index.js
-//@ts-check
-const { app, BrowserWindow, ipcMain, screen, dialog } = require("electron");
+// @ts-check
+/**
+ * @file Main entry point for FarmTrac System
+ * @version 1.0.0
+ * @author CyberArcenal
+ * @description Electron main process with TypeORM, SQLite, React, and auto-updater
+ */
+
+// ===================== CORE IMPORTS =====================
+const {
+  app,
+  ipcMain,
+  screen,
+  dialog,
+  shell,
+  BrowserWindow,
+} = require("electron");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs").promises;
+const fsSync = require("fs");
+const url = require("url");
+
+// TypeORM and Database
 require("reflect-metadata");
 const { AppDataSource } = require("./db/dataSource");
 const MigrationManager = require("../utils/migrationManager");
 
-// Configuration
-const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+// ===================== TYPE DEFINITIONS =====================
+/**
+ * @typedef {Object} AppConfig
+ * @property {boolean} isDev - Development mode flag
+ * @property {string} appName - Application name
+ * @property {string} version - App version
+ * @property {string} userDataPath - Path to user data directory
+ */
 
-// Global window references
 /**
- * @type {BrowserWindow | null}
+ * @typedef {Object} MigrationResult
+ * @property {boolean} success - Migration success status
+ * @property {string} message - Result message
+ * @property {Error} [error] - Error object if any
  */
+
+// ===================== GLOBAL STATE =====================
+/** @type {BrowserWindow | null} */
 let mainWindow = null;
-/**
- * @type {BrowserWindow | null}
- */
+
+/** @type {BrowserWindow | null} */
 let splashWindow = null;
-let dbClosed = false;
-/**
- * @type {MigrationManager | null}
- */
+
+/** @type {BrowserWindow | null} */
+// @ts-ignore
+let activationWindow = null;
+
+/** @type {boolean} */
+let isDatabaseInitialized = false;
+
+/** @type {boolean} */
+let isShuttingDown = false;
+
+/** @type {MigrationManager | null} */
 let migrationManager = null;
 
-// Logging utility
-/**
- * @param {string} level
- * @param {string} message
- */
-function log(level, message, data = null) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [Kabisilya ${level}] ${message}`;
-  console.log(logMessage);
-  if (data) console.log(`[${timestamp}] [DATA]`, data);
-}
+/** @type {AppConfig} */
+const APP_CONFIG = {
+  isDev: process.env.NODE_ENV === "development" || !app.isPackaged,
+  appName: "FarmTrac",
+  version: app.getVersion(),
+  userDataPath: app.getPath("userData"),
+};
 
-// Database functions
-function safeCloseDB() {
-  if (AppDataSource.isInitialized && !dbClosed) {
-    dbClosed = true;
-    AppDataSource.destroy()
-      .then(() => log("INFO", "Database connection closed"))
-      .catch((/** @type {string} */ err) =>
-        log("ERROR", "Error closing DB: " + err),
+// ===================== LOGGING SERVICE =====================
+/**
+ * Log levels for consistent logging
+ * @enum {string}
+ */
+const LogLevel = {
+  DEBUG: "DEBUG",
+  INFO: "INFO",
+  WARN: "WARN",
+  ERROR: "ERROR",
+  SUCCESS: "SUCCESS",
+};
+
+/**
+ * Enhanced logging utility with file writing capability
+ * @param {LogLevel} level - Log level
+ * @param {string} message - Log message
+ * @param {any} [data] - Optional data to log
+ * @param {boolean} [writeToFile=false] - Write to log file
+ */
+async function log(level, message, data = null, writeToFile = false) {
+  const timestamp = new Date().toISOString();
+  const prefix = `[${timestamp}] [${APP_CONFIG.appName} ${level}]`;
+  const logMessage = `${prefix} ${message}`;
+
+  if (APP_CONFIG.isDev) {
+    const colors = {
+      [LogLevel.DEBUG]: "\x1b[36m",
+      [LogLevel.INFO]: "\x1b[34m",
+      [LogLevel.WARN]: "\x1b[33m",
+      [LogLevel.ERROR]: "\x1b[31m",
+      [LogLevel.SUCCESS]: "\x1b[32m",
+    };
+    console.log(`${colors[level] || ""}${logMessage}\x1b[0m`);
+  } else {
+    console.log(logMessage);
+  }
+
+  if (data) {
+    console.dir(data, { depth: 3, colors: APP_CONFIG.isDev });
+  }
+
+  if (writeToFile && !APP_CONFIG.isDev) {
+    try {
+      const logDir = path.join(APP_CONFIG.userDataPath, "logs");
+      await fs.mkdir(logDir, { recursive: true });
+
+      const logFile = path.join(
+        logDir,
+        `FarmTrac-${new Date().toISOString().split("T")[0]}.log`,
       );
+      const logEntry = `${logMessage}${
+        data ? "\n" + JSON.stringify(data, null, 2) : ""
+      }\n`;
+
+      await fs.appendFile(logFile, logEntry);
+    } catch (error) {
+      console.error("Failed to write log to file:", error);
+    }
   }
 }
 
-// In your src/main/index.js, update the database initialization section:
+// ===================== ERROR HANDLING =====================
+/**
+ * Custom error classes for better error tracking
+ */
+// @ts-ignore
+class DatabaseError extends Error {
+  // @ts-ignore
+  constructor(message, originalError) {
+    super(message);
+    this.name = "DatabaseError";
+    this.originalError = originalError;
+    this.timestamp = new Date().toISOString();
+  }
+}
 
-// ===================== DATABASE FUNCTIONS WITH MIGRATION MANAGER =====================
-async function initializeDatabase() {
-  try {
-    log("INFO", "Initializing database connection...");
-
-    // Get database path for logging
-    const dbPath = AppDataSource.options.database;
-    log("INFO", `Database path: ${dbPath}`);
-
-    // Initialize the data source
-    
-    await AppDataSource.initialize();
-    log("SUCCESS", "Database connected successfully!");
-
-    // Create migration manager (simplified for now)
-    migrationManager = new MigrationManager(AppDataSource);
-    log("INFO", "Migration Manager initialized");
-
-    // Check migration status
-    const migrationStatus = await migrationManager.getMigrationStatus();
-    // @ts-ignore
-    log("INFO", "Migration status checked", {
-      // @ts-ignore
-      pendingMigrations: migrationStatus.pendingMigrations,
-      // @ts-ignore
-      executedCount: migrationStatus.executedMigrations.length,
-      // @ts-ignore
-      lastMigration: migrationStatus.lastMigration,
-    });
-
-    // If there are pending migrations
-    // @ts-ignore
-    if (migrationStatus.needsMigration || migrationStatus.pendingMigrations) {
-      log("INFO", "Pending migrations found. Starting migration process...");
-
-      // Show migration status in splash window if available
-      if (splashWindow && !splashWindow.isDestroyed()) {
-        splashWindow.webContents.send("migration:start", {
-          message: "Updating database...",
-          // @ts-ignore
-          pendingCount: migrationStatus.pendingMigrations,
-        });
-      }
-
-      // Try to run migrations directly
-      try {
-        log("INFO", "Running migrations...");
-        const migrations = await AppDataSource.runMigrations();
-
-        if (migrations && migrations.length > 0) {
-          log(
-            "SUCCESS",
-            `Applied ${migrations.length} migrations successfully`,
-          );
-
-          // Log each applied migration
-          migrations.forEach((migration, index) => {
-            log("INFO", `  ${index + 1}. ${migration.name}`);
-          });
-
-          // Update splash window
-          if (splashWindow && !splashWindow.isDestroyed()) {
-            splashWindow.webContents.send("migration:complete", {
-              message: "Database updated successfully",
-              appliedCount: migrations.length,
-            });
-          }
-        } else {
-          log("INFO", "No migrations were needed or applied");
-        }
-      } catch (migrationError) {
-        // @ts-ignore
-        log("ERROR", "Migration failed, trying synchronize:", migrationError);
-
-        // Try to synchronize as fallback
-        try {
-          log("WARN", "Attempting to synchronize database as fallback...");
-          await AppDataSource.synchronize();
-          log("WARN", "Database synchronized as fallback");
-
-          if (splashWindow && !splashWindow.isDestroyed()) {
-            splashWindow.webContents.send("migration:complete", {
-              message: "Database synchronized",
-              appliedCount: 0,
-            });
-          }
-        } catch (syncError) {
-          // @ts-ignore
-          log("ERROR", "Synchronization also failed:", syncError);
-          throw migrationError; // Throw original error
-        }
-      }
-    } else {
-      log("INFO", "No pending migrations. Database is up to date.");
-    }
-
-    // Ensure basic tables exist (simplified)
-    await ensureDatabaseTables();
-
-    // Test connection (skip for now if it causes issues)
-    try {
-      await AppDataSource.query("SELECT 1");
-      log("SUCCESS", "Database connection test passed!");
-    } catch (queryError) {
-      log("WARN", "Database query test skipped or failed");
-    }
-
-    return {
-      success: true,
-      message: "Database initialized successfully",
-      migrationStatus: migrationStatus,
-    };
-  } catch (error) {
-    // @ts-ignore
-    log("ERROR", "Database initialization failed:", error);
-
-    // Try to recover using simple synchronization
-    try {
-      log("INFO", "Attempting database recovery by synchronization...");
-
-      if (!AppDataSource.isInitialized) {
-        await AppDataSource.initialize();
-      }
-
-      await AppDataSource.synchronize();
-      log("WARN", "Database recovered by synchronization");
-
-      return {
-        success: true,
-        message: "Database recovered by synchronization",
-        recovered: true,
-      };
-    } catch (recoveryError) {
-      // @ts-ignore
-      log("ERROR", "Database recovery also failed:", recoveryError);
-
-      return {
-        success: false,
-        // @ts-ignore
-        message: error.message || "Unknown database error",
-        error: error,
-      };
-    }
+class WindowError extends Error {
+  // @ts-ignore
+  constructor(message, windowType) {
+    super(message);
+    this.name = "WindowError";
+    this.windowType = windowType;
+    this.timestamp = new Date().toISOString();
   }
 }
 
 // @ts-ignore
-async function ensureDatabaseTables() {
-  try {
-    log("INFO", "Ensuring database tables exist...");
-
-    // Check if any table exists
-    const tableCheck = await AppDataSource.query(`
-      SELECT name FROM sqlite_master 
-      WHERE type='table' AND name='workers'
-    `);
-
-    if (tableCheck.length === 0) {
-      log("WARN", "Database tables don't exist. Creating tables...");
-      await AppDataSource.synchronize();
-      log("SUCCESS", "Database tables created successfully");
-    }
-
-    log("INFO", "Database tables already exist");
-    return { created: false, message: "Tables already exist" };
-  } catch (error) {
-    // @ts-ignore
-    log("ERROR", "Failed to ensure database tables:", error);
-    throw error;
+class MigrationError extends Error {
+  // @ts-ignore
+  constructor(message, pendingMigrations = []) {
+    super(message);
+    this.name = "MigrationError";
+    this.pendingMigrations = pendingMigrations;
+    this.timestamp = new Date().toISOString();
   }
 }
 
-// Window creation functions
+/**
+ * Global error handler for uncaught exceptions
+ */
+function setupGlobalErrorHandlers() {
+  process.on("uncaughtException", (error) => {
+    log(
+      LogLevel.ERROR,
+      "Uncaught Exception:",
+      {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      },
+      true,
+    );
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("app:error", {
+        type: "uncaughtException",
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  process.on("unhandledRejection", (reason, promise) => {
+    log(
+      LogLevel.ERROR,
+      "Unhandled Promise Rejection:",
+      {
+        reason: reason instanceof Error ? reason.message : reason,
+        promise: promise.toString(),
+        timestamp: new Date().toISOString(),
+      },
+      true,
+    );
+  });
+
+  // @ts-ignore
+  app.on("renderer-process-crashed", (event, webContents, killed) => {
+    log(
+      LogLevel.ERROR,
+      "Renderer process crashed:",
+      {
+        killed,
+        webContentsId: webContents.id,
+        timestamp: new Date().toISOString(),
+      },
+      true,
+    );
+  });
+}
+
+// ===================== DATABASE SERVICE =====================
+async function initializeDatabase() {
+  try {
+    log(LogLevel.INFO, "Initializing database...");
+
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+      log(LogLevel.SUCCESS, "Database connected");
+    }
+
+    migrationManager = new MigrationManager(AppDataSource);
+
+    const status = await migrationManager.getMigrationStatus();
+
+    // @ts-ignore
+    if (status.needsMigration) {
+      log(
+        LogLevel.INFO,
+        // @ts-ignore
+        `Found ${status.pending} pending migration(s). Running now...`,
+      );
+
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.webContents.send("migration:status", {
+          status: "running",
+          message: "Updating database structure...",
+        });
+      }
+
+      // @ts-ignore
+      const result = await migrationManager.runMigrations();
+
+      if (result.success) {
+        log(LogLevel.SUCCESS, result.message);
+        if (splashWindow) {
+          splashWindow.webContents.send("migration:status", {
+            status: "completed",
+            message: result.message,
+          });
+        }
+      } else {
+        log(LogLevel.ERROR, "Migration failed:", result.error);
+        dialog.showMessageBoxSync({
+          type: "warning",
+          title: "Migration Warning",
+          message: "Database update had an issue",
+          detail: result.message + "\n\nContinuing with current schema.",
+          buttons: ["OK"],
+        });
+      }
+    } else {
+      log(LogLevel.INFO, "Database is up to date ✅");
+    }
+
+    isDatabaseInitialized = true;
+    return { success: true };
+  } catch (error) {
+    log(LogLevel.ERROR, "Database init failed:", error);
+
+    try {
+      await AppDataSource.synchronize(false);
+      log(LogLevel.WARN, "Used fallback synchronize");
+      isDatabaseInitialized = true;
+      return { success: true, fallback: true };
+    } catch (e) {
+      // @ts-ignore
+      return { success: false, error: e.message };
+    }
+  }
+}
+
+/**
+ * Safely close database connection
+ */
+async function safeCloseDatabase() {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  try {
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+      log(LogLevel.INFO, "Database connection closed gracefully");
+      isDatabaseInitialized = false;
+    }
+  } catch (error) {
+    log(LogLevel.ERROR, "Error closing database connection:", error);
+  }
+}
+
+// ===================== WINDOW MANAGEMENT =====================
+/**
+ * Get icon path based on platform and environment
+ * @returns {string}
+ */
+function getIconPath() {
+  const platform = process.platform;
+  const iconDir = APP_CONFIG.isDev
+    ? path.resolve(__dirname, "..", "..", "assets")
+    : path.join(process.resourcesPath, "build");
+
+  const iconMap = {
+    win32: "icon.ico",
+    darwin: "icon.icns",
+    linux: "icon.png",
+  };
+
+  // @ts-ignore
+  const iconFile = iconMap[platform] || "icon.png";
+  const iconPath = path.join(iconDir, iconFile);
+
+  // @ts-ignore
+  return fsSync.existsSync(iconPath) ? iconPath : null;
+}
+
+/**
+ * Create splash window
+ * @returns {Promise<BrowserWindow>}
+ */
 async function createSplashWindow() {
   try {
-    log("INFO", "Creating splash window...");
-    splashWindow = new BrowserWindow({
+    log(LogLevel.INFO, "Creating splash window...");
+
+    const splashConfig = {
       width: 500,
       height: 400,
       transparent: true,
@@ -235,94 +352,89 @@ async function createSplashWindow() {
       alwaysOnTop: true,
       center: true,
       resizable: false,
-      movable: false,
-      fullscreenable: false,
+      movable: true,
       skipTaskbar: true,
+      show: false,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js"),
       },
-    });
+    };
+
+    splashWindow = new BrowserWindow(splashConfig);
 
     const splashPath = path.join(__dirname, "splash.html");
-    await splashWindow.loadFile(splashPath);
-    splashWindow.show();
-    log("SUCCESS", "Splash window created");
-    return splashWindow;
-  } catch (error) {
-    // @ts-ignore
-    log("ERROR", "Failed to create splash window", error);
-    return null;
-  }
-}
-
-function getAppUrl() {
-  if (isDev) {
-    const devServerURL = "http://localhost:5173";
-    log("INFO", `Development mode - URL: ${devServerURL}`);
-    return devServerURL;
-  } else {
-    const prodPath = path.join(__dirname, "..", "..", "dist", "renderer", "index.html");
-
-    if (!fs.existsSync(prodPath)) {
-      const possiblePaths = [
-        prodPath,
-        path.join(
-          process.resourcesPath,
-          "app.asar.unpacked",
-          "dist",
-          "index.html",
-        ),
-        path.join(process.resourcesPath, "dist", "index.html"),
-        path.join(app.getAppPath(), "dist", "index.html"),
-      ];
-
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          log("INFO", `Found production build at: ${p}`);
-          return `file://${p}`;
-        }
-      }
-
-      throw new Error(
-        `Production build not found. Checked: ${possiblePaths.join(", ")}`,
-      );
+    if (!fsSync.existsSync(splashPath)) {
+      throw new WindowError("Splash HTML file not found", "splash");
     }
 
-    log("INFO", `Production mode - file: ${prodPath}`);
-    return `file://${prodPath}`;
+    await splashWindow.loadFile(splashPath);
+    splashWindow.show();
+
+    log(LogLevel.SUCCESS, "Splash window created");
+    return splashWindow;
+  } catch (error) {
+    throw new WindowError(
+      // @ts-ignore
+      `Failed to create splash window: ${error.message}`,
+      "splash",
+    );
   }
 }
 
-function getIconPath() {
-  const platform = process.platform;
-  if (isDev) {
-    const devIconDir = path.resolve(__dirname, "..", "..", "assets");
-    if (platform === "win32") return path.join(devIconDir, "icon.ico");
-    if (platform === "darwin") return path.join(devIconDir, "icon.icns");
-    return path.join(devIconDir, "icon.png");
-  } else {
-    const resourcesPath = process.resourcesPath;
-    if (platform === "win32")
-      return path.join(resourcesPath, "build", "icon.ico");
-    if (platform === "darwin") return path.join(resourcesPath, "icon.icns");
-    return path.join(resourcesPath, "build", "icon.png");
+/**
+ * Get application URL for main window
+ * @returns {Promise<string>}
+ */
+async function getAppUrl() {
+  if (APP_CONFIG.isDev) {
+    const devServerUrl = "http://localhost:5173";
+    log(LogLevel.INFO, `Development mode - URL: ${devServerUrl}`);
+    return devServerUrl;
   }
+
+  const possiblePaths = [
+    path.join(__dirname, "..", "..", "dist", "renderer", "index.html"),
+    path.join(__dirname, "..", "..", "dist", "index.html"),
+    path.join(process.resourcesPath, "app.asar.unpacked", "dist", "index.html"),
+    path.join(process.resourcesPath, "dist", "index.html"),
+    path.join(app.getAppPath(), "dist", "index.html"),
+  ];
+
+  for (const filePath of possiblePaths) {
+    try {
+      await fs.access(filePath);
+      const fileUrl = url.pathToFileURL(filePath).href;
+      log(LogLevel.INFO, `Found production build at: ${filePath}`);
+      return fileUrl;
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(
+    `Production build not found. Checked paths:\n${possiblePaths.join("\n")}`,
+  );
 }
 
+/**
+ * Create main application window
+ * @returns {Promise<BrowserWindow>}
+ */
 async function createMainWindow() {
   try {
-    log("INFO", "Creating main window...");
+    log(LogLevel.INFO, "Creating main window...");
 
     const primaryDisplay = screen.getPrimaryDisplay();
-    const { width, height } = primaryDisplay.workAreaSize;
-    const windowWidth = 1366,
-      windowHeight = 768;
-    const x = Math.max(0, Math.floor((width - windowWidth) / 2));
-    const y = Math.max(0, Math.floor((height - windowHeight) / 2));
+    const { width: screenWidth, height: screenHeight } =
+      primaryDisplay.workAreaSize;
+    const windowWidth = Math.min(1366, screenWidth - 100);
+    const windowHeight = Math.min(768, screenHeight - 100);
+    const x = Math.floor((screenWidth - windowWidth) / 2);
+    const y = Math.floor((screenHeight - windowHeight) / 2);
 
-    mainWindow = new BrowserWindow({
+    const windowConfig = {
       width: windowWidth,
       height: windowHeight,
       x,
@@ -333,393 +445,398 @@ async function createMainWindow() {
       frame: true,
       titleBarStyle: "default",
       backgroundColor: "#f0f7f0",
+      icon: getIconPath(),
       webPreferences: {
         preload: path.join(__dirname, "preload.js"),
         nodeIntegration: false,
         contextIsolation: true,
-        webSecurity: !isDev,
-        allowRunningInsecureContent: isDev,
+        webSecurity: !APP_CONFIG.isDev,
+        sandbox: true,
+        enableRemoteModule: false,
       },
-    });
+    };
 
-    mainWindow.setMenu(null);
-    mainWindow.setTitle("Kabisilya Management System");
+    // @ts-ignore
+    mainWindow = new BrowserWindow(windowConfig);
+    mainWindow.setMenuBarVisibility(false);
+    mainWindow.setTitle("FarmTrac Management System");
 
-    const iconPath = getIconPath();
-    if (fs.existsSync(iconPath)) mainWindow.setIcon(iconPath);
-    else log("WARN", `Icon not found: ${iconPath}`);
-
-    // Window event listeners
+    // Window event handlers
     mainWindow.on("ready-to-show", () => {
-      log("INFO", "Main window ready to show");
       if (splashWindow && !splashWindow.isDestroyed()) {
         setTimeout(() => {
           // @ts-ignore
           splashWindow.close();
           splashWindow = null;
-        }, 500);
+        }, 300);
       }
+
       // @ts-ignore
       mainWindow.show();
       // @ts-ignore
       mainWindow.focus();
       // @ts-ignore
       mainWindow.center();
+      log(LogLevel.SUCCESS, "Main window ready");
+
       // @ts-ignore
-      mainWindow.webContents.send("app-ready");
+      mainWindow.webContents.send("app:ready", {
+        version: APP_CONFIG.version,
+        isDev: APP_CONFIG.isDev,
+        databaseReady: isDatabaseInitialized,
+      });
     });
 
-    const appUrl = getAppUrl();
-    log("INFO", `Loading URL: ${appUrl}`);
+    mainWindow.on("close", (event) => {
+      if (!APP_CONFIG.isDev && !isShuttingDown) {
+        event.preventDefault();
+
+        // @ts-ignore
+        const choice = dialog.showMessageBoxSync(mainWindow, {
+          type: "question",
+          buttons: ["Yes", "No"],
+          title: "Confirm",
+          message: "Are you sure you want to quit?",
+          detail: "Any unsaved changes will be lost.",
+        });
+
+        if (choice === 0) {
+          isShuttingDown = true;
+          // @ts-ignore
+          mainWindow.destroy();
+        }
+      }
+    });
+
+    ["maximize", "unmaximize", "minimize", "restore"].forEach((event) => {
+      // @ts-ignore
+      mainWindow.on(event, () => {
+        // @ts-ignore
+        mainWindow.webContents.send("window-state-changed", event);
+      });
+    });
+
+    // Load application URL
+    const appUrl = await getAppUrl();
+    log(LogLevel.INFO, `Loading URL: ${appUrl}`);
 
     try {
-      if (!isDev) {
-        await mainWindow.loadURL(appUrl);
-      } else {
-        await mainWindow.loadURL(appUrl);
+      await mainWindow.loadURL(appUrl);
+      if (APP_CONFIG.isDev) {
         mainWindow.webContents.openDevTools({ mode: "detach" });
       }
-      log("SUCCESS", "Main window loaded successfully");
+      log(LogLevel.SUCCESS, "Main window loaded successfully");
     } catch (error) {
-      const errorMessage = isDev
-        ? "Dev server not running. Run 'npm run dev' first."
-        : "Production build not found or corrupted.";
-      showErrorPage(mainWindow, errorMessage);
-      throw error;
+      throw new Error(
+        APP_CONFIG.isDev
+          ? "Dev server not running. Run 'npm run dev' first."
+          : "Production build not found or corrupted.",
+      );
+    }
+
+    // Attach updater
+    try {
+      const updaterModule = require("./ipc/utils/updater/index.ipc.js");
+      updaterModule.setMainWindow(mainWindow);
+      log(LogLevel.INFO, "Updater handler attached to main window");
+    } catch (e) {
+      log(LogLevel.WARN, "Failed to set updater main window", e);
     }
 
     return mainWindow;
   } catch (error) {
-    // @ts-ignore
-    log("ERROR", "Failed to create main window", error);
-    throw error;
+    throw new WindowError(
+      // @ts-ignore
+      `Failed to create main window: ${error.message}`,
+      "main",
+    );
   }
 }
 
+// ===================== ACTIVATION HANDLER (placeholder) =====================
 /**
- * @param {BrowserWindow} window
- * @param {string} message
+ * Check if activation is required and show activation window if needed
+ * @returns {Promise<boolean>} - True if activation is complete and can proceed
  */
-function showErrorPage(window, message) {
-  const errorHTML = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          text-align: center;
-          padding: 40px;
-        }
-        .error-container {
-          max-width: 500px;
-          background: rgba(255, 255, 255, 0.1);
-          padding: 40px;
-          border-radius: 20px;
-          backdrop-filter: blur(10px);
-        }
-        h1 { margin-bottom: 20px; font-size: 24px; }
-        code {
-          background: rgba(255, 255, 255, 0.2);
-          padding: 10px 20px;
-          border-radius: 10px;
-          display: block;
-          margin: 20px 0;
-          font-family: monospace;
-        }
-        .retry-btn {
-          background: white;
-          color: #667eea;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 25px;
-          font-weight: bold;
-          cursor: pointer;
-          margin-top: 20px;
-          transition: transform 0.2s;
-        }
-        .retry-btn:hover { transform: scale(1.05); }
-      </style>
-    </head>
-    <body>
-      <div class="error-container">
-        <h1>⚠️ Application Error</h1>
-        <p>${message}</p>
-        <code>${isDev ? "http://localhost:5173" : "Production Build"}</code>
-        <button class="retry-btn" onclick="location.reload()">Retry</button>
-        <p style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
-          ${
-            isDev
-              ? "Make sure your development server is running"
-              : "Please check if the application is properly installed"
-          }
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  window.loadURL(
-    `data:text/html;charset=utf-8,${encodeURIComponent(errorHTML)}`,
-  );
+async function handleActivation() {
+  // TODO: Implement actual activation logic if needed
+  return true;
 }
 
-async function continueNormalStartup() {
-  try {
-    log("INFO", "Starting main window creation...");
-
-    const appUrl = getAppUrl();
-    log("INFO", `App URL to load: ${appUrl}`);
-
-    if (!isDev) {
-      const filePath = appUrl.replace("file://", "");
-      if (!fs.existsSync(filePath)) {
-        const errorMsg = `Cannot find application files at: ${filePath}\n\nPlease reinstall the application.`;
-        log("ERROR", errorMsg);
-
-        dialog.showErrorBox("File Not Found", errorMsg);
-
-        if (splashWindow && !splashWindow.isDestroyed()) {
-          splashWindow.close();
-        }
-
-        const errorWindow = new BrowserWindow({
-          width: 800,
-          height: 600,
-          show: false,
-          frame: true,
-          webPreferences: {
-            contextIsolation: false,
-            nodeIntegration: true,
-          },
-        });
-
-        showErrorPage(
-          errorWindow,
-          `Production build not found at: ${filePath}`,
-        );
-        errorWindow.show();
-        return;
-      }
-    }
-
-    await createMainWindow();
-    log("SUCCESS", "✅ Kabisilya Management System started successfully");
-  } catch (error) {
-    // @ts-ignore
-    log("ERROR", "Failed to continue startup", error);
-
-    // @ts-ignore
-    const errorMessage = error && error.message ? error.message : String(error);
-    dialog.showErrorBox(
-      "Startup Error",
-      `Failed to start Kabisilya Management System:\n\n${errorMessage}`,
-    );
-
-    app.quit();
-  }
-}
-
-// Main startup flow
-app.on("ready", async () => {
-  try {
-    log("INFO", "🚀 Starting Kabisilya Management System...");
-    log("INFO", `Version: ${app.getVersion()}`);
-    log("INFO", `Environment: ${isDev ? "Development" : "Production"}`);
-
-    // 1. Create splash window
-    await createSplashWindow();
-
-    // 2. Initialize database
-    log("INFO", "Starting database initialization...");
-    const dbResult = await initializeDatabase();
-
-    // @ts-ignore
-    if (!dbResult.success) {
-      // @ts-ignore
-      log("ERROR", `Database initialization failed: ${dbResult.message}`);
-
-      const dialogResult = dialog.showMessageBoxSync({
-        type: "warning",
-        title: "Database Warning",
-        message: "Database initialization failed",
-        // @ts-ignore
-        detail: `Error: ${dbResult.message}\n\nThe application may not function properly.`,
-        buttons: ["Continue Anyway", "Quit"],
-        defaultId: 0,
-        cancelId: 1,
-      });
-
-      if (dialogResult === 1) {
-        app.quit();
-        return;
-      }
-
-      log(
-        "WARN",
-        "Continuing with limited functionality due to database issues",
-      );
-    } else {
-      log("SUCCESS", "Database initialized successfully");
-    }
-
-    // 3. Register IPC handlers
-    registerIpcHandlers();
-
-    // 4. Continue with normal startup
-    await continueNormalStartup();
-
-    log("SUCCESS", "✅ Kabisilya Management System started successfully");
-  } catch (error) {
-    // @ts-ignore
-    log("ERROR", "❌ Startup failed", {
-      // @ts-ignore
-      error: error.message,
-      // @ts-ignore
-      stack: error.stack,
-    });
-
-    if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
-
-    dialog.showErrorBox(
-      "Application Startup Error",
-      // @ts-ignore
-      `Failed to start Kabisilya Management System:\n\n${error.message}\n\nPlease check the logs for details.`,
-    );
-
-    app.quit();
-  }
-});
-
-// Register IPC handlers
+// ===================== IPC HANDLERS =====================
+/**
+ * Register all IPC handlers
+ */
 function registerIpcHandlers() {
-  // Window control handlers
-  ipcMain.on("window-minimize", () => {
+  log(LogLevel.INFO, "Registering IPC handlers...");
+
+  // Window Control Handlers
+  ipcMain.on("window:minimize", () => {
     if (mainWindow) mainWindow.minimize();
   });
 
-  ipcMain.on("window-maximize", () => {
+  ipcMain.on("window:maximize", () => {
     if (mainWindow) {
-      if (mainWindow.isMaximized()) {
-        mainWindow.unmaximize();
-      } else {
-        mainWindow.maximize();
-      }
+      mainWindow.isMaximized()
+        ? mainWindow.unmaximize()
+        : mainWindow.maximize();
     }
   });
 
-  ipcMain.on("window-close", () => {
+  ipcMain.on("window:close", () => {
     if (mainWindow) mainWindow.close();
   });
 
-  ipcMain.on("app-quit", () => {
-    app.quit();
+  ipcMain.on("window:reload", () => {
+    if (mainWindow) mainWindow.reload();
   });
 
-  ipcMain.on("show-about", () => {
-    dialog.showMessageBox({
-      type: "info",
-      title: "About Kabisilya Management",
-      message: "Kabisilya Management System",
-      detail: `Version: ${app.getVersion()}\nFarm Worker and Harvest Management\n© ${new Date().getFullYear()} CyberArcenal`,
-      buttons: ["OK"],
-    });
+  ipcMain.on("window:toggle-devtools", () => {
+    if (mainWindow) mainWindow.webContents.toggleDevTools();
   });
 
-  // Database migration handlers
-  ipcMain.handle("migration:get-status", async () => {
+  // Application Info
+  ipcMain.handle("app:get-info", () => ({
+    name: APP_CONFIG.appName,
+    version: APP_CONFIG.version,
+    isDev: APP_CONFIG.isDev,
+    platform: process.platform,
+    arch: process.arch,
+    userDataPath: APP_CONFIG.userDataPath,
+    databaseReady: isDatabaseInitialized,
+  }));
+
+  // @ts-ignore
+  ipcMain.on("app:open-external", (event, url) => {
+    if (typeof url === "string" && url.startsWith("http")) {
+      shell.openExternal(url).catch(console.error);
+    }
+  });
+
+  // Database Status
+  ipcMain.handle("database:get-status", async () => {
     try {
+      const isInitialized = AppDataSource.isInitialized;
+      let migrationStatus = null;
+
       if (migrationManager) {
-        return await migrationManager.getMigrationStatus();
+        migrationStatus = await migrationManager.getMigrationStatus();
       }
-      return { error: "Migration manager not initialized" };
+
+      return {
+        initialized: isInitialized,
+        migrationManager: !!migrationManager,
+        migrationStatus,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
-      // @ts-ignore
-      log("ERROR", "Failed to get migration status", error);
+      log(LogLevel.ERROR, "Failed to get database status:", error);
       // @ts-ignore
       return { error: error.message };
     }
   });
 
-  ipcMain.handle("migration:run-manual", async () => {
+  ipcMain.handle("database:backup", async () => {
     try {
-      if (migrationManager) {
-        const result = await migrationManager.runMigrationsWithBackup();
-        return result;
+      if (!migrationManager) {
+        throw new Error("Migration manager not initialized");
       }
-      return { success: false, error: "Migration manager not initialized" };
+      const backupPath = await migrationManager.backupDatabase();
+      return { success: true, backupPath };
     } catch (error) {
-      // @ts-ignore
-      log("ERROR", "Failed to run migrations manually", error);
+      log(LogLevel.ERROR, "Database backup failed:", error);
       // @ts-ignore
       return { success: false, error: error.message };
     }
   });
-  require("./ipc/activation.ipc.");
-  require("./ipc/assignment/index.ipc");
-  require("./ipc/audit/index.ipc");
-  require("./ipc/bukid/index.ipc");
-  require("./ipc/dashboard/index.ipc");
-  require("./ipc/debt/index.ipc");
-  // require("./ipc/kabisilya/index.ipc");
-  // require("./ipc/notification/index.ipc");
-  require("./ipc/payment/index.ipc");
-  require("./ipc/pitak/index.ipc");
-  require("./ipc/user/index.ipc");
-  require("./ipc/worker/index.ipc");
-  require("./ipc/system_config.ipc");
-  require("./ipc/windows_control.ipc");
-  require("./ipc/attendance/index.ipc");
-  require("./ipc/session/index.ipc");
+
+  // Import FarmTrac specific IPC modules
+  try {
+    const ipcModules = [
+      "./ipc/activation.ipc",
+      "./ipc/assignment/index.ipc",
+      "./ipc/audit/index.ipc",
+      "./ipc/bukid/index.ipc",
+      "./ipc/dashboard/index.ipc",
+      "./ipc/debt/index.ipc",
+      // "./ipc/kabisilya/index.ipc",          // uncomment if needed
+      // "./ipc/notification/index.ipc",        // uncomment if needed
+      "./ipc/payment/index.ipc",
+      "./ipc/pitak/index.ipc",
+      "./ipc/user/index.ipc",
+      "./ipc/worker/index.ipc",
+      "./ipc/system_config.ipc",
+      "./ipc/windows_control.ipc",
+      "./ipc/attendance/index.ipc",
+      "./ipc/session/index.ipc",
+      "./ipc/utils/updater/index.ipc.js",
+    ];
+
+    ipcModules.forEach((modulePath) => {
+      try {
+        const fullPath = path.join(__dirname, modulePath);
+        if (fsSync.existsSync(fullPath)) {
+          require(fullPath);
+          log(LogLevel.DEBUG, `Loaded IPC module: ${modulePath}`);
+        } else {
+          log(LogLevel.WARN, `IPC module not found: ${modulePath}`);
+        }
+      } catch (error) {
+        log(LogLevel.ERROR, `Failed to load IPC module ${modulePath}:`, error);
+      }
+    });
+
+    log(LogLevel.SUCCESS, "All IPC handlers registered");
+  } catch (error) {
+    log(LogLevel.ERROR, "Failed to register IPC handlers:", error);
+  }
 }
 
-// Application event handlers
-app.on("window-all-closed", () => {
-  log("INFO", "All windows closed, closing database connection...");
-  safeCloseDB();
-  if (process.platform !== "darwin") app.quit();
-});
+// ===================== MAIN STARTUP SEQUENCE =====================
+async function startupSequence() {
+  try {
+    log(
+      LogLevel.INFO,
+      `🚀 Starting ${APP_CONFIG.appName} v${APP_CONFIG.version}...`,
+    );
+    log(
+      LogLevel.INFO,
+      `Environment: ${APP_CONFIG.isDev ? "Development" : "Production"}`,
+    );
+    log(LogLevel.INFO, `User Data Path: ${APP_CONFIG.userDataPath}`);
 
-app.on("activate", async () => {
-  log("INFO", "Application activated");
-  if (BrowserWindow.getAllWindows().length === 0) {
+    // 1. Setup global error handlers
+    setupGlobalErrorHandlers();
+
+    // 2. Create splash window
+    await createSplashWindow();
+
+    // 3. Initialize database and run migrations
+    const dbResult = await initializeDatabase();
+
+    // 4. Handle database initialization failure
+    if (!dbResult.success) {
+      log(LogLevel.ERROR, "Database initialization failed:", dbResult.error);
+
+      const userChoice = dialog.showMessageBoxSync({
+        type: "warning",
+        title: "Database Warning",
+        message: "Database initialization failed",
+        detail: `${dbResult.error}\n\nApplication may have limited functionality.`,
+        buttons: ["Continue Anyway", "Quit Application"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+
+      if (userChoice === 1) {
+        log(LogLevel.INFO, "User chose to quit due to database error");
+        app.quit();
+        return;
+      }
+    }
+
+    // 5. Register all IPC handlers
+    registerIpcHandlers();
+
+    // 6. Handle activation if required
+    const activationComplete = await handleActivation();
+    if (!activationComplete) {
+      log(LogLevel.INFO, "Activation required but not completed. Exiting.");
+      app.quit();
+      return;
+    }
+
+    // 7. Create main window
     await createMainWindow();
+
+    log(LogLevel.SUCCESS, `✅ ${APP_CONFIG.appName} started successfully!`);
+  } catch (error) {
+    log(LogLevel.ERROR, "Startup sequence failed:", error);
+
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.close();
+    }
+
+    // Show error window (simplified)
+    const errorWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+      show: false,
+      frame: true,
+      webPreferences: {
+        contextIsolation: false,
+        nodeIntegration: true,
+      },
+    });
+
+    const errorHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head><title>Startup Error</title></head>
+        <body style="font-family:sans-serif; text-align:center; padding:40px;">
+          <h1>Startup Failed</h1>
+          <p>The application failed to start properly.</p>
+          <pre style="background:#f0f0f0; padding:10px;">${
+// @ts-ignore
+          error.message}</pre>
+          <button onclick="window.close()">Close</button>
+        </body>
+      </html>
+    `;
+    errorWindow.loadURL(
+      `data:text/html;charset=utf-8,${encodeURIComponent(errorHTML)}`,
+    );
+    errorWindow.show();
+  }
+}
+
+// ===================== APPLICATION EVENT HANDLERS =====================
+app.on("ready", startupSequence);
+
+app.on("window-all-closed", async () => {
+  log(LogLevel.INFO, "All windows closed, quitting application");
+  await safeCloseDatabase();
+
+  if (process.platform !== "darwin") {
+    app.quit();
   }
 });
 
-app.on("before-quit", () => {
-  log("INFO", "Application quitting...");
+app.on("activate", async () => {
+  log(LogLevel.INFO, "Application activated");
+
+  if (BrowserWindow.getAllWindows().length === 0) {
+    await startupSequence();
+  }
+});
+
+app.on("before-quit", async (event) => {
+  log(LogLevel.INFO, "Application quitting...");
+
+  if (!isShuttingDown) {
+    event.preventDefault();
+    await safeCloseDatabase();
+    app.quit();
+  }
 });
 
 app.on("will-quit", () => {
-  log("INFO", "Application will quit");
-  safeCloseDB();
+  log(LogLevel.INFO, "Application will quit");
 });
 
 app.on("quit", () => {
-  log("INFO", "Application quit");
+  log(LogLevel.INFO, "Application quit");
+  process.exit(0);
 });
 
-// Error handling
-process.on("uncaughtException", (error) => {
-  // @ts-ignore
-  log("ERROR", "Uncaught exception", {
-    error: error.message,
-    stack: error.stack,
-  });
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-  // @ts-ignore
-  log("ERROR", "Unhandled promise rejection", {
-    // @ts-ignore
-    reason: reason?.message || reason,
-    promise,
-  });
-});
+// ===================== EXPORT FOR TESTING =====================
+if (APP_CONFIG.isDev) {
+  module.exports = {
+    APP_CONFIG,
+    getIconPath,
+    initializeDatabase,
+    createMainWindow,
+    safeCloseDatabase,
+    log,
+  };
+}

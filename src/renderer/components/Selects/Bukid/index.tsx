@@ -1,8 +1,8 @@
 // components/BukidSelect.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown, Loader, TreePalm } from 'lucide-react';
-import type { BukidData } from '../../../apis/bukid';
-import bukidAPI from '../../../apis/bukid';
+import React, { useState, useEffect, useRef } from "react";
+import { Search, ChevronDown, Loader, TreePalm } from "lucide-react";
+import type { BukidData } from "../../../apis/core/bukid";
+import bukidAPI from "../../../apis/core/bukid";
 
 interface BukidSelectProps {
   value: number | null;
@@ -15,11 +15,11 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  placeholder = 'Select a farm'
+  placeholder = "Select a farm",
 }) => {
   const [bukids, setBukids] = useState<BukidData[]>([]);
   const [filteredBukids, setFilteredBukids] = useState<BukidData[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -29,13 +29,13 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
       try {
         setLoading(true);
         const response = await bukidAPI.getAll({ limit: 1000 });
-        
+
         if (response.status && response.data?.bukids) {
           setBukids(response.data.bukids);
           setFilteredBukids(response.data.bukids);
         }
       } catch (err) {
-        console.error('Error fetching farms:', err);
+        console.error("Error fetching farms:", err);
       } finally {
         setLoading(false);
       }
@@ -45,12 +45,14 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
   }, []);
 
   useEffect(() => {
-    if (searchTerm.trim() === '') {
+    if (searchTerm.trim() === "") {
       setFilteredBukids(bukids);
     } else {
-      const filtered = bukids.filter(bukid =>
-        bukid.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (bukid.location && bukid.location.toLowerCase().includes(searchTerm.toLowerCase()))
+      const filtered = bukids.filter(
+        (bukid) =>
+          bukid.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (bukid.location &&
+            bukid.location.toLowerCase().includes(searchTerm.toLowerCase())),
       );
       setFilteredBukids(filtered);
     }
@@ -58,13 +60,16 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,14 +79,14 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
   const handleSelect = (bukidId: number) => {
     onChange(bukidId);
     setIsOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleClear = () => {
     onChange(null);
   };
 
-  const selectedBukid = bukids.find(b => b.id === value);
+  const selectedBukid = bukids.find((b) => b.id === value);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -90,23 +95,28 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
         style={{
-          backgroundColor: 'var(--input-bg)',
-          border: '1px solid var(--input-border)',
-          color: 'var(--text-primary)',
-          minHeight: '44px'
+          backgroundColor: "var(--input-bg)",
+          border: "1px solid var(--input-border)",
+          color: "var(--text-primary)",
+          minHeight: "44px",
         }}
       >
         <div className="flex items-center gap-2 truncate">
           {selectedBukid ? (
             <>
-              <TreePalm className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+              <TreePalm
+                className="w-4 h-4"
+                style={{ color: "var(--accent-green)" }}
+              />
               <span className="truncate">{selectedBukid.name}</span>
             </>
           ) : (
-            <span style={{ color: 'var(--text-secondary)' }}>{placeholder}</span>
+            <span style={{ color: "var(--text-secondary)" }}>
+              {placeholder}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -118,14 +128,14 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
                 handleClear();
               }}
               className="p-1 hover:bg-gray-100 rounded"
-              style={{ color: 'var(--accent-rust)' }}
+              style={{ color: "var(--accent-rust)" }}
             >
               ×
             </button>
           )}
           <ChevronDown
-            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-            style={{ color: 'var(--text-secondary)' }}
+            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            style={{ color: "var(--text-secondary)" }}
           />
         </div>
       </button>
@@ -134,16 +144,21 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
         <div
           className="absolute z-50 w-full mt-1 rounded-lg shadow-lg"
           style={{
-            backgroundColor: 'var(--card-bg)',
-            border: '1px solid var(--border-color)',
-            maxHeight: '300px',
-            overflow: 'hidden'
+            backgroundColor: "var(--card-bg)",
+            border: "1px solid var(--border-color)",
+            maxHeight: "300px",
+            overflow: "hidden",
           }}
         >
-          <div className="p-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+          <div
+            className="p-3 border-b"
+            style={{ borderColor: "var(--border-color)" }}
+          >
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
-                     style={{ color: 'var(--text-secondary)' }} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                style={{ color: "var(--text-secondary)" }}
+              />
               <input
                 type="text"
                 placeholder="Search farms..."
@@ -151,9 +166,9 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
                 onChange={handleSearchChange}
                 className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
                 style={{
-                  backgroundColor: 'var(--input-bg)',
-                  border: '1px solid var(--input-border)',
-                  color: 'var(--text-primary)'
+                  backgroundColor: "var(--input-bg)",
+                  border: "1px solid var(--input-border)",
+                  color: "var(--text-primary)",
                 }}
                 autoFocus
               />
@@ -162,8 +177,14 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
 
           {loading && (
             <div className="p-4 text-center">
-              <Loader className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--accent-green)' }} />
-              <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+              <Loader
+                className="w-5 h-5 animate-spin mx-auto"
+                style={{ color: "var(--accent-green)" }}
+              />
+              <p
+                className="text-xs mt-2"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 Loading farms...
               </p>
             </div>
@@ -172,8 +193,11 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
           {!loading && (
             <div className="max-h-60 overflow-y-auto">
               {filteredBukids.length === 0 ? (
-                <div className="p-4 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {searchTerm ? 'No farms found' : 'No farms available'}
+                <div
+                  className="p-4 text-center text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {searchTerm ? "No farms found" : "No farms available"}
                 </div>
               ) : (
                 filteredBukids.map((bukid) => (
@@ -182,25 +206,36 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
                     type="button"
                     onClick={() => handleSelect(bukid.id!)}
                     className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                      bukid.id === value ? 'bg-gray-50' : ''
+                      bukid.id === value ? "bg-gray-50" : ""
                     }`}
                     style={{
-                      borderBottom: '1px solid var(--border-light)',
-                      color: 'var(--text-primary)'
+                      borderBottom: "1px solid var(--border-light)",
+                      color: "var(--text-primary)",
                     }}
                   >
-                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      bukid.id === value ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
-                    }`}>
+                    <div
+                      className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                        bukid.id === value
+                          ? "bg-blue-500 border-blue-500"
+                          : "border-gray-300"
+                      }`}
+                    >
                       {bukid.id === value && (
                         <div className="w-2 h-2 rounded-full bg-white"></div>
                       )}
                     </div>
-                    <TreePalm className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+                    <TreePalm
+                      className="w-4 h-4"
+                      style={{ color: "var(--accent-green)" }}
+                    />
                     <div className="flex-1 text-left">
                       <div className="font-medium text-sm">{bukid.name}</div>
-                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {bukid.location || 'No location'} • {bukid.status || 'No status'}
+                      <div
+                        className="text-xs"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {bukid.location || "No location"} •{" "}
+                        {bukid.status || "No status"}
                       </div>
                     </div>
                   </button>
