@@ -5,86 +5,26 @@ declare global {
   interface Window {
     backendAPI: {
       // 📊 Dashboard
-      dashboard: (payload: {
-        method: string;
-        params?: Record<string, any>;
-      }) => Promise<any>;
-
+      dashboard: (payload: any) => Promise<any>;
       // 👥 Core Management Modules
-      worker?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      assignment?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      bukid?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      pitak?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      debt?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      payment?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      attendance?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
+      worker: (payload: any) => Promise<any>;
+      assignment: (payload: any) => Promise<any>;
+      bukid: (payload: any) => Promise<any>;
+      pitak: (payload: any) => Promise<any>;
+      debt: (payload: any) => Promise<any>;
+      debtHistory: (payload: any) => Promise<any>;
+      payment: (payload: any) => Promise<any>;
+      paymentHistory: (payload: any) => Promise<any>;
+      attendance: (payload: any) => Promise<any>;
+      activation: (payload: any) => Promise<any>;
+      auditLog: (payload: any) => Promise<any>;
+      notification: (payload: any) => Promise<any>;
+      notificationLog: (payload: any) => Promise<any>;
+      session: (payload: any) => Promise<any>;
+      systemConfig: (payload: any) => Promise<any>;
 
-      // 👤 User Management
-      user: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
+      windowControl: (payload: any) => Promise<any>;
 
-      // 🔐 Activation
-      activation: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-
-      // 📜 Audit Trail
-      auditTrail?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-
-      // 🔔 Notifications
-      notification?: (payload: any) => Promise<any>;
-session?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-      // ⚙️ System Config
-      systemConfig: (payload: { method: string; params?: any }) => Promise<{
-        status: boolean;
-        message: string;
-        data: any;
-      }>;
-
-      // 🪟 Window Control
-      windowControl?: (payload: { method: string; params?: Record<string, any> }) => Promise<{
-        status: boolean;
-        message: string;
-        data?: any;
-      }>;
-
-      // 🔄 Sync
-      sync?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
-
-      // 🎯 App lifecycle
-      onAppReady?: (callback: () => void) => void;
-      onSetupComplete?: (callback: () => void) => void;
-      getSetupStatus?: () => Promise<any>;
-      skipSetup?: () => void;
-
-      // 👥 Worker Events
-      onWorkerCreated?: (callback: (data: any) => void) => void;
-      onWorkerUpdated?: (callback: (data: any) => void) => void;
-      onWorkerDeleted?: (callback: (id: number) => void) => void;
-      onWorkerStatusChanged?: (callback: (data: any) => void) => void;
-
-      // 👤 User Events
-      onUserLogin?: (callback: (user: any) => void) => void;
-      onUserLogout?: (callback: () => void) => void;
-      onUserUpdated?: (callback: (user: any) => void) => void;
-      onUserCreated?: (callback: (user: any) => void) => void;
-      onUserDeleted?: (callback: (userId: number) => void) => void;
-
-      // 🔐 Activation Events
-      onActivationCompleted?: (callback: (data: any) => void) => void;
-      onActivationDeactivated?: (callback: () => void) => void;
-
-      // 📜 Audit Trail Events
-      onAuditTrailCreated?: (callback: (data: any) => void) => void;
-      onAuditTrailUpdated?: (callback: (data: any) => void) => void;
-      onAuditTrailDeleted?: (callback: (data: any) => void) => void;
-
-      // 🔔 Notification Events
-      onNotificationCreated?: (callback: (data: any) => void) => void;
-      onNotificationDeleted?: (callback: (id: number) => void) => void;
-      onNotificationUpdated?: (callback: (data: any) => void) => void;
-      onBulkNotificationsDeleted?: (callback: (count: number) => void) => void;
-      onNewNotification?: (callback: (data: any) => void) => void;
-      onNotificationRead?: (callback: (data: any) => void) => void;
-
-      // 🪟 Window Events
       onWindowMaximized?: (callback: () => void) => void;
       onWindowRestored?: (callback: () => void) => void;
       onWindowMinimized?: (callback: () => void) => void;
@@ -92,55 +32,18 @@ session?: (payload: { method: string; params?: Record<string, any> }) => Promise
       onWindowResized?: (callback: (bounds: any) => void) => void;
       onWindowMoved?: (callback: (position: any) => void) => void;
 
-      // 📊 Real-time Updates
-      onAssignmentUpdated?: (callback: (data: any) => void) => void;
-      onPaymentProcessed?: (callback: (data: any) => void) => void;
-      onDebtUpdated?: (callback: (data: any) => void) => void;
-      onDashboardUpdate?: (callback: (data: any) => void) => void;
+      // 🆕 Updater API (invoke)
+      updater: (payload: { method: string; params?: any }) => Promise<{
+        status: boolean;
+        message: string;
+        data: any;
+      }>;
 
-      // 📁 File Operations
-      exportToCSV?: (payload: any) => Promise<any>;
-      importFromCSV?: (payload: any) => Promise<any>;
-      generateReport?: (payload: any) => Promise<any>;
-
-      // 🖨️ Print Operations
-      printDocument?: (payload: any) => Promise<any>;
-      printPaymentSlip?: (payload: any) => Promise<any>;
-      printWorkerSummary?: (payload: any) => Promise<any>;
-
-      // 🔄 Sync Events
-      onSyncStart?: (callback: () => void) => void;
-      onSyncComplete?: (callback: (data: any) => void) => void;
-      onSyncError?: (callback: (error: any) => void) => void;
-
-      // 🛠️ Logging Utilities
-      log?: {
-        info: (message: string, data?: any) => void;
-        error: (message: string, error?: any) => void;
-        warn: (message: string, warning?: any) => void;
-        debug: (message: string, data?: any) => void;
-      };
-
-      // 📱 Mobile/Desktop Mode
-      isMobileMode?: () => Promise<boolean>;
-      toggleMobileMode?: () => void;
-
-      // 🔐 Security & Permissions
-      checkPermission?: (permission: string) => Promise<boolean>;
-      onPermissionChanged?: (callback: (data: any) => void) => void;
-
-      // 🌐 Network Status
-      getNetworkStatus?: () => Promise<any>;
-      onNetworkOnline?: (callback: () => void) => void;
-      onNetworkOffline?: (callback: () => void) => void;
-
-      // 💾 Backup & Restore
-      createBackup?: () => Promise<any>;
-      restoreBackup?: (payload: any) => Promise<any>;
-      onBackupComplete?: (callback: (data: any) => void) => void;
-
-      // 🔧 Utility Methods
-      showAbout?: () => void;
+      // 🎧 Generic event listener (returns cleanup function)
+      on: (
+        channel: string,
+        callback: (event: any, ...args: any[]) => void,
+      ) => () => void;
     };
   }
 }

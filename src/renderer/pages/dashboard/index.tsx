@@ -35,19 +35,19 @@ import {
 import {
   workerPerformanceAPI,
   type WorkersOverviewData,
-} from "../../apis/analytics/workerPerformance";
+} from "../../api/analytics/workerPerformance";
 import {
   financialAPI,
   type FinancialOverviewData,
-} from "../../apis/analytics/financial";
+} from "../../api/analytics/financial";
 import type {
   AssignmentOverviewData,
   LiveDashboardData,
-} from "../../apis/analytics/dashboard";
-import dashboardAPI from "../../apis/analytics/dashboard";
+} from "../../api/analytics/dashboard";
+import dashboardAPI from "../../api/analytics/dashboard";
 import systemConfigAPI, {
   type DefaultSessionData,
-} from "../../apis/core/system_config";
+} from "../../api/core/system_config";
 import { useDynamicWeather } from "../../hooks/useDynamicWeather";
 
 const DashboardPage: React.FC = () => {

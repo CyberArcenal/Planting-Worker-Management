@@ -1,9 +1,10 @@
 // @ts-check
-const os = require('os');
-const crypto = require('crypto');
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const os = require("os");
+const crypto = require("crypto");
+const { execSync } = require("child_process");
+const fs = require("fs");
+// @ts-ignore
+const path = require("path");
 
 class DeviceInfo {
   /**
@@ -13,16 +14,16 @@ class DeviceInfo {
   static async getMachineId() {
     try {
       const platform = process.platform;
-      let machineId = '';
+      let machineId = "";
 
       switch (platform) {
-        case 'win32':
+        case "win32":
           machineId = await this.getWindowsMachineId();
           break;
-        case 'darwin':
+        case "darwin":
           machineId = await this.getMacMachineId();
           break;
-        case 'linux':
+        case "linux":
           machineId = await this.getLinuxMachineId();
           break;
         default:
@@ -32,15 +33,15 @@ class DeviceInfo {
       // Combine with MAC address
       const macAddress = await this.getMacAddress();
       const combined = `${machineId}:${macAddress}`;
-      
+
       // Create SHA256 hash
       return crypto
-        .createHash('sha256')
+        .createHash("sha256")
         .update(combined)
-        .digest('hex')
+        .digest("hex")
         .toUpperCase();
     } catch (error) {
-      console.error('Error getting machine ID:', error);
+      console.error("Error getting machine ID:", error);
       return this.getFallbackId();
     }
   }
@@ -51,21 +52,21 @@ class DeviceInfo {
    */
   static async getWindowsMachineId() {
     try {
-      const stdout = execSync(
-        'wmic csproduct get uuid',
-        { encoding: 'utf-8', windowsHide: true }
-      );
-      const lines = stdout.split('\n');
-      return lines[1]?.trim() || '';
+      const stdout = execSync("wmic csproduct get uuid", {
+        encoding: "utf-8",
+        windowsHide: true,
+      });
+      const lines = stdout.split("\n");
+      return lines[1]?.trim() || "";
     } catch {
       // Fallback to serial number
       try {
-        const stdout = execSync(
-          'wmic bios get serialnumber',
-          { encoding: 'utf-8', windowsHide: true }
-        );
-        const lines = stdout.split('\n');
-        return lines[1]?.trim() || '';
+        const stdout = execSync("wmic bios get serialnumber", {
+          encoding: "utf-8",
+          windowsHide: true,
+        });
+        const lines = stdout.split("\n");
+        return lines[1]?.trim() || "";
       } catch {
         return os.hostname();
       }
@@ -79,8 +80,8 @@ class DeviceInfo {
   static async getMacMachineId() {
     try {
       const stdout = execSync(
-        'ioreg -rd1 -c IOPlatformExpertDevice | grep -E \'(UUID|IOPlatformSerialNumber)\'',
-        { encoding: 'utf-8' }
+        "ioreg -rd1 -c IOPlatformExpertDevice | grep -E '(UUID|IOPlatformSerialNumber)'",
+        { encoding: "utf-8" },
       );
       const match = stdout.match(/"IOPlatformSerialNumber" = "([^"]+)"/);
       return match ? match[1] : os.hostname();
@@ -96,14 +97,16 @@ class DeviceInfo {
   static async getLinuxMachineId() {
     try {
       // Try /etc/machine-id first
-      if (fs.existsSync('/etc/machine-id')) {
-        const content = fs.readFileSync('/etc/machine-id', 'utf-8').trim();
+      if (fs.existsSync("/etc/machine-id")) {
+        const content = fs.readFileSync("/etc/machine-id", "utf-8").trim();
         if (content) return content;
       }
 
       // Try /var/lib/dbus/machine-id
-      if (fs.existsSync('/var/lib/dbus/machine-id')) {
-        const content = fs.readFileSync('/var/lib/dbus/machine-id', 'utf-8').trim();
+      if (fs.existsSync("/var/lib/dbus/machine-id")) {
+        const content = fs
+          .readFileSync("/var/lib/dbus/machine-id", "utf-8")
+          .trim();
         if (content) return content;
       }
 
@@ -121,12 +124,12 @@ class DeviceInfo {
     const hostname = os.hostname();
     const arch = os.arch();
     const totalMem = os.totalmem();
-    
+
     const combined = `${hostname}:${arch}:${totalMem}`;
     return crypto
-      .createHash('md5')
+      .createHash("md5")
       .update(combined)
-      .digest('hex')
+      .digest("hex")
       .toUpperCase();
   }
 
@@ -137,13 +140,17 @@ class DeviceInfo {
   static async getMacAddress() {
     try {
       const networkInterfaces = os.networkInterfaces();
-      let macAddress = '';
+      let macAddress = "";
 
       for (const interfaceName in networkInterfaces) {
         const interfaces = networkInterfaces[interfaceName];
         // @ts-ignore
         for (const iface of interfaces) {
-          if (!iface.internal && iface.mac && iface.mac !== '00:00:00:00:00:00') {
+          if (
+            !iface.internal &&
+            iface.mac &&
+            iface.mac !== "00:00:00:00:00:00"
+          ) {
             macAddress = iface.mac;
             break;
           }
@@ -151,9 +158,9 @@ class DeviceInfo {
         if (macAddress) break;
       }
 
-      return macAddress || '00:00:00:00:00:00';
+      return macAddress || "00:00:00:00:00:00";
     } catch {
-      return '00:00:00:00:00:00';
+      return "00:00:00:00:00:00";
     }
   }
 
@@ -182,7 +189,7 @@ class DeviceInfo {
       // @ts-ignore
       cpuCount: os.cpus().length,
       homeDir: os.homedir(),
-      tempDir: os.tmpdir()
+      tempDir: os.tmpdir(),
     };
   }
 
@@ -198,21 +205,21 @@ class DeviceInfo {
   static async generateActivationRequest() {
     const fingerprint = await this.getDeviceFingerprint();
     const timestamp = new Date().toISOString();
-    
+
     // Create a hash of the fingerprint
     const dataString = JSON.stringify(fingerprint);
     const hash = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(dataString + timestamp)
-      .digest('hex');
+      .digest("hex");
 
     return {
       deviceId: fingerprint.deviceId,
       timestamp,
-      appVersion: require('../../package.json').version,
+      appVersion: require("../../package.json").version,
       data: dataString,
       // @ts-ignore
-      hash
+      hash,
     };
   }
 }

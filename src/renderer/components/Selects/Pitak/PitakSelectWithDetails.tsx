@@ -12,8 +12,8 @@ import {
   Calendar,
   AlertCircle,
 } from "lucide-react";
-import type { PitakData, PitakWithDetails } from "../../../apis/core/pitak";
-import pitakAPI from "../../../apis/core/pitak";
+import type { PitakData, PitakWithDetails } from "../../../api/core/pitak";
+import pitakAPI from "../../../api/core/pitak";
 
 interface PitakSelectWithDetailsProps {
   value: number | null;

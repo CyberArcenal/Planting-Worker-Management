@@ -1,8 +1,8 @@
 // components/BukidSelect.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Loader, TreePalm } from "lucide-react";
-import type { BukidData } from "../../../apis/core/bukid";
-import bukidAPI from "../../../apis/core/bukid";
+import type { BukidData } from "../../../api/core/bukid";
+import bukidAPI from "../../../api/core/bukid";
 
 interface BukidSelectProps {
   value: number | null;

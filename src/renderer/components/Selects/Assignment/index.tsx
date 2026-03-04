@@ -8,9 +8,9 @@ import {
   Filter,
   User,
 } from "lucide-react";
-import type { Assignment } from "../../../apis/core/assignment";
-import assignmentAPI from "../../../apis/core/assignment";
-import workerAPI from "../../../apis/core/worker"; // Import workerAPI
+import type { Assignment } from "../../../api/core/assignment";
+import assignmentAPI from "../../../api/core/assignment";
+import workerAPI from "../../../api/core/worker"; // Import workerAPI
 
 interface AssignmentSelectProps {
   value: number | null;

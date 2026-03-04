@@ -24,10 +24,10 @@ import { useMeasurementValidation } from "./hooks/useMeasurementValidation";
 import ResultsDisplay from "./components/ResultDisplay";
 
 // Types and APIs
-import type { PitakData } from "../../../../apis/core/pitak";
-import type { BukidData } from "../../../../apis/core/bukid";
-import bukidAPI from "../../../../apis/core/bukid";
-import pitakAPI from "../../../../apis/core/pitak";
+import type { PitakData } from "../../../../api/core/pitak";
+import type { BukidData } from "../../../../api/core/bukid";
+import bukidAPI from "../../../../api/core/bukid";
+import pitakAPI from "../../../../api/core/pitak";
 import { showError, showSuccess } from "../../../../utils/notification";
 import BukidSelect from "../../../../components/Selects/Bukid";
 import AdvancedGeometryForm from "./components/AdvancedGeometryForm";

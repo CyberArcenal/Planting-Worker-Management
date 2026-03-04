@@ -1,14 +1,15 @@
+// components/History/components/HistoryList.tsx
 import React, { useState } from "react";
 import { type HistoryType } from "../types/history.types";
-import type { PaymentHistoryItem as PaymentHistoryData } from "../../../apis/core/payment";
-import { type DebtHistoryItem as DebtHistoryData } from "../../../apis/core/debt";
+import type { PaymentHistory } from "../../../api/core/payment_history";
+import type { DebtHistory } from "../../../api/core/debt_history";
 import PaymentHistoryItem from "./PaymentHistoryItem";
 import DebtHistoryItem from "./DebtHistoryItem";
 
 interface HistoryListProps {
   viewType: HistoryType;
-  paymentHistory: PaymentHistoryData[];
-  debtHistory: DebtHistoryData[];
+  paymentHistory: PaymentHistory[];
+  debtHistory: DebtHistory[];
 }
 
 const HistoryList: React.FC<HistoryListProps> = ({

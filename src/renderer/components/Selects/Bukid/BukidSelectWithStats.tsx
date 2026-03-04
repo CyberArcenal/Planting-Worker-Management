@@ -10,8 +10,8 @@ import {
   BarChart3,
   Layers,
 } from "lucide-react";
-import type { BukidData, BukidSummaryData } from "../../../apis/core/bukid";
-import bukidAPI from "../../../apis/core/bukid";
+import type { BukidData, BukidSummaryData } from "../../../api/core/bukid";
+import bukidAPI from "../../../api/core/bukid";
 
 interface BukidSelectWithStatsProps {
   value: number | null;

@@ -1,3 +1,4 @@
+// components/History/index.tsx
 import React, { useState } from 'react';
 import { History, Download, RefreshCw, Users, DollarSign } from 'lucide-react';
 import { type HistoryType } from './types/history.types';
@@ -8,7 +9,7 @@ import HistoryViewToggle from './components/HistoryViewToggle';
 import HistoryStats from './components/HistoryStats';
 import HistoryFilters from './components/HistoryFilters';
 import HistoryList from './components/HistoryList';
-import PaymentPagination from '../Payment/Table/components/PaymentPagination';
+import PaymentPagination from '../Payment/components/PaymentPagination';
 
 interface HistoryPageProps {
   defaultView?: HistoryType;
@@ -35,8 +36,6 @@ const HistoryPage: React.FC<HistoryPageProps> = ({
   const {
     paymentHistory,
     debtHistory,
-    paymentHistorySummary,
-    debtHistorySummary,
     loading,
     error,
     totalPages,
@@ -72,10 +71,10 @@ const HistoryPage: React.FC<HistoryPageProps> = ({
   // Calculate unique workers
   const uniqueWorkers = () => {
     if (viewType === 'payment') {
-      const workerIds = new Set(paymentHistory.map(item => item.worker?.id).filter(Boolean));
+      const workerIds = new Set(paymentHistory.map(item => item.payment?.worker?.id).filter(Boolean));
       return workerIds.size;
     } else {
-      const workerIds = new Set(debtHistory.map(item => item.worker?.id).filter(Boolean));
+      const workerIds = new Set(debtHistory.map(item => item.debt?.worker?.id).filter(Boolean));
       return workerIds.size;
     }
   };
@@ -84,10 +83,8 @@ const HistoryPage: React.FC<HistoryPageProps> = ({
   const totalAmount = () => {
     if (viewType === 'payment') {
       return paymentHistory.reduce((sum, item) => {
-        const amountChange = Math.abs(
-          (item.changes.newAmount || 0) - (item.changes.oldAmount || 0)
-        );
-        return sum + amountChange;
+        const change = Math.abs((item.newAmount ?? 0) - (item.oldAmount ?? 0));
+        return sum + change;
       }, 0);
     } else {
       return debtHistory.reduce((sum, item) => sum + item.amountPaid, 0);
@@ -170,7 +167,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({
                 <p className="text-2xl font-bold text-gray-900">
                   {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD'
+                    currency: 'PHP'
                   }).format(totalAmount())}
                 </p>
               </div>

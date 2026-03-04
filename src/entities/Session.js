@@ -68,13 +68,6 @@ const Session = new EntitySchema({
       inverseSide: "session",
       cascade: true,
     },
-
-    userActivities: {
-      target: "UserActivity",
-      type: "one-to-many",
-      inverseSide: "session",
-      cascade: true,
-    },
   },
 });
 

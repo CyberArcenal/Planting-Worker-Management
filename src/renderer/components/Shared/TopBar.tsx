@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import systemConfigAPI from "../../apis/core/system_config";
+import systemConfigAPI from "../../api/core/system_config";
 import { kabAuthStore } from "../../lib/kabAuthStore";
 import { useDynamicWeather } from "../../hooks/useDynamicWeather";
 import UpdateNotifier from "./UpdateNotifier";
@@ -681,41 +681,6 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
               style={{ background: "var(--accent-red)" }}
             ></span>
           </button>
-
-          {/* Profile */}
-          <div
-            className="flex items-center gap-2 p-1 rounded-lg cursor-pointer"
-            onClick={() => navigate("/system/profile")}
-            style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-            }}
-          >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center"
-              style={{
-                background: "var(--accent-green)",
-                color: "white",
-              }}
-            >
-              <User className="w-5 h-5" />
-            </div>
-            <div className="hidden lg:block text-left">
-              <div className="text-sm font-medium" style={{ color: "white" }}>
-                <span className="truncate max-w-[120px]">
-                  {currentUser ? currentUser.username || "User" : "User"}
-                </span>
-              </div>
-              <div
-                className="text-xs"
-                style={{ color: "rgba(255,255,255,0.8)" }}
-              >
-                {defaultSession
-                  ? `Session: ${defaultSession.id}`
-                  : "Administrator"}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </header>

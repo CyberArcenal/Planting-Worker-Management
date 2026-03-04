@@ -24,7 +24,7 @@ const url = require("url");
 // TypeORM and Database
 require("reflect-metadata");
 const { AppDataSource } = require("./db/dataSource");
-const MigrationManager = require("../utils/migrationManager");
+const MigrationManager = require("../utils/dbUtils/migrationManager.js");
 
 // ===================== TYPE DEFINITIONS =====================
 /**
@@ -653,22 +653,22 @@ function registerIpcHandlers() {
   // Import FarmTrac specific IPC modules
   try {
     const ipcModules = [
-      "./ipc/activation.ipc",
-      "./ipc/assignment/index.ipc",
-      "./ipc/audit/index.ipc",
-      "./ipc/bukid/index.ipc",
-      "./ipc/dashboard/index.ipc",
-      "./ipc/debt/index.ipc",
-      // "./ipc/kabisilya/index.ipc",          // uncomment if needed
-      // "./ipc/notification/index.ipc",        // uncomment if needed
-      "./ipc/payment/index.ipc",
-      "./ipc/pitak/index.ipc",
-      "./ipc/user/index.ipc",
-      "./ipc/worker/index.ipc",
-      "./ipc/system_config.ipc",
-      "./ipc/windows_control.ipc",
-      "./ipc/attendance/index.ipc",
-      "./ipc/session/index.ipc",
+      "./ipc/core/activation/index.ipc.js",
+      "./ipc/core/assignment/index.ipc.js",
+      "./ipc/core/auditLog/index.ipc.js",
+      "./ipc/core/bukid/index.ipc.js",
+      "./ipc/reports/dashboard/index.ipc.js",
+      "./ipc/core/debt/index.ipc.js",
+      "./ipc/core/payment/index.ipc.js",
+      "./ipc/core/pitak/index.ipc.js",
+      "./ipc/core/user/index.ipc.js",
+      "./ipc/core/worker/index.ipc.js",
+      "./ipc/core/system_config.ipc.js",
+      "./ipc/core/windows_control.ipc.js",
+      "./ipc/core/attendance/index.ipc.js",
+      "./ipc/core/session/index.ipc.js",
+      "./ipc/core/notification/index.ipc.js",
+      "./ipc/core/notificationLog/index.ipc.js",
       "./ipc/utils/updater/index.ipc.js",
     ];
 
@@ -777,8 +777,9 @@ async function startupSequence() {
           <h1>Startup Failed</h1>
           <p>The application failed to start properly.</p>
           <pre style="background:#f0f0f0; padding:10px;">${
-// @ts-ignore
-          error.message}</pre>
+            // @ts-ignore
+            error.message
+          }</pre>
           <button onclick="window.close()">Close</button>
         </body>
       </html>

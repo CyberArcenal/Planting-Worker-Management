@@ -26,8 +26,8 @@ import { dialogs } from "../../utils/dialogs";
 import type {
   ActivationStatusData,
   DeviceInfoData,
-} from "../../apis/utils/activation";
-import activationAPI from "../../apis/utils/activation";
+} from "../../api/utils/activation";
+import activationAPI from "../../api/utils/activation";
 
 interface ActivationDialogProps {
   open: boolean;

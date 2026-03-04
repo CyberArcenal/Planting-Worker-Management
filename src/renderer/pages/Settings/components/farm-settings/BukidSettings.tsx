@@ -1,5 +1,5 @@
 import React from "react";
-import type { FarmBukidSettings } from "../../../../apis/core/system_config";
+import type { FarmBukidSettings } from "../../../../api/core/system_config";
 
 interface BukidSettingsProps {
   settings: FarmBukidSettings;

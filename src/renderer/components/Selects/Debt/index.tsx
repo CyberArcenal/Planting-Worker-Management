@@ -1,8 +1,8 @@
 // components/DebtSelect.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Loader, CreditCard } from "lucide-react";
-import type { DebtData } from "../../../apis/core/debt";
-import debtAPI from "../../../apis/core/debt";
+import type { DebtData } from "../../../api/core/debt";
+import debtAPI from "../../../api/core/debt";
 
 interface DebtSelectProps {
   value: number | null;

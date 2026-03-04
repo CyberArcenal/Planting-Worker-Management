@@ -5,12 +5,12 @@ import type {
   FinancialOverviewData,
   LiveDashboardData,
   WorkersOverviewData,
-} from "../../../apis/dashboard";
-import type { DefaultSessionData } from "../../../apis/core/system_config";
-import { workerPerformanceAPI } from "../../../apis/analytics/workerPerformance";
-import { financialAPI } from "../../../apis/analytics/financial";
-import dashboardAPI from "../../../apis/dashboard";
-import systemConfigAPI from "../../../apis/core/system_config";
+} from "../../../api/dashboard";
+import type { DefaultSessionData } from "../../../api/core/system_config";
+import { workerPerformanceAPI } from "../../../api/analytics/workerPerformance";
+import { financialAPI } from "../../../api/analytics/financial";
+import dashboardAPI from "../../../api/dashboard";
+import systemConfigAPI from "../../../api/core/system_config";
 
 export const useDashboardData = () => {
   const [loading, setLoading] = useState(true);

@@ -13,7 +13,7 @@ import { FinancialOverview } from "./components/FinancialOverview";
 import { WorkerPerformance } from "./components/WorkerPerformance";
 import WorkerFormDialog from "../Worker/Table/Dialogs/WorkerFormDialog";
 import { dialogs } from "../../utils/dialogs";
-import AssignmentFormDialog from "../Assignment/Dialogs/Form";
+import AssignmentFormDialog from "../Assignment/components/Dialogs/Form";
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();

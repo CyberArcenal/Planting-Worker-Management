@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ChevronRight as ChevronRightIcon } from "lucide-react";
 import SessionTableRow from "./SessionTableRow";
-import type { SessionListData } from "../../../apis/core/session";
+import type { SessionListData } from "../../../api/core/session";
 
 interface SessionTableViewProps {
   sessions: SessionListData[];

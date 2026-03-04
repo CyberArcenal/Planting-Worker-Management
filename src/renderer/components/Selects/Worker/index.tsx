@@ -1,8 +1,8 @@
 // components/WorkerSelect.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Loader, User } from "lucide-react";
-import type { WorkerData } from "../../../apis/core/worker";
-import workerAPI from "../../../apis/core/worker";
+import type { WorkerData } from "../../../api/core/worker";
+import workerAPI from "../../../api/core/worker";
 
 interface WorkerSelectProps {
   value: number | null;

@@ -1,8 +1,8 @@
 // components/UserSelect.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Loader, User } from "lucide-react";
-import type { UserData } from "../../../apis/core/user";
-import userAPI from "../../../apis/core/user";
+import type { UserData } from "../../../api/core/user";
+import userAPI from "../../../api/core/user";
 
 interface UserSelectProps {
   value: number | null;

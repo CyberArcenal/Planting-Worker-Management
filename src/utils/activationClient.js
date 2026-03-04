@@ -42,9 +42,11 @@ class ActivationClient {
 
         const protocol = url.protocol === "https:" ? https : http;
 
+        // @ts-ignore
         const req = protocol.request(options, (res) => {
           let body = "";
 
+          // @ts-ignore
           res.on("data", (chunk) => {
             body += chunk;
           });
@@ -76,6 +78,7 @@ class ActivationClient {
           });
         });
 
+        // @ts-ignore
         req.on("error", (error) => {
           reject(new Error(`Network error: ${error.message}`));
         });

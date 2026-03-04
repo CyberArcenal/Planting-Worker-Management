@@ -1,9 +1,9 @@
 // components/PitakSelect.tsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, ChevronDown, Loader, Layers, Filter } from "lucide-react";
-import type { PitakData } from "../../../apis/core/pitak";
-import pitakAPI from "../../../apis/core/pitak";
-import bukidAPI from "../../../apis/core/bukid"; // Import bukidAPI
+import type { PitakData } from "../../../api/core/pitak";
+import pitakAPI from "../../../api/core/pitak";
+import bukidAPI from "../../../api/core/bukid"; // Import bukidAPI
 
 interface PitakSelectProps {
   value: number | null;

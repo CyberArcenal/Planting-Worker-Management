@@ -11,7 +11,7 @@ import {
   CalendarDays,
   Clock,
 } from "lucide-react";
-import sessionAPI from "../../../apis/core/session";
+import sessionAPI from "../../../api/core/session";
 import { dialogs } from "../../../utils/dialogs";
 import { showSuccess, showError } from "../../../utils/notification";
 

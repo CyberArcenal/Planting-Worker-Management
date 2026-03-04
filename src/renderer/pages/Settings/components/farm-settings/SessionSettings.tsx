@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RefreshCw, Plus } from "lucide-react";
-import type { FarmSessionSettings } from "../../../../apis/core/system_config";
-import sessionAPI, {
-  type SessionListData,
-} from "../../../../apis/core/session";
+import type { FarmSessionSettings } from "../../../../api/core/system_config";
+import sessionAPI, { type SessionListData } from "../../../../api/core/session";
 import { useNavigate } from "react-router";
 
 interface SessionSettingsProps {

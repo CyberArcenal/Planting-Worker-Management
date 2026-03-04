@@ -1,6 +1,6 @@
 // Kabisilya Management Auth Store
 
-import type { UserData } from "../apis/core/user";
+import type { UserData } from "../api/core/user";
 
 export interface KabUser extends UserData {
   permissions: string[];
