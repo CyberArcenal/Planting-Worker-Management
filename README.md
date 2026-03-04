@@ -129,7 +129,7 @@ If you find this project helpful, consider supporting its development:
 ## 📱 Donate via GCash
 Scan the QR code below to send your support:
 
-![GCash QR](screenshots/gcash-qr.JPG)
+![GCash QR](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/gcash-qr.JPG?raw=true)
 
 ---
 
