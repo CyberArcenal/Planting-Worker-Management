@@ -78,8 +78,8 @@ Originally designed for kabisilya workflows, now expanded into a **general farm 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/farm-management.git
-   cd farm-management
+   git clone https://github.com/CyberArcenal/Kabisilya-Farm-Laborer-Management-System-FLMS.git
+   cd Kabisilya-Farm-Laborer-Management-System-FLMS
    ```
 
 2. Install dependencies:
