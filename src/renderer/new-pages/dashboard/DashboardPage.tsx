@@ -12,7 +12,7 @@ import { FarmStatus } from "./components/FarmStatus";
 import { FinancialOverview } from "./components/FinancialOverview";
 import { WorkerPerformance } from "./components/WorkerPerformance";
 import { dialogs } from "../../utils/dialogs";
-import AssignmentFormDialog from "../../pages/Assignment/components/Dialogs/AssignmentForm";
+import AssignmentFormDialog from "../assignments/components/AssignmentForm";
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();

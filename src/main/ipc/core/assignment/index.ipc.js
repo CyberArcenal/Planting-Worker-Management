@@ -24,6 +24,8 @@ class AssignmentHandler {
     this.updateAssignment = this.importHandler("./update.ipc");
     this.deleteAssignment = this.importHandler("./delete.ipc");
     this.updateStatus = this.importHandler("./update_status.ipc");
+
+    this.createBulkAssignments = this.importHandler("./bulk/create.ipc");
   }
 
   importHandler(path) {
@@ -68,6 +70,11 @@ class AssignmentHandler {
           return await this.getAssignmentsBySession(enrichedParams);
         case "getAssignmentStats":
           return await this.getAssignmentStats(enrichedParams);
+        case "createBulkAssignments":
+          return await this.handleWithTransaction(
+            this.createBulkAssignments,
+            enrichedParams,
+          );
 
         // WRITE (with transaction)
         case "createAssignment":

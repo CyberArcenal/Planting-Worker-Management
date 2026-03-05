@@ -13,8 +13,8 @@ import WorkersTable from "./components/WorkersTable";
 import WorkerViewDialog from "./components/WorkerViewDialog";
 import { useWorkerForm } from "./hooks/useWorkerForm";
 import { useWorkerView } from "./hooks/useWorkerView";
-import AssignmentFormDialog from "../../pages/Assignment/components/Dialogs/AssignmentForm";
-import { useAssignmentFormDialog } from "../../pages/Assignment/components/Dialogs/AssignmentForm/hooks/useAssignmentFormDialog";
+import AssignmentFormDialog from "../assignments/components/AssignmentForm";
+import { useAssignmentFormDialog } from "../assignments/components/AssignmentForm/hooks/useAssignmentFormDialog";
 
 const WorkersPage: React.FC = () => {
   const {

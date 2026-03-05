@@ -6,14 +6,12 @@ import type { Assignment } from "../../../api/core/assignment";
 interface AssignmentActionsDropdownProps {
   assignment: Assignment;
   onView: (assignment: Assignment) => void;
-  onEdit: (assignment: Assignment) => void;
   onDelete: (assignment: Assignment) => void;
 }
 
 const AssignmentActionsDropdown: React.FC<AssignmentActionsDropdownProps> = ({
   assignment,
   onView,
-  onEdit,
   onDelete,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -91,17 +89,6 @@ const AssignmentActionsDropdown: React.FC<AssignmentActionsDropdownProps> = ({
             >
               <Eye className="w-4 h-4 text-sky-500" />
               <span>View Details</span>
-            </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAction(() => onEdit(assignment));
-              }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
-            >
-              <Edit className="w-4 h-4 text-yellow-500" />
-              <span>Edit Assignment</span>
             </button>
 
             <div className="border-t border-gray-200 my-1"></div>

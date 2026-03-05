@@ -13,7 +13,6 @@ interface AssignmentsTableProps {
   onSort: (key: string) => void;
   sortConfig: { key: string; direction: "asc" | "desc" };
   onView: (assignment: Assignment) => void;
-  onEdit: (assignment: Assignment) => void;
   onDelete: (assignment: Assignment) => void;
 }
 
@@ -25,7 +24,6 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   onSort,
   sortConfig,
   onView,
-  onEdit,
   onDelete,
 }) => {
   const getSortIcon = (key: string) => {
@@ -184,7 +182,6 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                 <AssignmentActionsDropdown
                   assignment={assignment}
                   onView={onView}
-                  onEdit={onEdit}
                   onDelete={onDelete}
                 />
               </td>

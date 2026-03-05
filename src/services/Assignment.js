@@ -41,7 +41,7 @@ class AssignmentService {
   }
 
   /**
-   * Create a new assignment with automatic luwangCount distribution.
+   * Create a new assignment – luwangCount is temporary (0). It will be recalculated by the subscriber.
    * @param {Object} data - { workerId, pitakId, sessionId, assignmentDate, notes? }
    * @param {string} user - user identifier for audit log
    */
@@ -83,24 +83,12 @@ class AssignmentService {
       });
       if (existing) {
         throw new Error(
-          "An assignment already exists for this worker, pitak, and session combination",
+          "An assignment already exists for this worker, pitak, and session combination"
         );
       }
 
-      // Count current active assignments for the same pitak and session (excluding the new one)
-      const currentAssignments = await repo.count({
-        where: {
-          pitak: { id: data.pitakId },
-          session: { id: data.sessionId },
-          status: AssignmentStatus.ACTIVE,
-        },
-      });
-
-      // Compute luwangCount as pitak.totalLuwang divided equally among all assigned workers
-      const totalLuwang = parseFloat(pitak.totalLuwang) || 0;
-      const newLuwangCount = totalLuwang / (currentAssignments + 1);
-      // Round to 2 decimal places (match decimal(5,2) precision)
-      const luwangCount = Math.round(newLuwangCount * 100) / 100;
+      // Temporary luwangCount – will be corrected by subscriber
+      const luwangCount = 0;
 
       // Create entity
       const assignmentData = {
@@ -197,7 +185,7 @@ class AssignmentService {
 
     if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
       throw new Error(
-        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+        `Invalid status transition from ${oldStatus} to ${newStatus}`
       );
     }
 
@@ -210,7 +198,7 @@ class AssignmentService {
       id,
       { status: oldStatus },
       { status: newStatus },
-      user,
+      user
     );
     return saved;
   }

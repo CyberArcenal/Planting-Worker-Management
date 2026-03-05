@@ -7,12 +7,15 @@ import Pagination from "../../components/Shared/Pagination";
 import Button from "../../components/UI/Button";
 import { dialogs } from "../../utils/dialogs";
 import { showError, showSuccess } from "../../utils/notification";
-import AssignmentFormDialog from "./components/AssignmentFormDialog";
+// import AssignmentFormDialog from "./components/AssignmentFormDialog";
 import AssignmentsTable from "./components/AssignmentsTable";
 import AssignmentViewDialog from "./components/AssignmentViewDialog";
 import FilterBar from "./components/FilterBar";
-import { useAssignmentForm } from "./hooks/useAssignmentForm";
+// import { useAssignmentForm } from "./hooks/useAssignmentForm";
 import { useAssignmentView } from "./hooks/useAssignmentView";
+import AssignmentFormDialog from "./components/AssignmentForm";
+import { useAssignmentForm } from "./components/AssignmentForm/hooks/useAssignmentForm";
+import { useAssignmentFormDialog } from "./components/AssignmentForm/hooks/useAssignmentFormDialog";
 
 const AssignmentsPage: React.FC = () => {
   const {
@@ -37,7 +40,7 @@ const AssignmentsPage: React.FC = () => {
     handleSort,
   } = useAssignments();
 
-  const formDialog = useAssignmentForm();
+  const formDialog = useAssignmentFormDialog();
   const viewDialog = useAssignmentView();
 
   const [showFilters, setShowFilters] = useState(false);
@@ -329,7 +332,6 @@ const AssignmentsPage: React.FC = () => {
             onSort={handleSort}
             sortConfig={sortConfig}
             onView={(a) => viewDialog.open(a.id)}
-            onEdit={formDialog.openEdit}
             onDelete={handleDelete}
           />
 
@@ -373,7 +375,7 @@ const AssignmentsPage: React.FC = () => {
                     backgroundColor: "var(--accent-green)",
                     color: "white",
                   }}
-                  onClick={formDialog.openAdd}
+                  onClick={() => {formDialog.openAdd([])}}
                 >
                   Add First Assignment
                 </button>
@@ -401,9 +403,6 @@ const AssignmentsPage: React.FC = () => {
       {/* Dialogs */}
       <AssignmentFormDialog
         isOpen={formDialog.isOpen}
-        mode={formDialog.mode}
-        assignmentId={formDialog.assignmentId}
-        initialData={formDialog.initialData}
         onClose={formDialog.close}
         onSuccess={reload}
       />

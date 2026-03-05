@@ -183,6 +183,28 @@ class AssignmentAPI {
   }
 
   /**
+   * Create multiple assignments at once (bulk)
+   */
+  async createBulk(data: {
+    workerIds: number[];
+    pitakId: number;
+    sessionId: number;
+    assignmentDate: string;
+    notes?: string;
+  }): Promise<AssignmentsResponse> {
+    try {
+      const response = await this.call<AssignmentsResponse>(
+        "createBulkAssignments",
+        data,
+      );
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to create assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create assignments");
+    }
+  }
+
+  /**
    * Update an existing assignment
    * All fields are optional; only provided fields will be updated.
    */
@@ -212,20 +234,23 @@ class AssignmentAPI {
   }
 
   /**
- * Update assignment status
- * @param id - Assignment ID
- * @param status - New status ('active', 'completed', 'cancelled')
- */
-async updateStatus(id: number, status: string): Promise<AssignmentResponse> {
-  try {
-    if (!id || id <= 0) throw new Error("Invalid ID");
-    const response = await this.call<AssignmentResponse>("updateStatus", { id, status });
-    if (response.status) return response;
-    throw new Error(response.message || "Failed to update assignment status");
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to update assignment status");
+   * Update assignment status
+   * @param id - Assignment ID
+   * @param status - New status ('active', 'completed', 'cancelled')
+   */
+  async updateStatus(id: number, status: string): Promise<AssignmentResponse> {
+    try {
+      if (!id || id <= 0) throw new Error("Invalid ID");
+      const response = await this.call<AssignmentResponse>("updateStatus", {
+        id,
+        status,
+      });
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to update assignment status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update assignment status");
+    }
   }
-}
 
   /**
    * Delete (cancel) an assignment

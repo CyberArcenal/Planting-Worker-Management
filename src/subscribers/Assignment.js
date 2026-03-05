@@ -1,5 +1,4 @@
 // src/subscribers/AssignmentSubscriber.js
-// @ts-check
 const Assignment = require("../entities/Assignment");
 const { AppDataSource } = require("../main/db/datasource");
 const {
@@ -21,152 +20,175 @@ class AssignmentSubscriber {
   }
 
   /**
-   * @param {any} entity
+   * @param {Assignment} entity
    */
   async beforeInsert(entity) {
     try {
-      // @ts-ignore
       logger.info("[AssignmentSubscriber] beforeInsert", {
-        entity: JSON.parse(JSON.stringify(entity)),
+        id: entity.id,
+        status: entity.status,
       });
     } catch (err) {
-      // @ts-ignore
-      logger.error("[AssignmentSubscriber] beforeInsert error", err);
+      logger.error("[AssignmentSubscriber] beforeInsert logging error", err);
     }
   }
 
   /**
-   * @param {{ id: any; }} entity
+   * @param {Assignment} entity - The saved assignment (may not have relations)
    */
   async afterInsert(entity) {
     try {
-      // @ts-ignore
       logger.info("[AssignmentSubscriber] afterInsert", {
-        entity: JSON.parse(JSON.stringify(entity)),
+        id: entity.id,
+        status: entity.status,
       });
-      // When a new assignment is created, it may be in 'pending' or 'active' state.
-      // We'll treat it as "initiated" and call a method.
+
       const hydrated = await this._hydrateAssignment(entity.id);
-      if (hydrated) {
-        await this.transitionService.onInitiated(hydrated, "system");
+      if (!hydrated) return;
+
+      const pitakId = hydrated.pitak?.id;
+      const sessionId = hydrated.session?.id;
+      if (pitakId && sessionId) {
+        await this.transitionService.recalculateLuWangForPitakSession(
+          pitakId,
+          sessionId,
+          "system",
+        );
       }
+
+      await this.transitionService.onInitiated(hydrated, null, "system");
     } catch (err) {
-      // @ts-ignore
       logger.error("[AssignmentSubscriber] afterInsert error", err);
     }
   }
 
   /**
-   * @param {any} entity
+   * @param {Assignment} entity
    */
   async beforeUpdate(entity) {
     try {
-      // @ts-ignore
       logger.info("[AssignmentSubscriber] beforeUpdate", {
-        entity: JSON.parse(JSON.stringify(entity)),
+        id: entity.id,
+        status: entity.status,
       });
     } catch (err) {
-      // @ts-ignore
-      logger.error("[AssignmentSubscriber] beforeUpdate error", err);
+      logger.error("[AssignmentSubscriber] beforeUpdate logging error", err);
     }
   }
 
   /**
-   * @param {{ entity: any; databaseEntity: any; }} event
+   * @param {{ databaseEntity: Assignment, entity: Assignment }} event
    */
   async afterUpdate(event) {
-    if (!event.entity) return;
+    const { databaseEntity, entity } = event;
+    if (!entity) return;
 
-    // @ts-ignore
-    logger.info("[AssignmentSubscriber] afterUpdate", {
-      entity: JSON.parse(JSON.stringify(event.entity)),
-    });
+    try {
+      logger.info("[AssignmentSubscriber] afterUpdate", {
+        id: entity.id,
+        oldStatus: databaseEntity?.status,
+        newStatus: entity.status,
+      });
 
-    const oldAssignment = event.databaseEntity;
-    const newAssignment = event.entity;
+      const oldStatus = databaseEntity?.status;
+      const newStatus = entity.status;
 
-    // If status didn't change, skip
-    if (oldAssignment && oldAssignment.status === newAssignment.status) {
-      return;
-    }
+      if (oldStatus !== newStatus) {
+        const hydrated = await this._hydrateAssignment(entity.id);
+        if (!hydrated) return;
 
-    // Hydrate the assignment with needed relations
-    const hydrated = await this._hydrateAssignment(newAssignment.id);
-    if (!hydrated) return;
+        const pitakId = hydrated.pitak?.id;
+        const sessionId = hydrated.session?.id;
+        if (pitakId && sessionId) {
+          await this.transitionService.recalculateLuWangForPitakSession(
+            pitakId,
+            sessionId,
+            "system",
+          );
+        }
 
-    // Handle each possible status transition
-    switch (newAssignment.status) {
-      case "active":
-        // Only call onActivate if coming from initiated (or possibly other statuses)
-        await this.transitionService.onActivate(
-          hydrated,
-          oldAssignment?.status,
-          "system",
-        );
-        break;
-      case "completed":
-        await this.transitionService.onComplete(
-          // @ts-ignore
-          hydrated,
-          oldAssignment?.status,
-          "system",
-        );
-        break;
-      case "cancelled":
-        await this.transitionService.onCancel(
-          hydrated,
-          oldAssignment?.status,
-          "system",
-        );
-        break;
-      case "initiated":
-        // Could happen if an active assignment is reset (rare)
-        await this.transitionService.onInitiated(
-          hydrated,
-          oldAssignment?.status,
-          // @ts-ignore
-          "system",
-        );
-        break;
-      default:
-        logger.warn(
-          `[AssignmentSubscriber] Unhandled status transition: ${oldAssignment?.status} -> ${newAssignment.status}`,
-        );
+        switch (newStatus) {
+          case "active":
+            await this.transitionService.onActivate(
+              hydrated,
+              oldStatus,
+              "system",
+            );
+            break;
+          case "completed":
+            await this.transitionService.onComplete(
+              hydrated,
+              oldStatus,
+              "system",
+            );
+            break;
+          case "cancelled":
+            await this.transitionService.onCancel(
+              hydrated,
+              oldStatus,
+              "system",
+            );
+            break;
+          case "initiated":
+            await this.transitionService.onInitiated(
+              hydrated,
+              oldStatus,
+              "system",
+            );
+            break;
+          default:
+            logger.warn(
+              `[AssignmentSubscriber] Unhandled status transition: ${oldStatus} -> ${newStatus}`,
+            );
+        }
+      }
+    } catch (err) {
+      logger.error("[AssignmentSubscriber] afterUpdate error", err);
     }
   }
 
   /**
-   * @param {any} entity
+   * @param {Assignment} entity
    */
   async beforeRemove(entity) {
     try {
-      // @ts-ignore
       logger.info("[AssignmentSubscriber] beforeRemove", {
-        entity: JSON.parse(JSON.stringify(entity)),
+        id: entity.id,
+        status: entity.status,
       });
     } catch (err) {
-      // @ts-ignore
-      logger.error("[AssignmentSubscriber] beforeRemove error", err);
+      logger.error("[AssignmentSubscriber] beforeRemove logging error", err);
     }
   }
 
   /**
-   * @param {any} event
+   * @param {{ databaseEntity: Assignment, entityId: number }} event
    */
   async afterRemove(event) {
+    const { databaseEntity, entityId } = event;
     try {
-      // @ts-ignore
       logger.info("[AssignmentSubscriber] afterRemove", {
-        event: JSON.parse(JSON.stringify(event)),
+        id: entityId,
+        status: databaseEntity?.status,
+        pitakId: databaseEntity?.pitak?.id,
+        sessionId: databaseEntity?.session?.id,
       });
+
+      if (databaseEntity?.pitak?.id && databaseEntity?.session?.id) {
+        await this.transitionService.recalculateLuWangForPitakSession(
+          databaseEntity.pitak.id,
+          databaseEntity.session.id,
+          "system",
+        );
+      }
     } catch (err) {
-      // @ts-ignore
       logger.error("[AssignmentSubscriber] afterRemove error", err);
     }
   }
 
   /**
-   * @param {any} assignmentId
+   * @param {number} assignmentId
+   * @returns {Promise<Assignment|null>}
    */
   async _hydrateAssignment(assignmentId) {
     const assignmentRepo = AppDataSource.getRepository(Assignment);

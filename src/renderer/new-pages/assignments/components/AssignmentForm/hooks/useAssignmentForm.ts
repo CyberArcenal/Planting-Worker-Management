@@ -1,11 +1,15 @@
 // src/renderer/pages/assignments/hooks/useAssignmentForm.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type { Assignment } from "../../../../../../api/core/assignment";
-import systemConfigAPI from "../../../../../../api/core/system_config";
-import workerAPI from "../../../../../../api/core/worker";
-import assignmentAPI from "../../../../../../api/core/assignment";
-import { showError } from "../../../../../../utils/notification";
-import type { Worker } from "../../../../../../api/core/worker";
+import type { Assignment } from "../../../../../api/core/assignment";
+import systemConfigAPI from "../../../../../api/core/system_config";
+import workerAPI from "../../../../../api/core/worker";
+import assignmentAPI from "../../../../../api/core/assignment";
+import { showError } from "../../../../../utils/notification";
+import type { Worker } from "../../../../../api/core/worker";
+import {
+  useDefaultSessionId,
+  useFarmAssignmentSettings,
+} from "../../../../../utils/config/farmConfig";
 export interface AssignmentFormData {
   pitakId: number | null;
   assignmentDate: string;
@@ -39,7 +43,7 @@ export const useAssignmentForm = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Session state (default session ID)
-  const [sessionId, setSessionId] = useState<number | null>(null);
+  const sessionId = useDefaultSessionId();
 
   // Worker selection states
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,23 +61,6 @@ export const useAssignmentForm = ({
   >([]);
   const [checkingAssignments, setCheckingAssignments] = useState(false);
 
-  // Fetch default session on mount
-  useEffect(() => {
-    const fetchDefaultSession = async () => {
-      try {
-        const response = await systemConfigAPI.getDefaultSessionData();
-        if (response.status && response.data) {
-          setSessionId(response.data.id);
-        } else {
-          console.warn("No default session found; assignments may fail.");
-        }
-      } catch (err) {
-        console.error("Error fetching default session:", err);
-      }
-    };
-    fetchDefaultSession();
-  }, []);
-
   // Fetch initial workers based on workerIds prop
   useEffect(() => {
     const fetchInitialWorkers = async () => {
@@ -88,7 +75,9 @@ export const useAssignmentForm = ({
         const workerResponses = await Promise.all(workerPromises);
         const validWorkers = workerResponses
           .filter(
-            (response): response is { status: boolean; message: '', data: Worker } =>
+            (
+              response,
+            ): response is { status: boolean; message: ""; data: Worker } =>
               response !== null && response.status && !!response.data,
           )
           .map((response) => response.data);
@@ -241,49 +230,66 @@ export const useAssignmentForm = ({
   }, [formData.pitakId, formData.assignmentDate, availableWorkers]);
 
   // Handlers
-  const handleChange = useCallback((field: keyof AssignmentFormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  }, [errors]);
+  const handleChange = useCallback(
+    (field: keyof AssignmentFormData, value: any) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    },
+    [errors],
+  );
 
-  const getWorkerAssignmentStatus = useCallback((workerId: number) => {
-    const otherAssignments = assignedToOtherPitaks.get(workerId) || [];
-    const isAvailable = availableForAssignment.includes(workerId);
-    return {
-      hasOtherAssignments: otherAssignments.length > 0,
-      isAvailable,
-      otherAssignments,
-    };
-  }, [assignedToOtherPitaks, availableForAssignment]);
+  const getWorkerAssignmentStatus = useCallback(
+    (workerId: number) => {
+      const otherAssignments = assignedToOtherPitaks.get(workerId) || [];
+      const isAvailable = availableForAssignment.includes(workerId);
+      return {
+        hasOtherAssignments: otherAssignments.length > 0,
+        isAvailable,
+        otherAssignments,
+      };
+    },
+    [assignedToOtherPitaks, availableForAssignment],
+  );
 
-  const toggleWorkerSelection = useCallback((worker: Worker) => {
-    const assignmentStatus = getWorkerAssignmentStatus(worker.id);
+  const toggleWorkerSelection = useCallback(
+    (worker: Worker) => {
+      const assignmentStatus = getWorkerAssignmentStatus(worker.id);
 
-    if (assignmentStatus.hasOtherAssignments) {
-      const confirmAdd = window.confirm(
-        `This worker is already assigned to other pitaks on ${formData.assignmentDate}. Do you want to assign them anyway?`,
-      );
-      if (!confirmAdd) return;
-    }
+      if (assignmentStatus.hasOtherAssignments) {
+        const confirmAdd = window.confirm(
+          `This worker is already assigned to other pitaks on ${formData.assignmentDate}. Do you want to assign them anyway?`,
+        );
+        if (!confirmAdd) return;
+      }
 
-    const isSelected = formData.workers.some((w) => w.id === worker.id);
-    let updatedWorkers;
+      const isSelected = formData.workers.some((w) => w.id === worker.id);
+      let updatedWorkers;
 
-    if (isSelected) {
-      updatedWorkers = formData.workers.filter((w) => w.id !== worker.id);
-    } else {
-      updatedWorkers = [...formData.workers, worker];
-    }
+      if (isSelected) {
+        updatedWorkers = formData.workers.filter((w) => w.id !== worker.id);
+      } else {
+        updatedWorkers = [...formData.workers, worker];
+      }
 
-    handleChange("workers", updatedWorkers);
-  }, [formData.workers, formData.assignmentDate, getWorkerAssignmentStatus, handleChange]);
+      handleChange("workers", updatedWorkers);
+    },
+    [
+      formData.workers,
+      formData.assignmentDate,
+      getWorkerAssignmentStatus,
+      handleChange,
+    ],
+  );
 
-  const removeWorker = useCallback((workerId: number) => {
-    const updatedWorkers = formData.workers.filter((w) => w.id !== workerId);
-    handleChange("workers", updatedWorkers);
-  }, [formData.workers, handleChange]);
+  const removeWorker = useCallback(
+    (workerId: number) => {
+      const updatedWorkers = formData.workers.filter((w) => w.id !== workerId);
+      handleChange("workers", updatedWorkers);
+    },
+    [formData.workers, handleChange],
+  );
 
   const clearAllWorkers = useCallback(() => {
     handleChange("workers", []);
@@ -336,63 +342,76 @@ export const useAssignmentForm = ({
   }, [formData, sessionId]);
 
   const isSubmitDisabled = useMemo(() => {
-    return formData.workers.length === 0 ||
+    return (
+      formData.workers.length === 0 ||
       !formData.assignmentDate ||
       !formData.pitakId ||
-      !sessionId;
-  }, [formData.workers.length, formData.assignmentDate, formData.pitakId, sessionId]);
+      !sessionId
+    );
+  }, [
+    formData.workers.length,
+    formData.assignmentDate,
+    formData.pitakId,
+    sessionId,
+  ]);
 
   // Submit handler
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
 
-    if (!validateForm()) {
-      showError("Please fix the errors in the form");
-      return;
-    }
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    try {
-      setSubmitting(true);
-
-      // Cancel old assignment if this is a reassignment
-      if (isReassignment && reassignmentAssignmentId) {
-        await assignmentAPI.update(reassignmentAssignmentId, {
-          status: "cancelled",
-          notes: "Reassigned to new plot",
-        });
+      if (!validateForm()) {
+        showError("Please fix the errors in the form");
+        return;
       }
 
-      // Create new assignments for each selected worker
-      const createdAssignments: Assignment[] = [];
-      for (const worker of formData.workers) {
-        const response = await assignmentAPI.create({
-          workerId: worker.id,
+      try {
+        setSubmitting(true);
+
+        // Cancel old assignment if this is a reassignment
+        if (isReassignment && reassignmentAssignmentId) {
+          await assignmentAPI.update(reassignmentAssignmentId, {
+            status: "cancelled",
+            notes: "Reassigned to new plot",
+          });
+        }
+
+        // Create new assignments using bulk method
+        const workerIds = formData.workers.map((w) => w.id);
+        const response = await assignmentAPI.createBulk({
+          workerIds,
           pitakId: formData.pitakId!,
           sessionId: sessionId!,
-          luwangCount: 1, // default; could be made configurable later
           assignmentDate: formData.assignmentDate,
           notes: formData.notes.trim() || undefined,
-          status: "active",
         });
 
         if (response.status && response.data) {
-          createdAssignments.push(response.data);
+          if (onSuccess) {
+            onSuccess(response.data); // response.data is array of assignments
+          }
+          onClose();
         } else {
-          throw new Error(response.message || "Failed to create assignment");
+          throw new Error(response.message || "Failed to create assignments");
         }
+      } catch (error: any) {
+        console.error("Error submitting form:", error);
+        showError(error.message || "Failed to save assignments");
+      } finally {
+        setSubmitting(false);
       }
-
-      if (onSuccess) {
-        onSuccess(createdAssignments);
-      }
-      onClose();
-    } catch (error: any) {
-      console.error("Error submitting form:", error);
-      showError(error.message || "Failed to save assignments");
-    } finally {
-      setSubmitting(false);
-    }
-  }, [validateForm, isReassignment, reassignmentAssignmentId, formData, sessionId, onSuccess, onClose]);
+    },
+    [
+      validateForm,
+      isReassignment,
+      reassignmentAssignmentId,
+      formData,
+      sessionId,
+      onSuccess,
+      onClose,
+    ],
+  );
 
   const close = useCallback(() => {
     onClose();

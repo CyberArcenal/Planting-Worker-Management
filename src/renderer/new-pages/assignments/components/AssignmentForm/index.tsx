@@ -18,7 +18,7 @@ import {
   UserX,
 } from "lucide-react";
 import { useAssignmentForm } from "./hooks/useAssignmentForm";
-import PitakSelect from "../../../../../components/Selects/Pitak";
+import PitakSelect from "../../../../components/Selects/Pitak";
 interface AssignmentFormDialogProps {
   isOpen: boolean;
   workerIds?: number[];
