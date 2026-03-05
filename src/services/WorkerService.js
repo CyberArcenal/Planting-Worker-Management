@@ -1,6 +1,5 @@
 // services/WorkerService.js
 
-
 const auditLogger = require("../utils/auditLogger");
 
 class WorkerService {
@@ -9,7 +8,7 @@ class WorkerService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Worker = require("../entities/Worker");
 
     if (!AppDataSource.isInitialized) {
@@ -36,7 +35,8 @@ class WorkerService {
       // Email uniqueness
       if (data.email) {
         const existing = await repo.findOne({ where: { email: data.email } });
-        if (existing) throw new Error(`Worker with email "${data.email}" already exists`);
+        if (existing)
+          throw new Error(`Worker with email "${data.email}" already exists`);
       }
 
       const worker = repo.create({
@@ -64,8 +64,11 @@ class WorkerService {
 
       // Email uniqueness if changed
       if (data.email && data.email !== existing.email) {
-        const emailExists = await repo.findOne({ where: { email: data.email } });
-        if (emailExists) throw new Error(`Worker with email "${data.email}" already exists`);
+        const emailExists = await repo.findOne({
+          where: { email: data.email },
+        });
+        if (emailExists)
+          throw new Error(`Worker with email "${data.email}" already exists`);
       }
 
       Object.assign(existing, data);
@@ -78,6 +81,44 @@ class WorkerService {
       console.error("Failed to update worker:", error.message);
       throw error;
     }
+  }
+
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const repo = await this.getRepository();
+
+    const worker = await repo.findOne({ where: { id } });
+    if (!worker) throw new Error(`Worker with ID ${id} not found`);
+
+    const oldStatus = worker.status;
+    if (oldStatus === newStatus) return worker;
+
+    // Allowed transitions for worker statuses
+    const allowedTransitions = {
+      active: ["inactive", "on-leave", "terminated"],
+      inactive: ["active", "terminated"],
+      "on-leave": ["active", "terminated"],
+      terminated: [],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    worker.status = newStatus;
+    worker.updatedAt = new Date();
+
+    const saved = await updateDb(repo, worker);
+    await auditLogger.logUpdate(
+      "Worker",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
   }
 
   async delete(id, user = "system") {
@@ -132,9 +173,12 @@ class WorkerService {
         qb.andWhere("worker.status = :status", { status: options.status });
       }
       if (options.search) {
-        qb.andWhere("(worker.name LIKE :search OR worker.email LIKE :search OR worker.contact LIKE :search)", {
-          search: `%${options.search}%`,
-        });
+        qb.andWhere(
+          "(worker.name LIKE :search OR worker.email LIKE :search OR worker.contact LIKE :search)",
+          {
+            search: `%${options.search}%`,
+          },
+        );
       }
 
       const sortBy = options.sortBy || "createdAt";

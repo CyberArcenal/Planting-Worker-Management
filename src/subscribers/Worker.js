@@ -2,7 +2,9 @@
 // @ts-check
 const Worker = require("../entities/Worker");
 const { AppDataSource } = require("../main/db/datasource");
-const { WorkerStateTransitionService } = require("../stateTransitionService/Worker");
+const {
+  WorkerStateTransitionService,
+} = require("../stateTransitionService/Worker");
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading WorkerSubscriber");
@@ -23,7 +25,9 @@ class WorkerSubscriber {
     const entity = event.entity;
     try {
       // @ts-ignore
-      logger.info("[WorkerSubscriber] afterInsert", { entity: JSON.parse(JSON.stringify(entity)) });
+      logger.info("[WorkerSubscriber] afterInsert", {
+        entity: JSON.parse(JSON.stringify(entity)),
+      });
     } catch (err) {
       // @ts-ignore
       logger.error("[WorkerSubscriber] afterInsert error", err);
@@ -52,16 +56,36 @@ class WorkerSubscriber {
 
     switch (newWorker.status) {
       case "active":
-        await this.transitionService.onActivate(hydrated, manager, oldWorker?.status, "system");
+        await this.transitionService.onActivate(
+          hydrated,
+          manager,
+          oldWorker?.status,
+          "system",
+        );
         break;
       case "inactive":
-        await this.transitionService.onInactivate(hydrated, manager, oldWorker?.status, "system");
+        await this.transitionService.onInactivate(
+          hydrated,
+          manager,
+          oldWorker?.status,
+          "system",
+        );
         break;
       case "on-leave":
-        await this.transitionService.onLeave(hydrated, manager, oldWorker?.status, "system");
+        await this.transitionService.onLeave(
+          hydrated,
+          manager,
+          oldWorker?.status,
+          "system",
+        );
         break;
       case "terminated":
-        await this.transitionService.onTerminate(hydrated, manager, oldWorker?.status, "system");
+        await this.transitionService.onTerminate(
+          hydrated,
+          manager,
+          oldWorker?.status,
+          "system",
+        );
         break;
       default:
         logger.warn(`[WorkerSubscriber] Unhandled status: ${newWorker.status}`);

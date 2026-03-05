@@ -1,15 +1,13 @@
 // src/subscribers/DebtSubscriber.js
 // @ts-check
 const Debt = require("../entities/Debt");
-const { AppDataSource } = require("../main/db/datasource");
-const { DebtStateTransitionService } = require("../stateTransitionService/Debt");
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading DebtSubscriber");
 
 class DebtSubscriber {
   constructor() {
-    this.transitionService = new DebtStateTransitionService(AppDataSource);
+    this.transitionService = null;
   }
 
   listenTo() {
@@ -23,7 +21,9 @@ class DebtSubscriber {
     const entity = event.entity;
     try {
       // @ts-ignore
-      logger.info("[DebtSubscriber] afterInsert", { entity: JSON.parse(JSON.stringify(entity)) });
+      logger.info("[DebtSubscriber] afterInsert", {
+        entity: JSON.parse(JSON.stringify(entity)),
+      });
     } catch (err) {
       // @ts-ignore
       logger.error("[DebtSubscriber] afterInsert error", err);
@@ -34,6 +34,11 @@ class DebtSubscriber {
    * @param {{ entity: any; databaseEntity: any; queryRunner: { manager: any; }; }} event
    */
   async afterUpdate(event) {
+    const { AppDataSource } = require("../main/db/datasource");
+    const {
+      DebtStateTransitionService,
+    } = require("../stateTransitionService/Debt");
+    this.transitionService = new DebtStateTransitionService(AppDataSource);
     if (!event.entity) return;
 
     // @ts-ignore
@@ -52,16 +57,36 @@ class DebtSubscriber {
 
     switch (newDebt.status) {
       case "partially_paid":
-        await this.transitionService.onPartiallyPaid(hydrated, manager, oldDebt, "system");
+        await this.transitionService.onPartiallyPaid(
+          hydrated,
+          manager,
+          oldDebt,
+          "system",
+        );
         break;
       case "paid":
-        await this.transitionService.onPaid(hydrated, manager, oldDebt, "system");
+        await this.transitionService.onPaid(
+          hydrated,
+          manager,
+          oldDebt,
+          "system",
+        );
         break;
       case "cancelled":
-        await this.transitionService.onCancel(hydrated, manager, oldDebt, "system");
+        await this.transitionService.onCancel(
+          hydrated,
+          manager,
+          oldDebt,
+          "system",
+        );
         break;
       case "overdue":
-        await this.transitionService.onOverdue(hydrated, manager, oldDebt, "system");
+        await this.transitionService.onOverdue(
+          hydrated,
+          manager,
+          oldDebt,
+          "system",
+        );
         break;
       default:
         logger.warn(`[DebtSubscriber] Unhandled status: ${newDebt.status}`);

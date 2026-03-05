@@ -1,10 +1,9 @@
 // src/main/ipc/session/index.ipc.js
-// @ts-check
 const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
 const { logger } = require("../../../../utils/logger");
 const { AuditLog } = require("../../../../entities/AuditLog");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 class SessionHandler {
   constructor() {
@@ -22,6 +21,7 @@ class SessionHandler {
     this.createSession = this.importHandler("./create.ipc");
     this.updateSession = this.importHandler("./update.ipc");
     this.deleteSession = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   importHandler(path) {
@@ -31,7 +31,7 @@ class SessionHandler {
     } catch (error) {
       console.warn(
         `[SessionHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -63,6 +63,8 @@ class SessionHandler {
           return await this.handleWithTransaction(this.createSession, params);
         case "updateSession":
           return await this.handleWithTransaction(this.updateSession, params);
+        case "updateStatus":
+          return await this.handleWithTransaction(this.updateStatus, params);
         case "deleteSession":
           return await this.handleWithTransaction(this.deleteSession, params);
         default:
@@ -127,8 +129,8 @@ ipcMain.handle(
   "session",
   withErrorHandling(
     sessionHandler.handleRequest.bind(sessionHandler),
-    "IPC:session"
-  )
+    "IPC:session",
+  ),
 );
 
 module.exports = { SessionHandler, sessionHandler };

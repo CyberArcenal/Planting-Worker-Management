@@ -31,7 +31,7 @@ class DebtHistoryHandler {
     } catch (error) {
       console.warn(
         `[DebtHistoryHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -60,11 +60,20 @@ class DebtHistoryHandler {
         case "getDebtHistoryStats":
           return await this.getDebtHistoryStats(params);
         case "createDebtHistory":
-          return await this.handleWithTransaction(this.createDebtHistory, params);
+          return await this.handleWithTransaction(
+            this.createDebtHistory,
+            params,
+          );
         case "updateDebtHistory":
-          return await this.handleWithTransaction(this.updateDebtHistory, params);
+          return await this.handleWithTransaction(
+            this.updateDebtHistory,
+            params,
+          );
         case "deleteDebtHistory":
-          return await this.handleWithTransaction(this.deleteDebtHistory, params);
+          return await this.handleWithTransaction(
+            this.deleteDebtHistory,
+            params,
+          );
         default:
           return {
             status: false,
@@ -127,8 +136,8 @@ ipcMain.handle(
   "debtHistory",
   withErrorHandling(
     debtHistoryHandler.handleRequest.bind(debtHistoryHandler),
-    "IPC:debtHistory"
-  )
+    "IPC:debtHistory",
+  ),
 );
 
 module.exports = { DebtHistoryHandler, debtHistoryHandler };

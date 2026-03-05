@@ -2,7 +2,9 @@
 // @ts-check
 const Session = require("../entities/Session");
 const { AppDataSource } = require("../main/db/datasource");
-const { SessionStateTransitionService } = require("../stateTransitionService/Session");
+const {
+  SessionStateTransitionService,
+} = require("../stateTransitionService/Session");
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading SessionSubscriber");
@@ -59,16 +61,33 @@ class SessionSubscriber {
 
     switch (newSession.status) {
       case "active":
-        await this.transitionService.onActivate(hydrated, manager, oldSession?.status, "system");
+        await this.transitionService.onActivate(
+          hydrated,
+          manager,
+          oldSession?.status,
+          "system",
+        );
         break;
       case "closed":
-        await this.transitionService.onClose(hydrated, manager, oldSession?.status, "system");
+        await this.transitionService.onClose(
+          hydrated,
+          manager,
+          oldSession?.status,
+          "system",
+        );
         break;
       case "archived":
-        await this.transitionService.onArchive(hydrated, manager, oldSession?.status, "system");
+        await this.transitionService.onArchive(
+          hydrated,
+          manager,
+          oldSession?.status,
+          "system",
+        );
         break;
       default:
-        logger.warn(`[SessionSubscriber] Unhandled status transition: ${oldSession?.status} -> ${newSession.status}`);
+        logger.warn(
+          `[SessionSubscriber] Unhandled status transition: ${oldSession?.status} -> ${newSession.status}`,
+        );
     }
   }
 
@@ -84,7 +103,9 @@ class SessionSubscriber {
       relations: [],
     });
     if (!session) {
-      logger.error(`[SessionSubscriber] Session #${sessionId} not found for hydration`);
+      logger.error(
+        `[SessionSubscriber] Session #${sessionId} not found for hydration`,
+      );
       return null;
     }
     return session;

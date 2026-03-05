@@ -3,7 +3,7 @@
 const PaymentHistory = require("../../../../../entities/PaymentHistory");
 const paymentHistoryService = require("../../../../../services/PaymentHistoryService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getPaymentHistoryStats(params) {
   try {
@@ -13,7 +13,9 @@ module.exports = async function getPaymentHistoryStats(params) {
     const queryBuilder = repo.createQueryBuilder("history");
 
     if (params.paymentId) {
-      queryBuilder.where("history.paymentId = :paymentId", { paymentId: params.paymentId });
+      queryBuilder.where("history.paymentId = :paymentId", {
+        paymentId: params.paymentId,
+      });
     }
 
     const totalCount = await queryBuilder.getCount();
@@ -33,6 +35,10 @@ module.exports = async function getPaymentHistoryStats(params) {
     return { status: true, message: "Payment history statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getPaymentHistoryStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

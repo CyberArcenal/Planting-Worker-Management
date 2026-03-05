@@ -1,4 +1,4 @@
-// components/TopBar.tsx
+// TopBar.tsx (colors only updated)
 import {
   Sun,
   Cloud,
@@ -24,6 +24,7 @@ import systemConfigAPI from "../../api/core/system_config";
 import { kabAuthStore } from "../../lib/kabAuthStore";
 import { useDynamicWeather } from "../../hooks/useDynamicWeather";
 import UpdateNotifier from "./UpdateNotifier";
+import { NotificationDrawer } from "./NotificationDrawer";
 
 interface TopBarProps {
   toggleSidebar: () => void;
@@ -43,10 +44,11 @@ interface DefaultSessionData {
 
 const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
-  const currentUser = kabAuthStore.getUser();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [defaultSession, setDefaultSession] =
     useState<DefaultSessionData | null>(null);
@@ -99,7 +101,10 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
     await getWeatherForSavedLocation(index);
     setShowLocationMenu(false);
   };
-
+  // Callback to update badge from drawer
+  const handleUnreadCountChange = (count: number) => {
+    setUnreadCount(count);
+  };
   // Format location name for display
   const formatLocationName = (location: any) => {
     if (!location) return "Getting location...";
@@ -314,7 +319,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             style={{
               background: "var(--accent-green-light)",
               borderColor: "var(--accent-green)",
-              color: "var(--accent-green)",
+              color: "var(--accent-green-dark)",
             }}
           >
             <Menu className="w-5 h-5" />
@@ -324,26 +329,26 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           <div
             className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(46, 125, 50, 0.1)",
+              border: "1px solid var(--border-color)",
               minWidth: "220px",
             }}
           >
             <CalendarDays
               className="w-4 h-4 flex-shrink-0"
-              style={{ color: "white" }}
+              style={{ color: "var(--accent-green)" }}
             />
             <div className="min-w-0">
               {loadingSession ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-pulse h-3 w-24 bg-white/20 rounded"></div>
+                  <div className="animate-pulse h-3 w-24 bg-[var(--accent-green-light)] rounded"></div>
                 </div>
               ) : defaultSession ? (
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span
                       className="text-xs font-medium truncate"
-                      style={{ color: "white" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       {formatSeasonType(defaultSession.seasonType)}{" "}
                       {defaultSession.year}
@@ -362,7 +367,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                   </div>
                   <div
                     className="text-xs truncate"
-                    style={{ color: "rgba(255,255,255,0.8)" }}
+                    style={{ color: "var(--text-secondary)" }}
                   >
                     ID: {defaultSession.id} •{" "}
                     {defaultSession.startDate
@@ -379,14 +384,14 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                     />
                     <span
                       className="text-xs font-medium"
-                      style={{ color: "white" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       No Active Session
                     </span>
                   </div>
                   <div
                     className="text-xs cursor-pointer hover:underline"
-                    style={{ color: "var(--accent-green-light)" }}
+                    style={{ color: "var(--accent-green)" }}
                     onClick={() => navigate("/system/sessions")}
                   >
                     Click to set default session
@@ -400,18 +405,24 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           <div
             className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(46, 125, 50, 0.1)",
+              border: "1px solid var(--border-color)",
             }}
           >
-            <Calendar className="w-4 h-4" style={{ color: "white" }} />
+            <Calendar
+              className="w-4 h-4"
+              style={{ color: "var(--accent-green)" }}
+            />
             <div className="flex flex-col">
-              <div className="text-sm font-medium" style={{ color: "white" }}>
+              <div
+                className="text-sm font-medium"
+                style={{ color: "var(--text-primary)" }}
+              >
                 {today.toLocaleDateString("en-US", { weekday: "long" })}
               </div>
               <div
                 className="text-xs"
-                style={{ color: "rgba(255,255,255,0.8)" }}
+                style={{ color: "var(--text-secondary)" }}
               >
                 {formattedDate}
               </div>
@@ -520,6 +531,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
 
         {/* Right Section - Actions & Profile */}
         <div className="flex items-center gap-3">
+          <UpdateNotifier />
           {/* Weather Widget with Location Menu */}
           <div className="relative">
             <div
@@ -528,13 +540,13 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                 weather && !weatherLoading
                   ? {
                       background: getWeatherColorScheme(weather.condition).bg,
-                      border: "1px solid rgba(255,255,255,0.2)",
+                      border: "1px solid var(--border-color)",
                       minWidth: "200px",
                       cursor: "pointer",
                     }
                   : {
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.2)",
+                      background: "rgba(46, 125, 50, 0.1)",
+                      border: "1px solid var(--border-color)",
                       minWidth: "200px",
                       cursor: "pointer",
                     }
@@ -543,7 +555,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             >
               {weatherLoading ? (
                 <div className="flex items-center justify-center w-full">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--accent-green)]"></div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between w-full">
@@ -554,17 +566,24 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                         style={{
                           color: weather
                             ? getWeatherColorScheme(weather.condition).icon
-                            : "white",
+                            : "var(--accent-green)",
                         }}
                       />
                     )}
                     <div>
-                      <div className="text-sm font-medium text-white">
+                      <div
+                        className="text-sm font-medium"
+                        style={{ color: "var(--text-primary)" }}
+                      >
                         {weather ? `${weather.temperature}°C` : "--°C"}
                       </div>
-                      <div className="text-xs text-white/80 truncate max-w-[120px]">
+                      <div className="text-xs text-[var(--text-secondary)] truncate max-w-[120px]">
                         {weather
-                          ? `${weather.condition} • ${currentLocation?.city || currentLocation?.name || "Unknown"}`
+                          ? `${weather.condition} • ${
+                              currentLocation?.city ||
+                              currentLocation?.name ||
+                              "Unknown"
+                            }`
                           : "No weather data"}
                       </div>
                     </div>
@@ -575,9 +594,12 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                         e.stopPropagation();
                         handleRefreshWeather();
                       }}
-                      className="p-1 hover:bg-white/10 rounded"
+                      className="p-1 hover:bg-[var(--card-secondary-bg)] rounded"
                     >
-                      <RefreshCw className="w-3 h-3 text-white" />
+                      <RefreshCw
+                        className="w-3 h-3"
+                        style={{ color: "var(--text-secondary)" }}
+                      />
                     </button>
                   )}
                 </div>
@@ -665,24 +687,32 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             />
             <span className="hidden md:inline text-sm">Refresh</span>
           </button>
-          <UpdateNotifier />
+
           {/* Notification Bell */}
           <button
+            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
             className="relative windows-btn p-2 rounded-lg"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "white",
+              background: "rgba(46, 125, 50, 0.1)",
+              border: "1px solid var(--border-color)",
+              color: "var(--text-primary)",
             }}
           >
             <Bell className="w-5 h-5" />
-            <span
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-              style={{ background: "var(--accent-red)" }}
-            ></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-5 h-5 bg-[var(--danger-color)] text-white text-xs rounded-full flex items-center justify-center font-medium">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
+      {/* Notification Drawer */}
+      <NotificationDrawer
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        onUnreadCountChange={handleUnreadCountChange}
+      />
     </header>
   );
 };

@@ -21,6 +21,26 @@ contextBridge.exposeInMainWorld("backendAPI", {
   session: (payload) => ipcRenderer.invoke("session", payload),
   systemConfig: (payload) => ipcRenderer.invoke("systemConfig", payload),
 
+  // Exports
+  auditExport: (payload) => ipcRenderer.invoke("auditExport", payload),
+
+
+  // File ops
+  openFile: (filePath) => ipcRenderer.invoke("openFile", filePath),
+  showItemInFolder: (filePath) =>
+    ipcRenderer.invoke("showItemInFolder", filePath),
+  getFileInfo: (filePath) => ipcRenderer.invoke("getFileInfo", filePath),
+  fileExists: (filePath) => ipcRenderer.invoke("fileExists", filePath),
+  openDirectory: (dirPath) => ipcRenderer.invoke("openDirectory", dirPath),
+  getFilesInDirectory: (dirPath, extensions) =>
+    ipcRenderer.invoke("getFilesInDirectory", dirPath, extensions),
+  getRecentExports: (exportDir, limit) =>
+    ipcRenderer.invoke("getRecentExports", exportDir, limit),
+  deleteFile: (filePath) => ipcRenderer.invoke("deleteFile", filePath),
+  copyFileToClipboard: (filePath) =>
+    ipcRenderer.invoke("copyFileToClipboard", filePath),
+  
+
   windowControl: (payload) => ipcRenderer.invoke("window-control", payload),
 
   onWindowMaximized: (callback) =>

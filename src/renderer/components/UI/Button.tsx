@@ -8,8 +8,6 @@ export type ButtonVariant =
   | 'success'
   | 'warning'
   | 'danger'
-  | 'purple'
-  | 'emerald'
   | 'outline'
   | 'ghost';
 
@@ -18,7 +16,7 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 interface ButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
@@ -48,45 +46,55 @@ const Button: React.FC<ButtonProps> = ({
   title,
   loading = false
 }) => {
-  const baseClasses = 'btn';
-  const variantClass = `btn-${variant}`;
-  const sizeClass = `btn-${size}`;
+  const baseClasses =
+    "inline-flex items-center justify-center font-medium border rounded-sm focus:outline-none focus:ring-1 transition-colors";
+
+  const sizeClasses: Record<ButtonSize, string> = {
+    xs: "px-2 py-1 text-xs",
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-sm",
+    lg: "px-5 py-2.5 text-base"
+  };
+
+  const variantClasses: Record<ButtonVariant, string> = {
+    primary: "bg-[var(--accent-blue)] text-white border-[var(--accent-blue)] hover:bg-[var(--accent-blue-hover)]",
+    secondary: "bg-[var(--card-secondary-bg)] text-[var(--sidebar-text)] border-[var(--border-color)] hover:bg-[var(--card-bg)]",
+    success: "bg-green-600 text-white border-green-600 hover:bg-green-700",
+    warning: "bg-yellow-500 text-black border-yellow-500 hover:bg-yellow-600",
+    danger: "bg-red-600 text-white border-red-600 hover:bg-red-700",
+    outline: "bg-transparent text-[var(--sidebar-text)] border-[var(--border-color)] hover:bg-[var(--card-secondary-bg)]",
+    ghost: "bg-transparent text-[var(--sidebar-text)] border-transparent hover:bg-[var(--card-secondary-bg)]"
+  };
 
   const classes = [
     baseClasses,
-    variantClass,
-    sizeClass,
-    iconOnly && 'btn-icon-only',
-    loading && 'opacity-70 cursor-wait',
+    sizeClasses[size],
+    variantClasses[variant],
+    iconOnly && "p-2",
+    loading && "opacity-70 cursor-wait",
     className
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean).join(" ");
 
   const content = (
     <>
       {loading ? (
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
       ) : (
-        Icon && iconPosition === 'left' && (
-          <Icon className="btn-icon btn-icon-left" size={getIconSize(size)} />
+        Icon && iconPosition === "left" && (
+          <Icon className="mr-2" size={getIconSize(size)} />
         )
       )}
 
       {!iconOnly && children}
 
-      {Icon && iconPosition === 'right' && !loading && (
-        <Icon className="btn-icon btn-icon-right" size={getIconSize(size)} />
+      {Icon && iconPosition === "right" && !loading && (
+        <Icon className="ml-2" size={getIconSize(size)} />
       )}
     </>
   );
 
-  // Helper function to get icon size based on button size
   function getIconSize(btnSize: ButtonSize): number {
-    const sizeMap = {
-      xs: 12,
-      sm: 14,
-      md: 16,
-      lg: 18
-    };
+    const sizeMap = { xs: 12, sm: 14, md: 16, lg: 18 };
     return sizeMap[btnSize];
   }
 
@@ -98,7 +106,7 @@ const Button: React.FC<ButtonProps> = ({
         className={classes}
         title={title}
         onClick={onClick as any}
-        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        rel={target === "_blank" ? "noopener noreferrer" : undefined}
       >
         {content}
       </a>
@@ -119,42 +127,3 @@ const Button: React.FC<ButtonProps> = ({
 };
 
 export default Button;
-
-
-
-// // Example usage in your components
-// import Button from '@/components/UI/Button';
-// import { Plus, Edit, Trash2, Download, Search } from 'lucide-react';
-
-// // Different variants and sizes
-// <Button variant="primary" size="md" onClick={() => {}}>
-//   Primary Button
-// </Button>
-
-// <Button variant="success" size="sm" icon={Plus} iconPosition="left">
-//   Add Product
-// </Button>
-
-// <Button variant="danger" size="xs" icon={Trash2}>
-//   Delete
-// </Button>
-
-// <Button variant="secondary" size="lg" icon={Download} iconPosition="right">
-//   Export Data
-// </Button>
-
-// <Button variant="outline" size="sm">
-//   Cancel
-// </Button>
-
-// <Button variant="ghost" size="xs" icon={Search} iconOnly />
-
-// // With loading state
-// <Button variant="primary" loading={true}>
-//   Saving...
-// </Button>
-
-// // As link
-// <Button variant="primary" href="/products" target="_blank">
-//   Open Products
-// </Button>

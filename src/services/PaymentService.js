@@ -12,7 +12,7 @@ class PaymentService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Payment = require("../entities/Payment");
     const Worker = require("../entities/Worker");
     const Pitak = require("../entities/Pitak");
@@ -45,7 +45,13 @@ class PaymentService {
 
   async create(data, user = "system") {
     const { saveDb } = require("../utils/dbUtils/dbActions");
-    const { payment: repo, worker: workerRepo, pitak: pitakRepo, session: sessionRepo, assignment: assignmentRepo } = await this.getRepositories();
+    const {
+      payment: repo,
+      worker: workerRepo,
+      pitak: pitakRepo,
+      session: sessionRepo,
+      assignment: assignmentRepo,
+    } = await this.getRepositories();
 
     try {
       if (!data.workerId) throw new Error("workerId is required");
@@ -58,13 +64,19 @@ class PaymentService {
       const pitak = await pitakRepo.findOne({ where: { id: data.pitakId } });
       if (!pitak) throw new Error(`Pitak with ID ${data.pitakId} not found`);
 
-      const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-      if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+      const session = await sessionRepo.findOne({
+        where: { id: data.sessionId },
+      });
+      if (!session)
+        throw new Error(`Session with ID ${data.sessionId} not found`);
 
       let assignment = null;
       if (data.assignmentId) {
-        assignment = await assignmentRepo.findOne({ where: { id: data.assignmentId } });
-        if (!assignment) throw new Error(`Assignment with ID ${data.assignmentId} not found`);
+        assignment = await assignmentRepo.findOne({
+          where: { id: data.assignmentId },
+        });
+        if (!assignment)
+          throw new Error(`Assignment with ID ${data.assignmentId} not found`);
       }
 
       // Check uniqueness of (pitak, worker, session)
@@ -76,7 +88,9 @@ class PaymentService {
         },
       });
       if (existing) {
-        throw new Error("A payment already exists for this worker, pitak, and session combination");
+        throw new Error(
+          "A payment already exists for this worker, pitak, and session combination",
+        );
       }
 
       // If assignmentId provided, check its uniqueness
@@ -85,15 +99,21 @@ class PaymentService {
           where: { assignment: { id: data.assignmentId } },
         });
         if (existingByAssignment) {
-          throw new Error(`Assignment ID ${data.assignmentId} is already linked to another payment`);
+          throw new Error(
+            `Assignment ID ${data.assignmentId} is already linked to another payment`,
+          );
         }
       }
 
       // Idempotency key uniqueness
       if (data.idempotencyKey) {
-        const existingKey = await repo.findOne({ where: { idempotencyKey: data.idempotencyKey } });
+        const existingKey = await repo.findOne({
+          where: { idempotencyKey: data.idempotencyKey },
+        });
         if (existingKey) {
-          throw new Error(`Idempotency key "${data.idempotencyKey}" already exists`);
+          throw new Error(
+            `Idempotency key "${data.idempotencyKey}" already exists`,
+          );
         }
       }
 
@@ -120,9 +140,53 @@ class PaymentService {
     }
   }
 
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const { payment: repo } = await this.getRepositories();
+
+    const payment = await repo.findOne({ where: { id } });
+    if (!payment) throw new Error(`Payment with ID ${id} not found`);
+
+    const oldStatus = payment.status;
+    if (oldStatus === newStatus) return payment;
+
+    // Allowed transitions for payment statuses
+    const allowedTransitions = {
+      pending: ["partially_paid", "complete", "cancel"],
+      partially_paid: ["complete", "cancel"],
+      complete: [],
+      cancel: [],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    payment.status = newStatus;
+    payment.updatedAt = new Date();
+
+    const saved = await updateDb(repo, payment);
+    await auditLogger.logUpdate(
+      "Payment",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
+  }
+
   async update(id, data, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const { payment: repo, worker: workerRepo, pitak: pitakRepo, session: sessionRepo, assignment: assignmentRepo } = await this.getRepositories();
+    const {
+      payment: repo,
+      worker: workerRepo,
+      pitak: pitakRepo,
+      session: sessionRepo,
+      assignment: assignmentRepo,
+    } = await this.getRepositories();
 
     try {
       const existing = await repo.findOne({
@@ -135,8 +199,11 @@ class PaymentService {
 
       // Handle relation changes
       if (data.workerId !== undefined) {
-        const worker = await workerRepo.findOne({ where: { id: data.workerId } });
-        if (!worker) throw new Error(`Worker with ID ${data.workerId} not found`);
+        const worker = await workerRepo.findOne({
+          where: { id: data.workerId },
+        });
+        if (!worker)
+          throw new Error(`Worker with ID ${data.workerId} not found`);
         existing.worker = worker;
         delete data.workerId;
       }
@@ -147,8 +214,11 @@ class PaymentService {
         delete data.pitakId;
       }
       if (data.sessionId !== undefined) {
-        const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-        if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+        const session = await sessionRepo.findOne({
+          where: { id: data.sessionId },
+        });
+        if (!session)
+          throw new Error(`Session with ID ${data.sessionId} not found`);
         existing.session = session;
         delete data.sessionId;
       }
@@ -156,8 +226,13 @@ class PaymentService {
         if (data.assignmentId === null) {
           existing.assignment = null;
         } else {
-          const assignment = await assignmentRepo.findOne({ where: { id: data.assignmentId } });
-          if (!assignment) throw new Error(`Assignment with ID ${data.assignmentId} not found`);
+          const assignment = await assignmentRepo.findOne({
+            where: { id: data.assignmentId },
+          });
+          if (!assignment)
+            throw new Error(
+              `Assignment with ID ${data.assignmentId} not found`,
+            );
           existing.assignment = assignment;
         }
         delete data.assignmentId;
@@ -165,8 +240,12 @@ class PaymentService {
 
       // Check uniqueness constraints if relevant keys changed
       if (
-        (data.workerId !== undefined || data.pitakId !== undefined || data.sessionId !== undefined) &&
-        existing.worker && existing.pitak && existing.session
+        (data.workerId !== undefined ||
+          data.pitakId !== undefined ||
+          data.sessionId !== undefined) &&
+        existing.worker &&
+        existing.pitak &&
+        existing.session
       ) {
         const duplicate = await repo.findOne({
           where: {
@@ -176,7 +255,9 @@ class PaymentService {
           },
         });
         if (duplicate && duplicate.id !== id) {
-          throw new Error("Another payment already exists for this worker, pitak, and session combination");
+          throw new Error(
+            "Another payment already exists for this worker, pitak, and session combination",
+          );
         }
       }
 
@@ -186,15 +267,24 @@ class PaymentService {
           where: { assignment: { id: existing.assignment.id } },
         });
         if (duplicateAssignment && duplicateAssignment.id !== id) {
-          throw new Error(`Assignment ID ${existing.assignment.id} is already linked to another payment`);
+          throw new Error(
+            `Assignment ID ${existing.assignment.id} is already linked to another payment`,
+          );
         }
       }
 
       // Idempotency key uniqueness if changed
-      if (data.idempotencyKey && data.idempotencyKey !== existing.idempotencyKey) {
-        const keyExists = await repo.findOne({ where: { idempotencyKey: data.idempotencyKey } });
+      if (
+        data.idempotencyKey &&
+        data.idempotencyKey !== existing.idempotencyKey
+      ) {
+        const keyExists = await repo.findOne({
+          where: { idempotencyKey: data.idempotencyKey },
+        });
         if (keyExists) {
-          throw new Error(`Idempotency key "${data.idempotencyKey}" already exists`);
+          throw new Error(
+            `Idempotency key "${data.idempotencyKey}" already exists`,
+          );
         }
       }
 
@@ -241,7 +331,14 @@ class PaymentService {
     try {
       const payment = await repo.findOne({
         where: { id },
-        relations: ["worker", "pitak", "session", "assignment", "history", "debtPayments"],
+        relations: [
+          "worker",
+          "pitak",
+          "session",
+          "assignment",
+          "history",
+          "debtPayments",
+        ],
       });
       if (!payment) throw new Error(`Payment with ID ${id} not found`);
       await auditLogger.logView("Payment", id, "system");
@@ -270,16 +367,22 @@ class PaymentService {
         qb.andWhere("pitak.id = :pitakId", { pitakId: options.pitakId });
       }
       if (options.sessionId) {
-        qb.andWhere("session.id = :sessionId", { sessionId: options.sessionId });
+        qb.andWhere("session.id = :sessionId", {
+          sessionId: options.sessionId,
+        });
       }
       if (options.status) {
         qb.andWhere("payment.status = :status", { status: options.status });
       }
       if (options.startDate) {
-        qb.andWhere("payment.paymentDate >= :startDate", { startDate: options.startDate });
+        qb.andWhere("payment.paymentDate >= :startDate", {
+          startDate: options.startDate,
+        });
       }
       if (options.endDate) {
-        qb.andWhere("payment.paymentDate <= :endDate", { endDate: options.endDate });
+        qb.andWhere("payment.paymentDate <= :endDate", {
+          endDate: options.endDate,
+        });
       }
 
       const sortBy = options.sortBy || "createdAt";

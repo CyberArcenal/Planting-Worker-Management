@@ -23,6 +23,19 @@ declare global {
       session: (payload: any) => Promise<any>;
       systemConfig: (payload: any) => Promise<any>;
 
+      auditExport: (payload: any) => Promise<any>;
+
+      showItemInFolder: (fullPath) => Promise<any>;
+      openFile: (filePath) => Promise<any>;
+      showItemInFolder: (filePath) => Promise<any>;
+      getFileInfo: (filePath) => Promise<any>;
+      fileExists: (filePath) => Promise<any>;
+      openDirectory: (dirPath) => Promise<any>;
+      getFilesInDirectory: (dirPath, extensions) => Promise<any>;
+      getRecentExports: (exportDir, limit) => Promise<any>;
+      deleteFile: (filePath) => Promise<any>;
+      copyFileToClipboard: (filePath) => Promise<any>;
+
       windowControl: (payload: any) => Promise<any>;
 
       onWindowMaximized?: (callback: () => void) => void;

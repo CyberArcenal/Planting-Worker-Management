@@ -2,7 +2,7 @@
 const Assignment = require("../../../../../entities/Assignment");
 const assignmentService = require("../../../../../services/Assignment");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 /**
  * Get assignment statistics (counts by status, total luwang)
@@ -17,7 +17,9 @@ module.exports = async function getAssignmentStats(params) {
     const queryBuilder = assignmentRepo.createQueryBuilder("assignment");
 
     if (params.sessionId) {
-      queryBuilder.where("assignment.sessionId = :sessionId", { sessionId: params.sessionId });
+      queryBuilder.where("assignment.sessionId = :sessionId", {
+        sessionId: params.sessionId,
+      });
     }
 
     const totalCount = await queryBuilder.getCount();

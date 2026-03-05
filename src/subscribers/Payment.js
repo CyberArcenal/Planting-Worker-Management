@@ -1,15 +1,13 @@
 // src/subscribers/PaymentSubscriber.js
 // @ts-check
 const Payment = require("../entities/Payment");
-const { AppDataSource } = require("../main/db/datasource");
-const { PaymentStateTransitionService } = require("../stateTransitionService/Payment");
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading PaymentSubscriber");
 
 class PaymentSubscriber {
   constructor() {
-    this.transitionService = new PaymentStateTransitionService(AppDataSource);
+    this.transitionService = null;
   }
 
   listenTo() {
@@ -23,7 +21,9 @@ class PaymentSubscriber {
     const entity = event.entity;
     try {
       // @ts-ignore
-      logger.info("[PaymentSubscriber] afterInsert", { entity: JSON.parse(JSON.stringify(entity)) });
+      logger.info("[PaymentSubscriber] afterInsert", {
+        entity: JSON.parse(JSON.stringify(entity)),
+      });
     } catch (err) {
       // @ts-ignore
       logger.error("[PaymentSubscriber] afterInsert error", err);
@@ -34,6 +34,11 @@ class PaymentSubscriber {
    * @param {{ entity: any; databaseEntity: any; queryRunner: { manager: any; }; }} event
    */
   async afterUpdate(event) {
+    const { AppDataSource } = require("../main/db/datasource");
+    const {
+      PaymentStateTransitionService,
+    } = require("../stateTransitionService/Payment");
+    this.transitionService = new PaymentStateTransitionService(AppDataSource);
     if (!event.entity) return;
 
     // @ts-ignore
@@ -52,19 +57,41 @@ class PaymentSubscriber {
 
     switch (newPayment.status) {
       case "processing":
-        await this.transitionService.onProcessing(hydrated, manager, oldPayment, "system");
+        await this.transitionService.onProcessing(
+          hydrated,
+          manager,
+          oldPayment,
+          "system",
+        );
         break;
       case "completed":
-        await this.transitionService.onCompleted(hydrated, manager, oldPayment, "system");
+        await this.transitionService.onCompleted(
+          hydrated,
+          manager,
+          oldPayment,
+          "system",
+        );
         break;
       case "cancelled":
-        await this.transitionService.onCancelled(hydrated, manager, oldPayment, "system");
+        await this.transitionService.onCancelled(
+          hydrated,
+          manager,
+          oldPayment,
+          "system",
+        );
         break;
       case "partially_paid":
-        await this.transitionService.onPartiallyPaid(hydrated, manager, oldPayment, "system");
+        await this.transitionService.onPartiallyPaid(
+          hydrated,
+          manager,
+          oldPayment,
+          "system",
+        );
         break;
       default:
-        logger.warn(`[PaymentSubscriber] Unhandled status: ${newPayment.status}`);
+        logger.warn(
+          `[PaymentSubscriber] Unhandled status: ${newPayment.status}`,
+        );
     }
   }
 

@@ -1,6 +1,7 @@
 // services/AssignmentService.js
 const auditLogger = require("../utils/auditLogger");
-const { AssignmentStatus } = require("../entities/Assignment"); // we'll need to export the enum or define it here
+// Import the enum from Assignment entity
+const { AssignmentStatus } = require("../entities/Assignment");
 
 class AssignmentService {
   constructor() {
@@ -11,7 +12,7 @@ class AssignmentService {
   }
 
   async initialize() {
-  const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Assignment = require("../entities/Assignment");
     const Worker = require("../entities/Worker");
     const Pitak = require("../entities/Pitak");
@@ -40,20 +41,24 @@ class AssignmentService {
   }
 
   /**
-   * Create a new assignment
-   * @param {Object} data - { workerId, pitakId, sessionId, luwangCount, assignmentDate, notes? }
+   * Create a new assignment with automatic luwangCount distribution.
+   * @param {Object} data - { workerId, pitakId, sessionId, assignmentDate, notes? }
    * @param {string} user - user identifier for audit log
    */
   async create(data, user = "system") {
     const { saveDb } = require("../utils/dbUtils/dbActions");
-    const { assignment: repo, worker: workerRepo, pitak: pitakRepo, session: sessionRepo } = await this.getRepositories();
+    const {
+      assignment: repo,
+      worker: workerRepo,
+      pitak: pitakRepo,
+      session: sessionRepo,
+    } = await this.getRepositories();
 
     try {
       // Validate required fields
       if (!data.workerId) throw new Error("workerId is required");
       if (!data.pitakId) throw new Error("pitakId is required");
       if (!data.sessionId) throw new Error("sessionId is required");
-      if (data.luwangCount === undefined) throw new Error("luwangCount is required");
       if (!data.assignmentDate) throw new Error("assignmentDate is required");
 
       // Fetch related entities
@@ -63,11 +68,12 @@ class AssignmentService {
       const pitak = await pitakRepo.findOne({ where: { id: data.pitakId } });
       if (!pitak) throw new Error(`Pitak with ID ${data.pitakId} not found`);
 
-      const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
+      const session = await sessionRepo.findOne({
+        where: { id: data.sessionId },
+      });
       if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
 
-      // Check uniqueness (worker + pitak + session) – the unique constraint will enforce at DB level,
-      // but we check early to give a friendly error.
+      // Check uniqueness (worker + pitak + session)
       const existing = await repo.findOne({
         where: {
           worker: { id: data.workerId },
@@ -76,20 +82,36 @@ class AssignmentService {
         },
       });
       if (existing) {
-        throw new Error("An assignment already exists for this worker, pitak, and session combination");
+        throw new Error(
+          "An assignment already exists for this worker, pitak, and session combination",
+        );
       }
+
+      // Count current active assignments for the same pitak and session (excluding the new one)
+      const currentAssignments = await repo.count({
+        where: {
+          pitak: { id: data.pitakId },
+          session: { id: data.sessionId },
+          status: AssignmentStatus.ACTIVE,
+        },
+      });
+
+      // Compute luwangCount as pitak.totalLuwang divided equally among all assigned workers
+      const totalLuwang = parseFloat(pitak.totalLuwang) || 0;
+      const newLuwangCount = totalLuwang / (currentAssignments + 1);
+      // Round to 2 decimal places (match decimal(5,2) precision)
+      const luwangCount = Math.round(newLuwangCount * 100) / 100;
 
       // Create entity
       const assignmentData = {
-        ...data,
         worker,
         pitak,
         session,
-        status: data.status || AssignmentStatus.ACTIVE,
+        luwangCount,
+        assignmentDate: data.assignmentDate,
+        notes: data.notes,
+        status: AssignmentStatus.ACTIVE,
       };
-      delete assignmentData.workerId;
-      delete assignmentData.pitakId;
-      delete assignmentData.sessionId;
 
       const assignment = repo.create(assignmentData);
       const saved = await saveDb(repo, assignment);
@@ -102,14 +124,14 @@ class AssignmentService {
   }
 
   /**
-   * Update an existing assignment
+   * Update an existing assignment – ignores status and luwangCount changes.
    * @param {number} id
-   * @param {Object} data - fields to update (luwangCount, notes, status, assignmentDate, etc.)
+   * @param {Object} data - allowed fields: notes, assignmentDate
    * @param {string} user
    */
   async update(id, data, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const { assignment: repo, worker: workerRepo, pitak: pitakRepo, session: sessionRepo } = await this.getRepositories();
+    const { assignment: repo } = await this.getRepositories();
 
     try {
       const existing = await repo.findOne({
@@ -120,50 +142,23 @@ class AssignmentService {
 
       const oldData = { ...existing };
 
-      // If worker, pitak, or session IDs are provided, fetch and update relations
-      let worker = existing.worker;
-      let pitak = existing.pitak;
-      let session = existing.session;
+      // Prevent updates to status and luwangCount
+      const allowedUpdates = {
+        notes: data.notes,
+        assignmentDate: data.assignmentDate,
+      };
+      // Remove undefined fields
+      Object.keys(allowedUpdates).forEach(key => {
+        if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
+      });
 
-      if (data.workerId !== undefined) {
-        worker = await workerRepo.findOne({ where: { id: data.workerId } });
-        if (!worker) throw new Error(`Worker with ID ${data.workerId} not found`);
-        delete data.workerId;
-      }
-      if (data.pitakId !== undefined) {
-        pitak = await pitakRepo.findOne({ where: { id: data.pitakId } });
-        if (!pitak) throw new Error(`Pitak with ID ${data.pitakId} not found`);
-        delete data.pitakId;
-      }
-      if (data.sessionId !== undefined) {
-        session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-        if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
-        delete data.sessionId;
+      // If no updates allowed, just return existing
+      if (Object.keys(allowedUpdates).length === 0) {
+        return existing;
       }
 
-      // Check uniqueness if any of the three key fields changed
-      if (
-        worker.id !== existing.worker.id ||
-        pitak.id !== existing.pitak.id ||
-        session.id !== existing.session.id
-      ) {
-        const duplicate = await repo.findOne({
-          where: {
-            worker: { id: worker.id },
-            pitak: { id: pitak.id },
-            session: { id: session.id },
-          },
-        });
-        if (duplicate && duplicate.id !== id) {
-          throw new Error("Another assignment already exists for this worker, pitak, and session combination");
-        }
-      }
-
-      // Update fields
-      existing.worker = worker;
-      existing.pitak = pitak;
-      existing.session = session;
-      Object.assign(existing, data);
+      // Apply updates
+      Object.assign(existing, allowedUpdates);
       existing.updatedAt = new Date();
 
       const saved = await updateDb(repo, existing);
@@ -173,6 +168,51 @@ class AssignmentService {
       console.error("Failed to update assignment:", error.message);
       throw error;
     }
+  }
+
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const { assignment: repo } = await this.getRepositories();
+
+    const assignment = await repo.findOne({ where: { id } });
+    if (!assignment) throw new Error(`Assignment with ID ${id} not found`);
+
+    const oldStatus = assignment.status;
+    if (oldStatus === newStatus) return assignment;
+
+    // Allowed transitions based on AssignmentStatus
+    const allowedTransitions = {
+      [AssignmentStatus.INITIATED]: [
+        AssignmentStatus.ACTIVE,
+        AssignmentStatus.COMPLETED,
+        AssignmentStatus.CANCELLED,
+      ],
+      [AssignmentStatus.ACTIVE]: [
+        AssignmentStatus.COMPLETED,
+        AssignmentStatus.CANCELLED,
+      ],
+      [AssignmentStatus.COMPLETED]: [],
+      [AssignmentStatus.CANCELLED]: [],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    assignment.status = newStatus;
+    assignment.updatedAt = new Date();
+
+    const saved = await updateDb(repo, assignment);
+    await auditLogger.logUpdate(
+      "Assignment",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
   }
 
   /**
@@ -188,9 +228,9 @@ class AssignmentService {
       const assignment = await repo.findOne({ where: { id } });
       if (!assignment) throw new Error(`Assignment with ID ${id} not found`);
 
-      // If already cancelled, maybe just return or throw? We'll allow idempotent delete
+      // If already cancelled, just return
       if (assignment.status === AssignmentStatus.CANCELLED) {
-        return assignment; // no change
+        return assignment;
       }
 
       const oldData = { ...assignment };
@@ -228,8 +268,9 @@ class AssignmentService {
   }
 
   /**
-   * Find all assignments with optional filters
-   * @param {Object} options - { workerId, pitakId, sessionId, status, startDate, endDate, page, limit, sortBy, sortOrder }
+   * Find all assignments with optional filters – returns array (original behavior)
+   * @param {Object} options - { workerId, pitakId, sessionId, status, startDate, endDate, page?, limit?, sortBy, sortOrder }
+   * @returns {Promise<Assignment[]>}
    */
   async findAll(options = {}) {
     const { assignment: repo } = await this.getRepositories();
@@ -266,10 +307,13 @@ class AssignmentService {
       const sortOrder = options.sortOrder === "ASC" ? "ASC" : "DESC";
       qb.orderBy(`assignment.${sortBy}`, sortOrder);
 
-      // Pagination
+      // Pagination (if provided)
       if (options.page && options.limit) {
         const skip = (options.page - 1) * options.limit;
         qb.skip(skip).take(options.limit);
+      } else if (options.limit) {
+        // If only limit is provided (no page), apply limit only
+        qb.take(options.limit);
       }
 
       const assignments = await qb.getMany();

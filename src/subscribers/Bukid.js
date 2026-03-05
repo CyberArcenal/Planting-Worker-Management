@@ -1,15 +1,14 @@
 // src/subscribers/BukidSubscriber.js
 // @ts-check
 const Bukid = require("../entities/Bukid");
-const { AppDataSource } = require("../main/db/datasource");
-const { BukidStateTransitionService } = require("../stateTransitionService/Bukid");
+
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading BukidSubscriber");
 
 class BukidSubscriber {
   constructor() {
-    this.transitionService = new BukidStateTransitionService(AppDataSource);
+    this.transitionService = null;
   }
 
   listenTo() {
@@ -20,6 +19,11 @@ class BukidSubscriber {
    * @param {{ entity: any; }} event
    */
   async afterInsert(event) {
+    const { AppDataSource } = require("../main/db/datasource");
+    const {
+      BukidStateTransitionService,
+    } = require("../stateTransitionService/Bukid");
+    this.transitionService = new BukidStateTransitionService(AppDataSource);
     const entity = event.entity;
     try {
       // @ts-ignore
@@ -41,6 +45,11 @@ class BukidSubscriber {
    */
   async afterUpdate(event) {
     if (!event.entity) return;
+    const { AppDataSource } = require("../main/db/datasource");
+    const {
+      BukidStateTransitionService,
+    } = require("../stateTransitionService/Bukid");
+    this.transitionService = new BukidStateTransitionService(AppDataSource);
 
     // @ts-ignore
     logger.info("[BukidSubscriber] afterUpdate", {
@@ -59,21 +68,39 @@ class BukidSubscriber {
 
     switch (newBukid.status) {
       case "active":
-        await this.transitionService.onActivate(hydrated, oldBukid?.status, "system");
+        await this.transitionService.onActivate(
+          hydrated,
+          oldBukid?.status,
+          "system",
+        );
         break;
       case "complete":
-        await this.transitionService.onComplete(hydrated, oldBukid?.status, "system");
+        await this.transitionService.onComplete(
+          hydrated,
+          oldBukid?.status,
+          "system",
+        );
         break;
       case "inactive":
-        await this.transitionService.onInactivate(hydrated, oldBukid?.status, "system");
+        await this.transitionService.onInactivate(
+          hydrated,
+          oldBukid?.status,
+          "system",
+        );
         break;
       case "initiated":
         // Could happen if reset, but rare
         // @ts-ignore
-        await this.transitionService.onInitiated(hydrated, oldBukid?.status, "system");
+        await this.transitionService.onInitiated(
+          hydrated,
+          oldBukid?.status,
+          "system",
+        );
         break;
       default:
-        logger.warn(`[BukidSubscriber] Unhandled status transition: ${oldBukid?.status} -> ${newBukid.status}`);
+        logger.warn(
+          `[BukidSubscriber] Unhandled status transition: ${oldBukid?.status} -> ${newBukid.status}`,
+        );
     }
   }
 
@@ -83,13 +110,16 @@ class BukidSubscriber {
    * @param {any} bukidId
    */
   async _hydrateBukid(bukidId) {
+    const { AppDataSource } = require("../main/db/datasource");
     const bukidRepo = AppDataSource.getRepository(Bukid);
     const bukid = await bukidRepo.findOne({
       where: { id: bukidId },
       relations: ["pitaks"], // we need pitaks for cascading complete
     });
     if (!bukid) {
-      logger.error(`[BukidSubscriber] Bukid #${bukidId} not found for hydration`);
+      logger.error(
+        `[BukidSubscriber] Bukid #${bukidId} not found for hydration`,
+      );
       return null;
     }
     return bukid;

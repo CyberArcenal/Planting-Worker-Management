@@ -4,7 +4,7 @@ const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
 const { logger } = require("../../../../utils/logger");
 const { AuditLog } = require("../../../../entities/AuditLog");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 class BukidHandler {
   constructor() {
@@ -22,6 +22,7 @@ class BukidHandler {
     this.createBukid = this.importHandler("./create.ipc");
     this.updateBukid = this.importHandler("./update.ipc");
     this.deleteBukid = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   // @ts-ignore
@@ -33,7 +34,7 @@ class BukidHandler {
       console.warn(
         `[BukidHandler] Failed to load handler: ${path}`,
         // @ts-ignore
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -67,6 +68,8 @@ class BukidHandler {
           return await this.handleWithTransaction(this.createBukid, params);
         case "updateBukid":
           return await this.handleWithTransaction(this.updateBukid, params);
+        case "updateStatus":
+          return await this.handleWithTransaction(this.updateStatus, params);
         case "deleteBukid":
           return await this.handleWithTransaction(this.deleteBukid, params);
         default:
@@ -135,10 +138,7 @@ const bukidHandler = new BukidHandler();
 
 ipcMain.handle(
   "bukid",
-  withErrorHandling(
-    bukidHandler.handleRequest.bind(bukidHandler),
-    "IPC:bukid"
-  )
+  withErrorHandling(bukidHandler.handleRequest.bind(bukidHandler), "IPC:bukid"),
 );
 
 module.exports = { BukidHandler, bukidHandler };

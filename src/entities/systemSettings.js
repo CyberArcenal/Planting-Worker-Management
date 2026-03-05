@@ -3,6 +3,7 @@ const { EntitySchema } = require("typeorm");
 
 const SettingType = {
   GENERAL: "general",
+  NOTIFICATIONS: "notification",
   FARM_SESSION: "farm_session",
   FARM_BUKID: "farm_bukid",
   FARM_PITAK: "farm_pitak",

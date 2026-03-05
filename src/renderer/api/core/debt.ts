@@ -162,6 +162,21 @@ class DebtAPI {
       throw new Error(error.message || "Failed to update debt");
     }
   }
+  /**
+ * Update debt status
+ * @param id - Debt ID
+ * @param status - New status ('pending', 'partially_paid', 'paid', 'cancelled', 'overdue', 'settled')
+ */
+async updateStatus(id: number, status: string): Promise<DebtResponse> {
+  try {
+    if (!id || id <= 0) throw new Error("Invalid ID");
+    const response = await this.call<DebtResponse>("updateStatus", { id, status });
+    if (response.status) return response;
+    throw new Error(response.message || "Failed to update debt status");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to update debt status");
+  }
+}
 
   async delete(id: number): Promise<DebtResponse> {
     try {

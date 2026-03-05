@@ -111,8 +111,6 @@ async function seedData() {
     const debtHistoryRepo = seedDataSource.getRepository("DebtHistory");
     const paymentRepo = seedDataSource.getRepository("Payment");
     const paymentHistoryRepo = seedDataSource.getRepository("PaymentHistory");
-    const userRepo = seedDataSource.getRepository("User");
-    const userActivityRepo = seedDataSource.getRepository("UserActivity");
     const auditTrailRepo = seedDataSource.getRepository("AuditTrail");
     const notificationRepo = seedDataSource.getRepository("Notification");
     const systemSettingRepo = seedDataSource.getRepository("SystemSetting");
@@ -144,12 +142,6 @@ async function seedData() {
     console.log("📊 Seeding Payment History...");
     // await seedPaymentHistory(paymentHistoryRepo, payments);
 
-    console.log("👤 Seeding Users...");
-    const users = await seedUsers(userRepo);
-
-    console.log("📱 Seeding User Activities...");
-    // await seedUserActivities(userActivityRepo, users, sessions); // ✅ UPDATED
-
     console.log("🔍 Seeding Audit Trails...");
     // await seedAuditTrails(auditTrailRepo);
 
@@ -168,11 +160,7 @@ async function seedData() {
     console.log(`   Bukids: ${bukids.length}`);
     console.log(`   Pitaks: ${pitaks.length}`);
     console.log(`   Workers: ${workers.length}`);
-    // console.log(`   Assignments: ${assignments.length}`);
-    // console.log(`   Debts: ${debts.length}`);
-    // console.log(`   Payments: ${payments.length}`);
-    console.log(`   Users: ${users.length}`);
-
+ 
     // Destroy the connection when done
     await seedDataSource.destroy();
     console.log("✅ Connection closed");

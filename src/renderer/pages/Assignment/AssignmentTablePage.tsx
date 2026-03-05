@@ -14,7 +14,7 @@ import {
 
 import { useAssignmentData } from "./hooks/useAssignmentData";
 import { useAssignmentActions } from "./hooks/useAssignmentActions";
-import AssignmentFormDialog from "./components/Dialogs/Form";
+import AssignmentFormDialog from "./components/Dialogs/AssignmentForm";
 import AddAssignmentNoteDialog from "./components/Dialogs/AddAssignmentNoteDialog";
 import UpdateLuWangCountDialog from "./components/Dialogs/UpdateLuWangCountDialog";
 import type { Assignment } from "../../api/core/assignment";

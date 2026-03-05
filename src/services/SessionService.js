@@ -8,7 +8,7 @@ class SessionService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Session = require("../entities/Session");
 
     if (!AppDataSource.isInitialized) {
@@ -76,6 +76,43 @@ class SessionService {
     }
   }
 
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const repo = await this.getRepository();
+
+    const session = await repo.findOne({ where: { id } });
+    if (!session) throw new Error(`Session with ID ${id} not found`);
+
+    const oldStatus = session.status;
+    if (oldStatus === newStatus) return session;
+
+    // Allowed transitions: active → closed/archived, closed → archived, archived is final
+    const allowedTransitions = {
+      active: ["closed", "archived"],
+      closed: ["archived"],
+      archived: [],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    session.status = newStatus;
+    session.updatedAt = new Date();
+
+    const saved = await updateDb(repo, session);
+    await auditLogger.logUpdate(
+      "Session",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
+  }
+
   async delete(id, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
     const repo = await this.getRepository();
@@ -131,7 +168,9 @@ class SessionService {
         qb.andWhere("session.year = :year", { year: options.year });
       }
       if (options.seasonType) {
-        qb.andWhere("session.seasonType = :seasonType", { seasonType: options.seasonType });
+        qb.andWhere("session.seasonType = :seasonType", {
+          seasonType: options.seasonType,
+        });
       }
 
       const sortBy = options.sortBy || "startDate";

@@ -1,4 +1,4 @@
-const { AppDataSource } = require("../../main/db/dataSource");
+const { AppDataSource } = require("../../main/db/datasource");
 
 //@ts-check
 class TransactionError extends Error {
@@ -69,7 +69,7 @@ async function withTransaction(operation, options = {}) {
       } catch (rollbackError) {
         console.error(
           `[Transaction] Failed to rollback ${name}:`,
-          rollbackError
+          rollbackError,
         );
       }
     }
@@ -90,29 +90,32 @@ async function withTransaction(operation, options = {}) {
  */
 function createTransactionalHandler(handlerMethod, options = {}) {
   // @ts-ignore
-  return async function (/** @type {any} */ eventOrPayload, /** @type {any} */ payload) {
+  return async function (
+    /** @type {any} */ eventOrPayload,
+    /** @type {any} */ payload,
+  ) {
     // @ts-ignore
     const transactionName = options.name || handlerMethod.name || "ipc_handler";
-    
+
     // 确定哪个参数是真正的 payload
     const actualPayload = payload !== undefined ? payload : eventOrPayload;
-    
+
     return await withTransaction(
       async (/** @type {any} */ queryRunner) => {
         const result = await handlerMethod(actualPayload, queryRunner);
-        
+
         if (result && result.status === false) {
           throw new TransactionError(
-            `Transaction "${transactionName}" failed: status=false`
+            `Transaction "${transactionName}" failed: status=false`,
           );
         }
-        
+
         return result;
       },
       // @ts-ignore
-      { ...options, name: transactionName }
+      { ...options, name: transactionName },
     );
-  // @ts-ignore
+    // @ts-ignore
   }.bind(this);
 }
 
@@ -123,12 +126,16 @@ function createTransactionalHandler(handlerMethod, options = {}) {
  * @returns {Function} Class decorator
  */
 function transactionalMethods(methodNames, options = {}) {
-  return function (/** @type {{ prototype: { [x: string]: (...args: any[]) => Promise<any>; }; name: any; }} */ target) {
+  return function (
+    /** @type {{ prototype: { [x: string]: (...args: any[]) => Promise<any>; }; name: any; }} */ target,
+  ) {
     methodNames.forEach((methodName) => {
       const originalMethod = target.prototype[methodName];
 
       if (typeof originalMethod === "function") {
-        target.prototype[methodName] = async function (/** @type {any} */ ...args) {
+        target.prototype[methodName] = async function (
+          /** @type {any} */ ...args
+        ) {
           const transactionName =
             // @ts-ignore
             options.name || `${target.name}.${methodName}`;
@@ -142,7 +149,7 @@ function transactionalMethods(methodNames, options = {}) {
             {
               ...options,
               name: transactionName,
-            }
+            },
           );
         };
       }
@@ -199,7 +206,7 @@ async function withRetry(operation, options = {}) {
       const shouldRetry = retryableErrors.some(
         (/** @type {any} */ errorPattern) =>
           // @ts-ignore
-          error.message.includes(errorPattern) || error.name === errorPattern
+          error.message.includes(errorPattern) || error.name === errorPattern,
       );
 
       if (!shouldRetry || attempt === maxRetries) {
@@ -209,11 +216,11 @@ async function withRetry(operation, options = {}) {
       // Calculate delay with exponential backoff
       const delay = Math.min(
         initialDelay * Math.pow(backoffFactor, attempt - 1),
-        maxDelay
+        maxDelay,
       );
 
       console.log(
-        `[Transaction] Retry ${attempt}/${maxRetries} after ${delay}ms`
+        `[Transaction] Retry ${attempt}/${maxRetries} after ${delay}ms`,
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -248,22 +255,24 @@ async function batchTransaction(operations, options = {}) {
       const batchResults = await withTransaction(
         async (/** @type {any} */ queryRunner) => {
           const batchPromises = batch.map((operation, index) =>
-            operation(queryRunner).catch((/** @type {{ message: any; }} */ error) => {
-              if (continueOnError) {
-                errors.push({
-                  operationIndex: i + index,
-                  error: error.message,
-                });
-                return null;
-              }
-              throw error;
-            })
+            operation(queryRunner).catch(
+              (/** @type {{ message: any; }} */ error) => {
+                if (continueOnError) {
+                  errors.push({
+                    operationIndex: i + index,
+                    error: error.message,
+                  });
+                  return null;
+                }
+                throw error;
+              },
+            ),
           );
 
           return await Promise.all(batchPromises);
         },
         // @ts-ignore
-        { name: batchName }
+        { name: batchName },
       );
 
       results.push(...batchResults);
@@ -305,7 +314,7 @@ class ManualTransaction {
     await this.queryRunner.connect();
     await this.queryRunner.startTransaction();
     this.transactionActive = true;
-    
+
     // @ts-ignore
     console.log(`[ManualTransaction] Started: ${options.name || "unnamed"}`);
   }
@@ -319,7 +328,7 @@ class ManualTransaction {
     await this.queryRunner.commitTransaction();
     this.transactionActive = false;
     await this.release();
-    
+
     console.log("[ManualTransaction] Committed");
   }
 
@@ -332,7 +341,7 @@ class ManualTransaction {
     await this.queryRunner.rollbackTransaction();
     this.transactionActive = false;
     await this.release();
-    
+
     console.log("[ManualTransaction] Rolled back");
   }
 

@@ -1,11 +1,11 @@
 // src/utils/auditLogger.js
 // @ts-check
 
+const { AuditLog } = require("../entities/AuditLog");
 const { AppDataSource } = require("../main/db/datasource");
 const DeviceInfo = require("./deviceInfo"); // static class, no constructor needed
 const { logger } = require("./logger");
 const { auditLogEnabled } = require("./settings/system");
-
 
 /**
  * @typedef {Object} SystemSettings
@@ -36,7 +36,7 @@ class AuditLogger {
       if (!this.dataSource.isInitialized) {
         await this.dataSource.initialize();
       }
-      // @ts-ignore
+    
       this.repository = this.dataSource.getRepository(AuditLog);
       logger.debug("AuditLogger repository initialized");
     }
@@ -186,7 +186,7 @@ class AuditLogger {
    */
   async logView(entity, entityId, actor) {
     return;
-    
+
     return this.log({ action: "VIEW", entity, entityId, actor });
   }
 

@@ -2,15 +2,14 @@
 
 const auditLogger = require("../utils/auditLogger");
 
-
 class SystemSettingService {
   constructor() {
     this.repository = null;
   }
 
   async initialize() {
-const { AppDataSource } = require("../main/db/dataSource");
-const { SystemSetting } = require("../entities/systemSettings");
+    const { AppDataSource } = require("../main/db/datasource");
+    const { SystemSetting } = require("../entities/systemSettings");
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
@@ -43,7 +42,9 @@ const { SystemSetting } = require("../entities/systemSettings");
         },
       });
       if (existing) {
-        throw new Error(`Setting with type "${data.setting_type}" and key "${data.key}" already exists`);
+        throw new Error(
+          `Setting with type "${data.setting_type}" and key "${data.key}" already exists`,
+        );
       }
 
       const setting = repo.create({
@@ -84,7 +85,9 @@ const { SystemSetting } = require("../entities/systemSettings");
           },
         });
         if (duplicate && duplicate.id !== id) {
-          throw new Error(`Setting with type "${newType}" and key "${newKey}" already exists`);
+          throw new Error(
+            `Setting with type "${newType}" and key "${newKey}" already exists`,
+          );
         }
       }
 
@@ -139,17 +142,22 @@ const { SystemSetting } = require("../entities/systemSettings");
     const repo = await this.getRepository();
 
     try {
-      const qb = repo.createQueryBuilder("setting")
+      const qb = repo
+        .createQueryBuilder("setting")
         .where("setting.is_deleted = :isDeleted", { isDeleted: false });
 
       if (options.setting_type) {
-        qb.andWhere("setting.setting_type = :setting_type", { setting_type: options.setting_type });
+        qb.andWhere("setting.setting_type = :setting_type", {
+          setting_type: options.setting_type,
+        });
       }
       if (options.key) {
         qb.andWhere("setting.key = :key", { key: options.key });
       }
       if (options.is_public !== undefined) {
-        qb.andWhere("setting.is_public = :is_public", { is_public: options.is_public });
+        qb.andWhere("setting.is_public = :is_public", {
+          is_public: options.is_public,
+        });
       }
 
       const sortBy = options.sortBy || "created_at";

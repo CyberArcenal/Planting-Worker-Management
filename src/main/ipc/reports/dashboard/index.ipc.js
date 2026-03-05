@@ -1,7 +1,7 @@
 // dashboard/index.js - Main Dashboard Handler for Kabisilya Management
 //@ts-check
 const { ipcMain } = require("electron");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 // Import modular handlers for Kabisilya Management
 const workerAnalytics = require("./handlers/workerAnalytics");

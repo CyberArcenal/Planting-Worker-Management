@@ -18,6 +18,7 @@ export interface Session {
   startDate: string;
   endDate?: string | null;
   status: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
   bukids?: Bukid[];
@@ -33,6 +34,7 @@ export interface SessionCreateData {
   seasonType?: string;
   endDate?: string;
   status?: string;
+   notes?: string;
 }
 
 export interface SessionUpdateData extends Partial<SessionCreateData> {}
@@ -152,6 +154,22 @@ class SessionAPI {
       throw new Error(error.message || "Failed to update session");
     }
   }
+
+  /**
+ * Update session status
+ * @param id - Session ID
+ * @param status - New status ('active', 'closed', 'archived')
+ */
+async updateStatus(id: number, status: string): Promise<SessionResponse> {
+  try {
+    if (!id || id <= 0) throw new Error("Invalid ID");
+    const response = await this.call<SessionResponse>("updateStatus", { id, status });
+    if (response.status) return response;
+    throw new Error(response.message || "Failed to update session status");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to update session status");
+  }
+}
 
   async delete(id: number): Promise<SessionResponse> {
     try {

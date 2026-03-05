@@ -1,14 +1,13 @@
 // services/AuditLogService.js
 const auditLogger = require("../utils/auditLogger");
 
-
 class AuditLogService {
   constructor() {
     this.repository = null;
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const { AuditLog } = require("../entities/AuditLog");
 
     if (!AppDataSource.isInitialized) {
@@ -26,7 +25,11 @@ class AuditLogService {
   }
 
   async findById(id) {
-    const { saveDb, updateDb, removeDb } = require("../utils/dbUtils/dbActions");
+    const {
+      saveDb,
+      updateDb,
+      removeDb,
+    } = require("../utils/dbUtils/dbActions");
     const repo = await this.getRepository();
     try {
       const log = await repo.findOne({ where: { id } });

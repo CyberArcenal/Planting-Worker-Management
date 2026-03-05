@@ -516,6 +516,126 @@ async function farmDebtAutoApplyInterest() {
   return getBool("auto_apply_interest", SettingType.FARM_DEBT, false);
 }
 
+
+// ============================================================
+// 🔔 NOTIFICATION SETTINGS (original)
+// ============================================================
+
+async function enableEmailAlerts() {
+  // @ts-ignore
+  return getValue("enable_email_alerts", SettingType.NOTIFICATION, "false");
+}
+
+async function enableSmsAlerts() {
+  // @ts-ignore
+  return getValue("enable_sms_alerts", SettingType.NOTIFICATION, "false");
+}
+
+async function reminderIntervalHours() {
+  // @ts-ignore
+  return getValue("reminder_interval_hours", SettingType.NOTIFICATION, "24");
+}
+
+async function smtpHost() {
+  // @ts-ignore
+  return getValue("smtp_host", SettingType.NOTIFICATION, "smtp.gmail.com");
+}
+
+async function smtpPort() {
+  return getInt("smtp_port", SettingType.NOTIFICATIONS, 587);
+}
+
+async function smtpUsername() {
+  // @ts-ignore
+  return getValue("smtp_username", SettingType.NOTIFICATION, "");
+}
+
+async function smtpPassword() {
+  // @ts-ignore
+  return getValue("smtp_password", SettingType.NOTIFICATION, "");
+}
+
+async function smtpUseSsl() {
+  // @ts-ignore
+  return getValue("smtp_use_ssl", SettingType.NOTIFICATION, "true");
+}
+
+async function smtpFromEmail() {
+  // @ts-ignore
+  return getValue("smtp_from_email", SettingType.NOTIFICATION, "");
+}
+
+async function smtpFromName() {
+  // @ts-ignore
+  return getValue("smtp_from_name", SettingType.NOTIFICATION, "");
+}
+
+// 📱 TWILIO SMS SETTINGS (NEW)
+async function twilioAccountSid() {
+  // @ts-ignore
+  return getValue("twilio_account_sid", SettingType.NOTIFICATION, "");
+}
+
+async function twilioAuthToken() {
+  // @ts-ignore
+  return getValue("twilio_auth_token", SettingType.NOTIFICATION, "");
+}
+
+async function twilioPhoneNumber() {
+  // @ts-ignore
+  return getValue("twilio_phone_number", SettingType.NOTIFICATION, "");
+}
+
+async function twilioMessagingServiceSid() {
+  // @ts-ignore
+  return getValue("twilio_messaging_service_sid", SettingType.NOTIFICATION, "");
+}
+
+async function getSmtpConfig() {
+  const [host, port, username, password, useSsl, fromEmail, fromName] =
+    await Promise.all([
+      smtpHost(),
+      smtpPort(),
+      smtpUsername(),
+      smtpPassword(),
+      smtpUseSsl(),
+      smtpFromEmail(),
+      smtpFromName(),
+    ]);
+
+  return {
+    host,
+
+    // @ts-ignore
+    port: parseInt(port, 10),
+    username,
+    password,
+    secure: useSsl === "true" || useSsl === "1" || useSsl === "yes",
+    from: {
+      email: fromEmail,
+      name: fromName,
+    },
+  };
+}
+
+async function getTwilioConfig() {
+  const [accountSid, authToken, phoneNumber, messagingServiceSid] =
+    await Promise.all([
+      twilioAccountSid(),
+      twilioAuthToken(),
+      twilioPhoneNumber(),
+      twilioMessagingServiceSid(),
+    ]);
+
+  return {
+    accountSid,
+    authToken,
+    phoneNumber,
+    messagingServiceSid,
+  };
+}
+
+
 // ============================================================
 // 📝 FARM AUDIT SETTINGS
 // ============================================================
@@ -761,6 +881,24 @@ module.exports = {
   workStart,
   workEnd,
   language,
+
+  // Notifications settings (original)
+  enableEmailAlerts,
+  enableSmsAlerts,
+  reminderIntervalHours,
+  smtpHost,
+  smtpPort,
+  smtpUsername,
+  smtpPassword,
+  smtpUseSsl,
+  smtpFromEmail,
+  smtpFromName,
+  getSmtpConfig,
+  twilioAccountSid,
+  twilioAuthToken,
+  twilioPhoneNumber,
+  twilioMessagingServiceSid,
+  getTwilioConfig,
 
   // Farm Session Settings
   farmSessionDefaultSessionId,

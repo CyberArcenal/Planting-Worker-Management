@@ -27,7 +27,7 @@ export interface Pitak {
 
 export interface PitakCreateData {
   bukidId: number;
-  location: string;
+  location?: string;
   layoutType?: string;
   sideLengths?: any;
   areaSqm?: number;
@@ -146,6 +146,22 @@ class PitakAPI {
       throw new Error(error.message || "Failed to update pitak");
     }
   }
+
+  /**
+ * Update pitak status
+ * @param id - Pitak ID
+ * @param status - New status ('active', 'inactive', 'archived')
+ */
+async updateStatus(id: number, status: string): Promise<PitakResponse> {
+  try {
+    if (!id || id <= 0) throw new Error("Invalid ID");
+    const response = await this.call<PitakResponse>("updateStatus", { id, status });
+    if (response.status) return response;
+    throw new Error(response.message || "Failed to update pitak status");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to update pitak status");
+  }
+}
 
   async delete(id: number): Promise<PitakResponse> {
     try {

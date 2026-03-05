@@ -14,10 +14,10 @@ module.exports = async function createAssignment(params, queryRunner) {
     logger.info("IPC: createAssignment", { params });
 
     // Basic validation (service will also validate)
-    if (!params.workerId || !params.pitakId || !params.sessionId || params.luwangCount === undefined || !params.assignmentDate) {
+    if (!params.workerId || !params.pitakId || !params.sessionId  || !params.assignmentDate) {
       return {
         status: false,
-        message: "Missing required fields: workerId, pitakId, sessionId, luwangCount, assignmentDate",
+        message: "Missing required fields: workerId, pitakId, sessionId, assignmentDate",
         data: null,
       };
     }

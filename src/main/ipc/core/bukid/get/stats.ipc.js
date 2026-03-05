@@ -3,7 +3,7 @@ const Bukid = require("../../../../../entities/Bukid");
 const Pitak = require("../../../../../entities/Pitak");
 const bukidService = require("../../../../../services/BukidService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getBukidStats(params) {
   try {
@@ -38,6 +38,10 @@ module.exports = async function getBukidStats(params) {
     return { status: true, message: "Bukid statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getBukidStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

@@ -9,7 +9,7 @@ class DebtHistoryService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const DebtHistory = require("../entities/DebtHistory");
     const Debt = require("../entities/Debt");
     const Payment = require("../entities/Payment");
@@ -36,7 +36,11 @@ class DebtHistoryService {
 
   async create(data, user = "system") {
     const { saveDb } = require("../utils/dbUtils/dbActions");
-    const { debtHistory: repo, debt: debtRepo, payment: paymentRepo } = await this.getRepositories();
+    const {
+      debtHistory: repo,
+      debt: debtRepo,
+      payment: paymentRepo,
+    } = await this.getRepositories();
 
     try {
       if (!data.debtId) throw new Error("debtId is required");
@@ -47,7 +51,8 @@ class DebtHistoryService {
       let payment = null;
       if (data.paymentId) {
         payment = await paymentRepo.findOne({ where: { id: data.paymentId } });
-        if (!payment) throw new Error(`Payment with ID ${data.paymentId} not found`);
+        if (!payment)
+          throw new Error(`Payment with ID ${data.paymentId} not found`);
       }
 
       const historyData = {
@@ -70,7 +75,11 @@ class DebtHistoryService {
 
   async update(id, data, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const { debtHistory: repo, debt: debtRepo, payment: paymentRepo } = await this.getRepositories();
+    const {
+      debtHistory: repo,
+      debt: debtRepo,
+      payment: paymentRepo,
+    } = await this.getRepositories();
 
     try {
       const existing = await repo.findOne({
@@ -91,8 +100,11 @@ class DebtHistoryService {
         if (data.paymentId === null) {
           existing.payment = null;
         } else {
-          const payment = await paymentRepo.findOne({ where: { id: data.paymentId } });
-          if (!payment) throw new Error(`Payment with ID ${data.paymentId} not found`);
+          const payment = await paymentRepo.findOne({
+            where: { id: data.paymentId },
+          });
+          if (!payment)
+            throw new Error(`Payment with ID ${data.paymentId} not found`);
           existing.payment = payment;
         }
         delete data.paymentId;
@@ -159,16 +171,24 @@ class DebtHistoryService {
         qb.andWhere("debt.id = :debtId", { debtId: options.debtId });
       }
       if (options.paymentId) {
-        qb.andWhere("payment.id = :paymentId", { paymentId: options.paymentId });
+        qb.andWhere("payment.id = :paymentId", {
+          paymentId: options.paymentId,
+        });
       }
       if (options.transactionType) {
-        qb.andWhere("history.transactionType = :transactionType", { transactionType: options.transactionType });
+        qb.andWhere("history.transactionType = :transactionType", {
+          transactionType: options.transactionType,
+        });
       }
       if (options.startDate) {
-        qb.andWhere("history.transactionDate >= :startDate", { startDate: options.startDate });
+        qb.andWhere("history.transactionDate >= :startDate", {
+          startDate: options.startDate,
+        });
       }
       if (options.endDate) {
-        qb.andWhere("history.transactionDate <= :endDate", { endDate: options.endDate });
+        qb.andWhere("history.transactionDate <= :endDate", {
+          endDate: options.endDate,
+        });
       }
 
       const sortBy = options.sortBy || "transactionDate";

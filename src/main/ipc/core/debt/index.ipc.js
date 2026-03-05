@@ -1,5 +1,4 @@
 // src/main/ipc/debt/index.ipc.js
-// @ts-check
 const { ipcMain } = require("electron");
 const { AppDataSource } = require("../../../db/datasource");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
@@ -23,6 +22,7 @@ class DebtHandler {
     this.createDebt = this.importHandler("./create.ipc");
     this.updateDebt = this.importHandler("./update.ipc");
     this.deleteDebt = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   importHandler(path) {
@@ -32,7 +32,7 @@ class DebtHandler {
     } catch (error) {
       console.warn(
         `[DebtHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -66,6 +66,8 @@ class DebtHandler {
           return await this.handleWithTransaction(this.createDebt, params);
         case "updateDebt":
           return await this.handleWithTransaction(this.updateDebt, params);
+        case "updateStatus":
+          return await this.handleWithTransaction(this.updateStatus, params);
         case "deleteDebt":
           return await this.handleWithTransaction(this.deleteDebt, params);
         default:
@@ -128,10 +130,7 @@ const debtHandler = new DebtHandler();
 
 ipcMain.handle(
   "debt",
-  withErrorHandling(
-    debtHandler.handleRequest.bind(debtHandler),
-    "IPC:debt"
-  )
+  withErrorHandling(debtHandler.handleRequest.bind(debtHandler), "IPC:debt"),
 );
 
 module.exports = { DebtHandler, debtHandler };

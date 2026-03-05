@@ -71,7 +71,10 @@ export interface WorkerStatsResponse {
 class WorkerAPI {
   private channel = "worker";
 
-  private async call<T = any>(method: string, params: Record<string, any> = {}): Promise<T> {
+  private async call<T = any>(
+    method: string,
+    params: Record<string, any> = {},
+  ): Promise<T> {
     if (!window.backendAPI?.worker) {
       throw new Error(`Electron API (${this.channel}) not available`);
     }
@@ -89,7 +92,10 @@ class WorkerAPI {
     sortOrder?: "ASC" | "DESC";
   }): Promise<WorkersResponse> {
     try {
-      const response = await this.call<WorkersResponse>("getAllWorkers", params || {});
+      const response = await this.call<WorkersResponse>(
+        "getAllWorkers",
+        params || {},
+      );
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch workers");
     } catch (error: any) {
@@ -110,14 +116,16 @@ class WorkerAPI {
 
   async getByStatus(
     status: string,
-    params?: Omit<Parameters<WorkerAPI['getAll']>[0], 'status'>
+    params?: Omit<Parameters<WorkerAPI["getAll"]>[0], "status">,
   ): Promise<WorkersResponse> {
     return this.getAll({ ...params, status });
   }
 
   async getStats(workerId?: number): Promise<WorkerStatsResponse> {
     try {
-      const response = await this.call<WorkerStatsResponse>("getWorkerStats", { workerId });
+      const response = await this.call<WorkerStatsResponse>("getWorkerStats", {
+        workerId,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch stats");
     } catch (error: any) {
@@ -140,11 +148,33 @@ class WorkerAPI {
   async update(id: number, data: WorkerUpdateData): Promise<WorkerResponse> {
     try {
       if (!id || id <= 0) throw new Error("Invalid ID");
-      const response = await this.call<WorkerResponse>("updateWorker", { id, ...data });
+      const response = await this.call<WorkerResponse>("updateWorker", {
+        id,
+        ...data,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to update worker");
     } catch (error: any) {
       throw new Error(error.message || "Failed to update worker");
+    }
+  }
+
+  /**
+   * Update worker status
+   * @param id - Worker ID
+   * @param status - New status ('active', 'inactive', 'on-leave', 'terminated')
+   */
+  async updateStatus(id: number, status: string): Promise<WorkerResponse> {
+    try {
+      if (!id || id <= 0) throw new Error("Invalid ID");
+      const response = await this.call<WorkerResponse>("updateStatus", {
+        id,
+        status,
+      });
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to update worker status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update worker status");
     }
   }
 

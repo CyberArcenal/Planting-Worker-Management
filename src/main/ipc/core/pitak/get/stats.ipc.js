@@ -2,7 +2,7 @@
 // @ts-check
 
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getPitakStats(params) {
   try {
@@ -12,7 +12,9 @@ module.exports = async function getPitakStats(params) {
     const queryBuilder = repo.createQueryBuilder("pitak");
 
     if (params.bukidId) {
-      queryBuilder.where("pitak.bukidId = :bukidId", { bukidId: params.bukidId });
+      queryBuilder.where("pitak.bukidId = :bukidId", {
+        bukidId: params.bukidId,
+      });
     }
 
     const totalCount = await queryBuilder.getCount();
@@ -37,6 +39,10 @@ module.exports = async function getPitakStats(params) {
     return { status: true, message: "Pitak statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getPitakStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

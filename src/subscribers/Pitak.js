@@ -2,7 +2,9 @@
 // @ts-check
 const Pitak = require("../entities/Pitak");
 const { AppDataSource } = require("../main/db/datasource");
-const { PitakStateTransitionService } = require("../stateTransitionService/Pitak");
+const {
+  PitakStateTransitionService,
+} = require("../stateTransitionService/Pitak");
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading PitakSubscriber");
@@ -60,16 +62,33 @@ class PitakSubscriber {
     // Use the transaction manager from the event
     switch (newPitak.status) {
       case "active":
-        await this.transitionService.onActivate(hydrated, manager, oldPitak?.status, "system");
+        await this.transitionService.onActivate(
+          hydrated,
+          manager,
+          oldPitak?.status,
+          "system",
+        );
         break;
       case "complete":
-        await this.transitionService.onComplete(hydrated, manager, oldPitak?.status, "system");
+        await this.transitionService.onComplete(
+          hydrated,
+          manager,
+          oldPitak?.status,
+          "system",
+        );
         break;
       case "inactive":
-        await this.transitionService.onInactivate(hydrated, manager, oldPitak?.status, "system");
+        await this.transitionService.onInactivate(
+          hydrated,
+          manager,
+          oldPitak?.status,
+          "system",
+        );
         break;
       default:
-        logger.warn(`[PitakSubscriber] Unhandled status transition: ${oldPitak?.status} -> ${newPitak.status}`);
+        logger.warn(
+          `[PitakSubscriber] Unhandled status transition: ${oldPitak?.status} -> ${newPitak.status}`,
+        );
     }
   }
 
@@ -84,7 +103,9 @@ class PitakSubscriber {
       relations: ["assignments"], // we need assignments for cascade
     });
     if (!pitak) {
-      logger.error(`[PitakSubscriber] Pitak #${pitakId} not found for hydration`);
+      logger.error(
+        `[PitakSubscriber] Pitak #${pitakId} not found for hydration`,
+      );
       return null;
     }
     return pitak;

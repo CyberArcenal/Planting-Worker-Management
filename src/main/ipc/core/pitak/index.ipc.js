@@ -1,10 +1,9 @@
 // src/main/ipc/pitak/index.ipc.js
-// @ts-check
 const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
 const { logger } = require("../../../../utils/logger");
 const { AuditLog } = require("../../../../entities/AuditLog");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 class PitakHandler {
   constructor() {
@@ -22,6 +21,7 @@ class PitakHandler {
     this.createPitak = this.importHandler("./create.ipc");
     this.updatePitak = this.importHandler("./update.ipc");
     this.deletePitak = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   importHandler(path) {
@@ -31,7 +31,7 @@ class PitakHandler {
     } catch (error) {
       console.warn(
         `[PitakHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -63,6 +63,8 @@ class PitakHandler {
           return await this.handleWithTransaction(this.createPitak, params);
         case "updatePitak":
           return await this.handleWithTransaction(this.updatePitak, params);
+        case "updateStatus":
+          return await this.handleWithTransaction(this.updateStatus, params);
         case "deletePitak":
           return await this.handleWithTransaction(this.deletePitak, params);
         default:
@@ -125,10 +127,7 @@ const pitakHandler = new PitakHandler();
 
 ipcMain.handle(
   "pitak",
-  withErrorHandling(
-    pitakHandler.handleRequest.bind(pitakHandler),
-    "IPC:pitak"
-  )
+  withErrorHandling(pitakHandler.handleRequest.bind(pitakHandler), "IPC:pitak"),
 );
 
 module.exports = { PitakHandler, pitakHandler };

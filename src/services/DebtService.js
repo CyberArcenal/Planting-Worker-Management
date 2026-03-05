@@ -1,6 +1,5 @@
 // services/DebtService.js
 
-
 const auditLogger = require("../utils/auditLogger");
 
 class DebtService {
@@ -11,7 +10,7 @@ class DebtService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Debt = require("../entities/Debt");
     const Worker = require("../entities/Worker");
     const Session = require("../entities/Session");
@@ -38,7 +37,11 @@ class DebtService {
 
   async create(data, user = "system") {
     const { saveDb } = require("../utils/dbUtils/dbActions");
-    const { debt: repo, worker: workerRepo, session: sessionRepo } = await this.getRepositories();
+    const {
+      debt: repo,
+      worker: workerRepo,
+      session: sessionRepo,
+    } = await this.getRepositories();
 
     try {
       if (!data.workerId) throw new Error("workerId is required");
@@ -48,8 +51,11 @@ class DebtService {
       const worker = await workerRepo.findOne({ where: { id: data.workerId } });
       if (!worker) throw new Error(`Worker with ID ${data.workerId} not found`);
 
-      const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-      if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+      const session = await sessionRepo.findOne({
+        where: { id: data.sessionId },
+      });
+      if (!session)
+        throw new Error(`Session with ID ${data.sessionId} not found`);
 
       const debtData = {
         ...data,
@@ -74,7 +80,11 @@ class DebtService {
 
   async update(id, data, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const { debt: repo, worker: workerRepo, session: sessionRepo } = await this.getRepositories();
+    const {
+      debt: repo,
+      worker: workerRepo,
+      session: sessionRepo,
+    } = await this.getRepositories();
 
     try {
       const existing = await repo.findOne({
@@ -86,14 +96,20 @@ class DebtService {
       const oldData = { ...existing };
 
       if (data.workerId !== undefined) {
-        const worker = await workerRepo.findOne({ where: { id: data.workerId } });
-        if (!worker) throw new Error(`Worker with ID ${data.workerId} not found`);
+        const worker = await workerRepo.findOne({
+          where: { id: data.workerId },
+        });
+        if (!worker)
+          throw new Error(`Worker with ID ${data.workerId} not found`);
         existing.worker = worker;
         delete data.workerId;
       }
       if (data.sessionId !== undefined) {
-        const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-        if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+        const session = await sessionRepo.findOne({
+          where: { id: data.sessionId },
+        });
+        if (!session)
+          throw new Error(`Session with ID ${data.sessionId} not found`);
         existing.session = session;
         delete data.sessionId;
       }
@@ -110,6 +126,46 @@ class DebtService {
       console.error("Failed to update debt:", error.message);
       throw error;
     }
+  }
+
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const { debt: repo } = await this.getRepositories();
+
+    const debt = await repo.findOne({ where: { id } });
+    if (!debt) throw new Error(`Debt with ID ${id} not found`);
+
+    const oldStatus = debt.status;
+    if (oldStatus === newStatus) return debt;
+
+    // Allowed transitions for debt statuses
+    const allowedTransitions = {
+      pending: ["partially_paid", "paid", "cancelled", "overdue", "settled"],
+      partially_paid: ["paid", "cancelled", "overdue", "settled"],
+      overdue: ["paid", "settled", "cancelled"],
+      paid: ["settled"],
+      settled: [],
+      cancelled: [],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    debt.status = newStatus;
+    debt.updatedAt = new Date();
+
+    const saved = await updateDb(repo, debt);
+    await auditLogger.logUpdate(
+      "Debt",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
   }
 
   async delete(id, user = "system") {
@@ -167,16 +223,22 @@ class DebtService {
         qb.andWhere("worker.id = :workerId", { workerId: options.workerId });
       }
       if (options.sessionId) {
-        qb.andWhere("session.id = :sessionId", { sessionId: options.sessionId });
+        qb.andWhere("session.id = :sessionId", {
+          sessionId: options.sessionId,
+        });
       }
       if (options.status) {
         qb.andWhere("debt.status = :status", { status: options.status });
       }
       if (options.dueDateStart) {
-        qb.andWhere("debt.dueDate >= :dueDateStart", { dueDateStart: options.dueDateStart });
+        qb.andWhere("debt.dueDate >= :dueDateStart", {
+          dueDateStart: options.dueDateStart,
+        });
       }
       if (options.dueDateEnd) {
-        qb.andWhere("debt.dueDate <= :dueDateEnd", { dueDateEnd: options.dueDateEnd });
+        qb.andWhere("debt.dueDate <= :dueDateEnd", {
+          dueDateEnd: options.dueDateEnd,
+        });
       }
 
       const sortBy = options.sortBy || "createdAt";

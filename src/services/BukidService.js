@@ -8,7 +8,7 @@ class BukidService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Bukid = require("../entities/Bukid");
     const Session = require("../entities/Session");
 
@@ -38,8 +38,11 @@ class BukidService {
       if (!data.name) throw new Error("Bukid name is required");
       if (!data.sessionId) throw new Error("sessionId is required");
 
-      const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-      if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+      const session = await sessionRepo.findOne({
+        where: { id: data.sessionId },
+      });
+      if (!session)
+        throw new Error(`Session with ID ${data.sessionId} not found`);
 
       const bukidData = {
         ...data,
@@ -72,8 +75,11 @@ class BukidService {
       const oldData = { ...existing };
 
       if (data.sessionId !== undefined) {
-        const session = await sessionRepo.findOne({ where: { id: data.sessionId } });
-        if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+        const session = await sessionRepo.findOne({
+          where: { id: data.sessionId },
+        });
+        if (!session)
+          throw new Error(`Session with ID ${data.sessionId} not found`);
         existing.session = session;
         delete data.sessionId;
       }
@@ -88,6 +94,45 @@ class BukidService {
       console.error("Failed to update bukid:", error.message);
       throw error;
     }
+  }
+
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const { bukid: repo } = await this.getRepositories();
+
+    const bukid = await repo.findOne({ where: { id } });
+    if (!bukid) throw new Error(`Bukid with ID ${id} not found`);
+
+    const oldStatus = bukid.status;
+    if (oldStatus === newStatus) return bukid;
+
+    // Allowed transitions: initiated → active/complete/inactive, active → complete/inactive,
+    // inactive → active, complete is final
+    const allowedTransitions = {
+      initiated: ["active", "complete", "inactive"],
+      active: ["complete", "inactive"],
+      complete: [],
+      inactive: ["active"],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    bukid.status = newStatus;
+    bukid.updatedAt = new Date();
+
+    const saved = await updateDb(repo, bukid);
+    await auditLogger.logUpdate(
+      "Bukid",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
   }
 
   async delete(id, user = "system") {
@@ -142,15 +187,20 @@ class BukidService {
         .leftJoinAndSelect("bukid.pitaks", "pitaks");
 
       if (options.sessionId) {
-        qb.andWhere("session.id = :sessionId", { sessionId: options.sessionId });
+        qb.andWhere("session.id = :sessionId", {
+          sessionId: options.sessionId,
+        });
       }
       if (options.status) {
         qb.andWhere("bukid.status = :status", { status: options.status });
       }
       if (options.search) {
-        qb.andWhere("(bukid.name LIKE :search OR bukid.location LIKE :search)", {
-          search: `%${options.search}%`,
-        });
+        qb.andWhere(
+          "(bukid.name LIKE :search OR bukid.location LIKE :search)",
+          {
+            search: `%${options.search}%`,
+          },
+        );
       }
 
       const sortBy = options.sortBy || "createdAt";

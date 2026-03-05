@@ -166,8 +166,7 @@ class AssignmentAPI {
     workerId: number;
     pitakId: number;
     sessionId: number;
-    luwangCount: number;
-    assignmentDate: string;
+    assignmentDate?: string;
     notes?: string;
     status?: string;
   }): Promise<AssignmentResponse> {
@@ -211,6 +210,22 @@ class AssignmentAPI {
       throw new Error(error.message || "Failed to update assignment");
     }
   }
+
+  /**
+ * Update assignment status
+ * @param id - Assignment ID
+ * @param status - New status ('active', 'completed', 'cancelled')
+ */
+async updateStatus(id: number, status: string): Promise<AssignmentResponse> {
+  try {
+    if (!id || id <= 0) throw new Error("Invalid ID");
+    const response = await this.call<AssignmentResponse>("updateStatus", { id, status });
+    if (response.status) return response;
+    throw new Error(response.message || "Failed to update assignment status");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to update assignment status");
+  }
+}
 
   /**
    * Delete (cancel) an assignment

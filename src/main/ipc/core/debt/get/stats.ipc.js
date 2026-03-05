@@ -3,7 +3,7 @@
 const Debt = require("../../../../../entities/Debt");
 const debtService = require("../../../../../services/DebtService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getDebtStats(params) {
   try {
@@ -13,7 +13,9 @@ module.exports = async function getDebtStats(params) {
     const queryBuilder = debtRepo.createQueryBuilder("debt");
 
     if (params.sessionId) {
-      queryBuilder.where("debt.sessionId = :sessionId", { sessionId: params.sessionId });
+      queryBuilder.where("debt.sessionId = :sessionId", {
+        sessionId: params.sessionId,
+      });
     }
 
     const totalCount = await queryBuilder.getCount();
@@ -42,6 +44,10 @@ module.exports = async function getDebtStats(params) {
     return { status: true, message: "Debt statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getDebtStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

@@ -59,12 +59,6 @@ export interface BukidStatsResponse {
 // ----------------------------------------------------------------------
 
 class BukidAPI {
-  exportToCSV(arg0: { status: string | undefined; }) {
-    throw new Error("Method not implemented.");
-  }
-  updateStatus(id: number, arg1: string) {
-    throw new Error("Method not implemented.");
-  }
   private channel = "bukid";
 
   private async call<T = any>(method: string, params: Record<string, any> = {}): Promise<T> {
@@ -144,6 +138,22 @@ class BukidAPI {
       throw new Error(error.message || "Failed to update bukid");
     }
   }
+
+  /**
+ * Update bukid status
+ * @param id - Bukid ID
+ * @param status - New status ('initiated', 'active', 'complete', 'inactive')
+ */
+async updateStatus(id: number, status: string): Promise<BukidResponse> {
+  try {
+    if (!id || id <= 0) throw new Error("Invalid ID");
+    const response = await this.call<BukidResponse>("updateStatus", { id, status });
+    if (response.status) return response;
+    throw new Error(response.message || "Failed to update bukid status");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to update bukid status");
+  }
+}
 
   async delete(id: number): Promise<BukidResponse> {
     try {

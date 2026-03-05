@@ -2,7 +2,9 @@
 // @ts-check
 const Assignment = require("../entities/Assignment");
 const { AppDataSource } = require("../main/db/datasource");
-const { AssignmentStateTransitionService } = require("../stateTransitionService/Assignment");
+const {
+  AssignmentStateTransitionService,
+} = require("../stateTransitionService/Assignment");
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading AssignmentSubscriber");

@@ -14,6 +14,10 @@ const Session = new EntitySchema({
       type: String,
       nullable: false, // e.g. "First Cropping 2026"
     },
+    notes: {
+      type: String,
+      nullable: true,
+    },
     seasonType: {
       type: String,
       nullable: true, // optional: 'tag-ulan' or 'tag-araw'

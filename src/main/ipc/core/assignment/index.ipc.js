@@ -3,7 +3,7 @@ const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
 const { logger } = require("../../../../utils/logger");
 const { AuditLog } = require("../../../../entities/AuditLog");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 class AssignmentHandler {
   constructor() {
@@ -23,6 +23,7 @@ class AssignmentHandler {
     this.createAssignment = this.importHandler("./create.ipc");
     this.updateAssignment = this.importHandler("./update.ipc");
     this.deleteAssignment = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   importHandler(path) {
@@ -77,6 +78,11 @@ class AssignmentHandler {
         case "updateAssignment":
           return await this.handleWithTransaction(
             this.updateAssignment,
+            enrichedParams,
+          );
+        case "updateStatus":
+          return await this.handleWithTransaction(
+            this.updateStatus,
             enrichedParams,
           );
         case "deleteAssignment":

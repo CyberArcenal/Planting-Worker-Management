@@ -9,7 +9,7 @@ class PaymentHistoryService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const PaymentHistory = require("../entities/PaymentHistory");
     const Payment = require("../entities/Payment");
 
@@ -33,13 +33,17 @@ class PaymentHistoryService {
 
   async create(data, user = "system") {
     const { saveDb } = require("../utils/dbUtils/dbActions");
-    const { paymentHistory: repo, payment: paymentRepo } = await this.getRepositories();
+    const { paymentHistory: repo, payment: paymentRepo } =
+      await this.getRepositories();
 
     try {
       if (!data.paymentId) throw new Error("paymentId is required");
 
-      const payment = await paymentRepo.findOne({ where: { id: data.paymentId } });
-      if (!payment) throw new Error(`Payment with ID ${data.paymentId} not found`);
+      const payment = await paymentRepo.findOne({
+        where: { id: data.paymentId },
+      });
+      if (!payment)
+        throw new Error(`Payment with ID ${data.paymentId} not found`);
 
       const historyData = {
         ...data,
@@ -59,7 +63,8 @@ class PaymentHistoryService {
 
   async update(id, data, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const { paymentHistory: repo, payment: paymentRepo } = await this.getRepositories();
+    const { paymentHistory: repo, payment: paymentRepo } =
+      await this.getRepositories();
 
     try {
       const existing = await repo.findOne({
@@ -71,8 +76,11 @@ class PaymentHistoryService {
       const oldData = { ...existing };
 
       if (data.paymentId !== undefined) {
-        const payment = await paymentRepo.findOne({ where: { id: data.paymentId } });
-        if (!payment) throw new Error(`Payment with ID ${data.paymentId} not found`);
+        const payment = await paymentRepo.findOne({
+          where: { id: data.paymentId },
+        });
+        if (!payment)
+          throw new Error(`Payment with ID ${data.paymentId} not found`);
         existing.payment = payment;
         delete data.paymentId;
       }
@@ -132,16 +140,24 @@ class PaymentHistoryService {
         .leftJoinAndSelect("history.payment", "payment");
 
       if (options.paymentId) {
-        qb.andWhere("payment.id = :paymentId", { paymentId: options.paymentId });
+        qb.andWhere("payment.id = :paymentId", {
+          paymentId: options.paymentId,
+        });
       }
       if (options.actionType) {
-        qb.andWhere("history.actionType = :actionType", { actionType: options.actionType });
+        qb.andWhere("history.actionType = :actionType", {
+          actionType: options.actionType,
+        });
       }
       if (options.startDate) {
-        qb.andWhere("history.changeDate >= :startDate", { startDate: options.startDate });
+        qb.andWhere("history.changeDate >= :startDate", {
+          startDate: options.startDate,
+        });
       }
       if (options.endDate) {
-        qb.andWhere("history.changeDate <= :endDate", { endDate: options.endDate });
+        qb.andWhere("history.changeDate <= :endDate", {
+          endDate: options.endDate,
+        });
       }
 
       const sortBy = options.sortBy || "changeDate";

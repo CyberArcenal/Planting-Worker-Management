@@ -23,7 +23,7 @@ import AddNoteDialog from "./Dialogs/AddNote";
 import ViewStatsDialog from "./Dialogs/ViewStats";
 import ViewNoteDialog from "./Dialogs/ViewNote";
 import ViewPlotsDialog from "./Dialogs/ViewPlots";
-import PitakFormDialog from "../Pitak/Dialogs/Form";
+import PitakFormDialog from "../../new-pages/pitak/components/pitakFormDialog";
 import PitakViewDialog from "../Pitak/Dialogs/View";
 import BukidFormDialog from "./Dialogs/Form";
 
@@ -75,7 +75,9 @@ const BukidTablePage: React.FC = () => {
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [isViewNoteDialogOpen, setIsViewNoteDialogOpen] = useState(false);
   const [showViewPitakDialog, setShowViewPitakDialog] = useState(false);
-  const [selectedViewPitakId, setSelectedViewPitakId] = useState<number | null>(null);
+  const [selectedViewPitakId, setSelectedViewPitakId] = useState<number | null>(
+    null,
+  );
   const [selectedNote, setSelectedNote] = useState<{
     id: number;
     bukidName: string;
@@ -205,7 +207,7 @@ const BukidTablePage: React.FC = () => {
 
   const toggleSelectBukid = (id: number) => {
     setSelectedBukids((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -233,23 +235,39 @@ const BukidTablePage: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr style={{ background: "var(--table-header-bg)" }}>
-                  <th className="p-4 text-left"><div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div></th>
-                  {["Name", "Location", "Status", "Created", "Actions"].map((header) => (
-                    <th key={header} className="p-4 text-left">
-                      <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
-                    </th>
-                  ))}
+                  <th className="p-4 text-left">
+                    <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </th>
+                  {["Name", "Location", "Status", "Created", "Actions"].map(
+                    (header) => (
+                      <th key={header} className="p-4 text-left">
+                        <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {[...Array(5)].map((_, index) => (
                   <tr key={index} className="border-b border-gray-200">
-                    <td className="p-4"><div className="w-4 h-4 bg-gray-100 rounded animate-pulse"></div></td>
-                    <td className="p-4"><div className="h-4 bg-gray-100 rounded animate-pulse w-32"></div></td>
-                    <td className="p-4"><div className="h-4 bg-gray-100 rounded animate-pulse w-40"></div></td>
-                    <td className="p-4"><div className="h-6 bg-gray-100 rounded-full animate-pulse w-16"></div></td>
-                    <td className="p-4"><div className="h-4 bg-gray-100 rounded animate-pulse w-24"></div></td>
-                    <td className="p-4"><div className="flex gap-2">{/* actions skeleton */}</div></td>
+                    <td className="p-4">
+                      <div className="w-4 h-4 bg-gray-100 rounded animate-pulse"></div>
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-100 rounded animate-pulse w-32"></div>
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-100 rounded animate-pulse w-40"></div>
+                    </td>
+                    <td className="p-4">
+                      <div className="h-6 bg-gray-100 rounded-full animate-pulse w-16"></div>
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-100 rounded animate-pulse w-24"></div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2">{/* actions skeleton */}</div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -262,7 +280,10 @@ const BukidTablePage: React.FC = () => {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, index) => (
-            <div key={index} className="p-5 rounded-xl bg-white border border-gray-200 animate-pulse">
+            <div
+              key={index}
+              className="p-5 rounded-xl bg-white border border-gray-200 animate-pulse"
+            >
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
                 <div className="flex-1">
@@ -293,14 +314,19 @@ const BukidTablePage: React.FC = () => {
     return (
       <div className="flex flex-col h-screen bg-gray-50">
         <div className="p-6 bg-white">
-          <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+          <h1
+            className="text-2xl font-bold flex items-center gap-2"
+            style={{ color: "var(--text-primary)" }}
+          >
             <Home className="w-6 h-6" /> Bukid Management
           </h1>
         </div>
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center p-8 bg-white rounded-xl border border-gray-200 max-w-md">
             <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-            <p className="text-base font-semibold mb-2 text-red-600">Error Loading Bukid Data</p>
+            <p className="text-base font-semibold mb-2 text-red-600">
+              Error Loading Bukid Data
+            </p>
             <p className="text-sm mb-6 text-gray-600">{error}</p>
             <button
               onClick={handleRefresh}
@@ -321,7 +347,10 @@ const BukidTablePage: React.FC = () => {
         <div className="p-6 bg-white border-b border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+              <h1
+                className="text-2xl font-bold flex items-center gap-2"
+                style={{ color: "var(--text-primary)" }}
+              >
                 <Home className="w-6 h-6" /> Bukid Management
               </h1>
               <p className="text-sm text-gray-600 mt-1">Manage farm lands</p>
@@ -386,13 +415,17 @@ const BukidTablePage: React.FC = () => {
             </div>
           )}
 
-          {loading && !refreshing && <div className="mb-6">{renderLoadingSkeleton()}</div>}
+          {loading && !refreshing && (
+            <div className="mb-6">{renderLoadingSkeleton()}</div>
+          )}
 
           {!loading && bukids.length === 0 ? (
             <div className="flex items-center justify-center h-64 rounded-xl border-2 border-dashed border-gray-300 bg-white">
               <div className="text-center p-8">
                 <Home className="w-16 h-16 mx-auto mb-4 opacity-20 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">No Bukid Found</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">
+                  No Bukid Found
+                </h3>
                 <p className="text-sm mb-6 max-w-md mx-auto text-gray-600">
                   {searchQuery
                     ? `No results for "${searchQuery}"`

@@ -5,7 +5,7 @@ const Payment = require("../../../../../entities/Payment");
 const Session = require("../../../../../entities/Session");
 const sessionService = require("../../../../../services/SessionService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getSessionStats(params) {
   try {
@@ -26,9 +26,15 @@ module.exports = async function getSessionStats(params) {
     // If a specific sessionId is provided, get its detailed stats
     let sessionStats = null;
     if (params.sessionId) {
-      const assignments = await assignmentRepo.count({ where: { session: { id: params.sessionId } } });
-      const payments = await paymentRepo.count({ where: { session: { id: params.sessionId } } });
-      const debts = await debtRepo.count({ where: { session: { id: params.sessionId } } });
+      const assignments = await assignmentRepo.count({
+        where: { session: { id: params.sessionId } },
+      });
+      const payments = await paymentRepo.count({
+        where: { session: { id: params.sessionId } },
+      });
+      const debts = await debtRepo.count({
+        where: { session: { id: params.sessionId } },
+      });
 
       sessionStats = {
         totalAssignments: assignments,
@@ -49,6 +55,10 @@ module.exports = async function getSessionStats(params) {
     return { status: true, message: "Session statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getSessionStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

@@ -190,6 +190,22 @@ class PaymentAPI {
     }
   }
 
+  /**
+ * Update payment status
+ * @param id - Payment ID
+ * @param status - New status ('pending', 'partially_paid', 'complete', 'cancel')
+ */
+async updateStatus(id: number, status: string): Promise<PaymentResponse> {
+  try {
+    if (!id || id <= 0) throw new Error("Invalid ID");
+    const response = await this.call<PaymentResponse>("updateStatus", { id, status });
+    if (response.status) return response;
+    throw new Error(response.message || "Failed to update payment status");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to update payment status");
+  }
+}
+
   async delete(id: number): Promise<PaymentResponse> {
     try {
       if (!id || id <= 0) throw new Error("Invalid ID");

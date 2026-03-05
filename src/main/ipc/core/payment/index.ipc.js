@@ -1,5 +1,4 @@
 // src/main/ipc/payment/index.ipc.js
-// @ts-check
 const { ipcMain } = require("electron");
 const { AppDataSource } = require("../../../db/datasource");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
@@ -24,6 +23,7 @@ class PaymentHandler {
     this.createPayment = this.importHandler("./create.ipc");
     this.updatePayment = this.importHandler("./update.ipc");
     this.deletePayment = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   importHandler(path) {
@@ -33,7 +33,7 @@ class PaymentHandler {
     } catch (error) {
       console.warn(
         `[PaymentHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -69,6 +69,8 @@ class PaymentHandler {
           return await this.handleWithTransaction(this.createPayment, params);
         case "updatePayment":
           return await this.handleWithTransaction(this.updatePayment, params);
+        case "updateStatus":
+          return await this.handleWithTransaction(this.updateStatus, params);
         case "deletePayment":
           return await this.handleWithTransaction(this.deletePayment, params);
         default:
@@ -133,8 +135,8 @@ ipcMain.handle(
   "payment",
   withErrorHandling(
     paymentHandler.handleRequest.bind(paymentHandler),
-    "IPC:payment"
-  )
+    "IPC:payment",
+  ),
 );
 
 module.exports = { PaymentHandler, paymentHandler };

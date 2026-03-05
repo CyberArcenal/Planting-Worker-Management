@@ -9,7 +9,7 @@ class PitakService {
   }
 
   async initialize() {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     const Pitak = require("../entities/Pitak");
     const Bukid = require("../entities/Bukid");
 
@@ -31,16 +31,26 @@ class PitakService {
     };
   }
 
+  /**
+   * Create a new pitak. If location is not provided, auto-generate a unique name like "Plot-1", "Plot-2", etc.
+   */
   async create(data, user = "system") {
     const { saveDb } = require("../utils/dbUtils/dbActions");
     const { pitak: repo, bukid: bukidRepo } = await this.getRepositories();
 
     try {
       if (!data.bukidId) throw new Error("bukidId is required");
-      if (!data.location) throw new Error("location is required");
 
       const bukid = await bukidRepo.findOne({ where: { id: data.bukidId } });
       if (!bukid) throw new Error(`Bukid with ID ${data.bukidId} not found`);
+
+      // Auto-generate location if not provided
+      if (!data.location || data.location.trim() === "") {
+        const count = await repo.count({
+          where: { bukid: { id: data.bukidId } },
+        });
+        data.location = `Plot-${count + 1}`;
+      }
 
       // Check uniqueness of (bukid, location)
       const existing = await repo.findOne({
@@ -50,7 +60,9 @@ class PitakService {
         },
       });
       if (existing) {
-        throw new Error(`A pitak with location "${data.location}" already exists in this bukid`);
+        throw new Error(
+          `A pitak with location "${data.location}" already exists in this bukid`,
+        );
       }
 
       const pitakData = {
@@ -102,7 +114,9 @@ class PitakService {
           },
         });
         if (duplicate && duplicate.id !== id) {
-          throw new Error(`A pitak with location "${data.location || existing.location}" already exists in this bukid`);
+          throw new Error(
+            `A pitak with location "${data.location || existing.location}" already exists in this bukid`,
+          );
         }
       }
 
@@ -116,6 +130,43 @@ class PitakService {
       console.error("Failed to update pitak:", error.message);
       throw error;
     }
+  }
+
+  async updateStatus(id, newStatus, user = "system") {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    const { pitak: repo } = await this.getRepositories();
+
+    const pitak = await repo.findOne({ where: { id } });
+    if (!pitak) throw new Error(`Pitak with ID ${id} not found`);
+
+    const oldStatus = pitak.status;
+    if (oldStatus === newStatus) return pitak;
+
+    // Allowed transitions: active ↔ inactive, and both can go to archived (final)
+    const allowedTransitions = {
+      active: ["inactive", "archived"],
+      inactive: ["active", "archived"],
+      archived: [],
+    };
+
+    if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
+      );
+    }
+
+    pitak.status = newStatus;
+    pitak.updatedAt = new Date();
+
+    const saved = await updateDb(repo, pitak);
+    await auditLogger.logUpdate(
+      "Pitak",
+      id,
+      { status: oldStatus },
+      { status: newStatus },
+      user,
+    );
+    return saved;
   }
 
   async delete(id, user = "system") {
@@ -175,7 +226,9 @@ class PitakService {
         qb.andWhere("pitak.status = :status", { status: options.status });
       }
       if (options.search) {
-        qb.andWhere("(pitak.location LIKE :search)", { search: `%${options.search}%` });
+        qb.andWhere("(pitak.location LIKE :search)", {
+          search: `%${options.search}%`,
+        });
       }
 
       const sortBy = options.sortBy || "createdAt";

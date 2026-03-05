@@ -23,7 +23,7 @@ const url = require("url");
 
 // TypeORM and Database
 require("reflect-metadata");
-const { AppDataSource } = require("./db/dataSource");
+const { AppDataSource } = require("./db/datasource");
 const MigrationManager = require("../utils/dbUtils/migrationManager.js");
 
 // ===================== TYPE DEFINITIONS =====================
@@ -319,7 +319,7 @@ async function safeCloseDatabase() {
 function getIconPath() {
   const platform = process.platform;
   const iconDir = APP_CONFIG.isDev
-    ? path.resolve(__dirname, "..", "..", "assets")
+    ? path.resolve(__dirname, "..", "..", "build")
     : path.join(process.resourcesPath, "build");
 
   const iconMap = {
@@ -653,23 +653,25 @@ function registerIpcHandlers() {
   // Import FarmTrac specific IPC modules
   try {
     const ipcModules = [
-      "./ipc/core/activation/index.ipc.js",
+      "./ipc/utils/activation.ipc.js",
       "./ipc/core/assignment/index.ipc.js",
       "./ipc/core/auditLog/index.ipc.js",
       "./ipc/core/bukid/index.ipc.js",
       "./ipc/reports/dashboard/index.ipc.js",
+      "./ipc/core/paymentHistory/index.ipc.js",
+      "./ipc/core/debtHistory/index.ipc.js",
       "./ipc/core/debt/index.ipc.js",
       "./ipc/core/payment/index.ipc.js",
       "./ipc/core/pitak/index.ipc.js",
-      "./ipc/core/user/index.ipc.js",
       "./ipc/core/worker/index.ipc.js",
       "./ipc/core/system_config.ipc.js",
-      "./ipc/core/windows_control.ipc.js",
-      "./ipc/core/attendance/index.ipc.js",
+      "./ipc/utils/windows_control.ipc.js",
       "./ipc/core/session/index.ipc.js",
       "./ipc/core/notification/index.ipc.js",
       "./ipc/core/notificationLog/index.ipc.js",
       "./ipc/utils/updater/index.ipc.js",
+      "./ipc/utils/handlers/fileHandler.js",
+      "./ipc/exports/audit/index.ipc.js",
     ];
 
     ipcModules.forEach((modulePath) => {

@@ -3,7 +3,7 @@
 const DebtHistory = require("../../../../../entities/DebtHistory");
 const debtHistoryService = require("../../../../../services/DebtHistoryService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getDebtHistoryStats(params) {
   try {
@@ -39,6 +39,10 @@ module.exports = async function getDebtHistoryStats(params) {
     return { status: true, message: "Debt history statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getDebtHistoryStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

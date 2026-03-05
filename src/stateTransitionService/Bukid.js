@@ -15,7 +15,7 @@ class BukidStateTransitionService {
    * Called when a bukid is first created (status = "initiated").
    */
   // @ts-ignore
-  async onInitiated(bukid, user = "system") {
+  async onInitiated(bukid, OldStatus, user = "system") {
     logger.info(`[BukidTransition] Bukid #${bukid.id} initiated.`);
     // Placeholder
   }

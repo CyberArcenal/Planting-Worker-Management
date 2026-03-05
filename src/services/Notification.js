@@ -1,8 +1,7 @@
 // src/services/NotificationService.js
 //@ts-check
 
-
-const { AppDataSource } = require("../main/db/dataSource");
+const { AppDataSource } = require("../main/db/datasource");
 const auditLogger = require("../utils/auditLogger");
 
 class NotificationService {
@@ -59,6 +58,7 @@ class NotificationService {
 
       // @ts-ignore
       const saved = await saveDb(repo, notification);
+
       // @ts-ignore
       await auditLogger.logCreate("Notification", saved.id, saved, user);
       console.log(

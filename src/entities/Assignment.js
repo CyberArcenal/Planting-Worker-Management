@@ -72,3 +72,4 @@ const Assignment = new EntitySchema({
 });
 
 module.exports = Assignment;
+module.exports.AssignmentStatus = AssignmentStatus;

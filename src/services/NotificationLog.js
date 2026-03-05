@@ -38,7 +38,7 @@ class NotificationLogService {
    * @param {typeof logger} [deps.logger] - Logger instance
    */
   constructor(deps = {}) {
-    const { AppDataSource } = require("../main/db/dataSource");
+    const { AppDataSource } = require("../main/db/datasource");
     // @ts-ignore
     this.repository =
       // @ts-ignore

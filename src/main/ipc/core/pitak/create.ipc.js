@@ -6,7 +6,7 @@ const { logger } = require("../../../../utils/logger");
 module.exports = async function createPitak(params, queryRunner) {
   try {
     logger.info("IPC: createPitak", { params });
-    if (!params.bukidId || !params.location) {
+    if (!params.bukidId) {
       return { status: false, message: "Missing required fields: bukidId, location", data: null };
     }
     const result = await pitakService.create(params, "system");

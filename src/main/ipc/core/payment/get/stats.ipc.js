@@ -2,7 +2,7 @@
 const Payment = require("../../../../../entities/Payment");
 const paymentService = require("../../../../../services/PaymentService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getPaymentStats(params) {
   try {
@@ -12,7 +12,9 @@ module.exports = async function getPaymentStats(params) {
     const queryBuilder = repo.createQueryBuilder("payment");
 
     if (params.sessionId) {
-      queryBuilder.where("payment.sessionId = :sessionId", { sessionId: params.sessionId });
+      queryBuilder.where("payment.sessionId = :sessionId", {
+        sessionId: params.sessionId,
+      });
     }
 
     const totalCount = await queryBuilder.getCount();
@@ -41,6 +43,10 @@ module.exports = async function getPaymentStats(params) {
     return { status: true, message: "Payment statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getPaymentStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

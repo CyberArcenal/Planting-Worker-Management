@@ -4,7 +4,7 @@ const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
 const { logger } = require("../../../../utils/logger");
 const { AuditLog } = require("../../../../entities/AuditLog");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 class PaymentHistoryHandler {
   constructor() {
@@ -15,7 +15,9 @@ class PaymentHistoryHandler {
     // READ
     this.getAllPaymentHistories = this.importHandler("./get/all.ipc");
     this.getPaymentHistoryById = this.importHandler("./get/by_id.ipc");
-    this.getPaymentHistoriesByPayment = this.importHandler("./get/by_payment.ipc");
+    this.getPaymentHistoriesByPayment = this.importHandler(
+      "./get/by_payment.ipc",
+    );
     this.getPaymentHistoryStats = this.importHandler("./get/stats.ipc");
 
     // WRITE
@@ -31,7 +33,7 @@ class PaymentHistoryHandler {
     } catch (error) {
       console.warn(
         `[PaymentHistoryHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -60,11 +62,20 @@ class PaymentHistoryHandler {
         case "getPaymentHistoryStats":
           return await this.getPaymentHistoryStats(params);
         case "createPaymentHistory":
-          return await this.handleWithTransaction(this.createPaymentHistory, params);
+          return await this.handleWithTransaction(
+            this.createPaymentHistory,
+            params,
+          );
         case "updatePaymentHistory":
-          return await this.handleWithTransaction(this.updatePaymentHistory, params);
+          return await this.handleWithTransaction(
+            this.updatePaymentHistory,
+            params,
+          );
         case "deletePaymentHistory":
-          return await this.handleWithTransaction(this.deletePaymentHistory, params);
+          return await this.handleWithTransaction(
+            this.deletePaymentHistory,
+            params,
+          );
         default:
           return {
             status: false,
@@ -127,8 +138,8 @@ ipcMain.handle(
   "paymentHistory",
   withErrorHandling(
     paymentHistoryHandler.handleRequest.bind(paymentHistoryHandler),
-    "IPC:paymentHistory"
-  )
+    "IPC:paymentHistory",
+  ),
 );
 
 module.exports = { PaymentHistoryHandler, paymentHistoryHandler };

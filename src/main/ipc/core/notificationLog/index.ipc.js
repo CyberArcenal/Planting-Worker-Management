@@ -1,12 +1,13 @@
 // src/main/ipc/notification/index.ipc.js
 // @ts-check
 const { ipcMain } = require("electron");
-const { NotificationLogService } = require("../../../../services/NotificationLog");
+const {
+  NotificationLogService,
+} = require("../../../../services/NotificationLog");
 const { logger } = require("../../../../utils/logger");
 const { AppDataSource } = require("../../../db/datasource");
 const { AuditLog } = require("../../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
-
 
 class NotificationLogHandler {
   /**
@@ -18,23 +19,54 @@ class NotificationLogHandler {
     this.service = deps.service || new NotificationLogService();
 
     // @ts-ignore
-    this.auditLogRepo = deps.auditLogRepo || AppDataSource.getRepository(AuditLog);
+    this.auditLogRepo =
+      deps.auditLogRepo || AppDataSource.getRepository(AuditLog);
     this.logger = deps.logger || logger;
     // Map method names to their transaction requirement and handler function
     this.methodHandlers = {
       // Read operations – no transaction needed
-      getAllNotifications: { tx: false, handler: this.service.getAllNotifications.bind(this.service) },
-      getNotificationById: { tx: false, handler: this.service.getNotificationById.bind(this.service) },
-      getNotificationsByRecipient: { tx: false, handler: this.service.getNotificationsByRecipient.bind(this.service) },
-      searchNotifications: { tx: false, handler: this.service.searchNotifications.bind(this.service) },
-      getNotificationStats: { tx: false, handler: this.service.getNotificationStats.bind(this.service) },
+      getAllNotifications: {
+        tx: false,
+        handler: this.service.getAllNotifications.bind(this.service),
+      },
+      getNotificationById: {
+        tx: false,
+        handler: this.service.getNotificationById.bind(this.service),
+      },
+      getNotificationsByRecipient: {
+        tx: false,
+        handler: this.service.getNotificationsByRecipient.bind(this.service),
+      },
+      searchNotifications: {
+        tx: false,
+        handler: this.service.searchNotifications.bind(this.service),
+      },
+      getNotificationStats: {
+        tx: false,
+        handler: this.service.getNotificationStats.bind(this.service),
+      },
 
       // Write operations – require transaction
-      retryFailedNotification: { tx: true, handler: this.service.retryFailedNotification.bind(this.service) },
-      retryAllFailed: { tx: true, handler: this.service.retryAllFailed.bind(this.service) },
-      resendNotification: { tx: true, handler: this.service.resendNotification.bind(this.service) },
-      deleteNotification: { tx: true, handler: this.service.deleteNotification.bind(this.service) },
-      updateNotificationStatus: { tx: true, handler: this.service.updateNotificationStatus.bind(this.service) },
+      retryFailedNotification: {
+        tx: true,
+        handler: this.service.retryFailedNotification.bind(this.service),
+      },
+      retryAllFailed: {
+        tx: true,
+        handler: this.service.retryAllFailed.bind(this.service),
+      },
+      resendNotification: {
+        tx: true,
+        handler: this.service.resendNotification.bind(this.service),
+      },
+      deleteNotification: {
+        tx: true,
+        handler: this.service.deleteNotification.bind(this.service),
+      },
+      updateNotificationStatus: {
+        tx: true,
+        handler: this.service.updateNotificationStatus.bind(this.service),
+      },
     };
   }
 
@@ -85,8 +117,12 @@ class NotificationLogHandler {
         await queryRunner.commitTransaction();
         // Log activity (non-critical, don't fail if it errors)
         // @ts-ignore
-        await this.logActivity(event, method, `Notification ${method} executed`).catch(err => {
-          this.logger.warn('Failed to log activity:', err);
+        await this.logActivity(
+          event,
+          method,
+          `Notification ${method} executed`,
+        ).catch((err) => {
+          this.logger.warn("Failed to log activity:", err);
         });
       } else {
         await queryRunner.rollbackTransaction();
@@ -130,7 +166,7 @@ const handler = new NotificationLogHandler();
 ipcMain.handle(
   "notificationLog",
   // @ts-ignore
-  withErrorHandling(handler.handleRequest.bind(handler), "IPC:notificationLog")
+  withErrorHandling(handler.handleRequest.bind(handler), "IPC:notificationLog"),
 );
 
 module.exports = { NotificationLogHandler, notificationHandler: handler };

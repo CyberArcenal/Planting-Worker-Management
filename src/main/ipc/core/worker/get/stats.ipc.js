@@ -4,7 +4,7 @@ const Debt = require("../../../../../entities/Debt");
 const Payment = require("../../../../../entities/Payment");
 const workerService = require("../../../../../services/WorkerService");
 const { logger } = require("../../../../../utils/logger");
-const { AppDataSource } = require("../../../../db/dataSource");
+const { AppDataSource } = require("../../../../db/datasource");
 
 module.exports = async function getWorkerStats(params) {
   try {
@@ -25,9 +25,15 @@ module.exports = async function getWorkerStats(params) {
     // If a specific workerId is provided, get detailed stats
     let workerDetails = null;
     if (params.workerId) {
-      const assignments = await assignmentRepo.count({ where: { worker: { id: params.workerId } } });
-      const payments = await paymentRepo.count({ where: { worker: { id: params.workerId } } });
-      const debts = await debtRepo.count({ where: { worker: { id: params.workerId } } });
+      const assignments = await assignmentRepo.count({
+        where: { worker: { id: params.workerId } },
+      });
+      const payments = await paymentRepo.count({
+        where: { worker: { id: params.workerId } },
+      });
+      const debts = await debtRepo.count({
+        where: { worker: { id: params.workerId } },
+      });
       const totalDebtBalance = await debtRepo
         .createQueryBuilder("debt")
         .where("debt.workerId = :workerId", { workerId: params.workerId })
@@ -54,6 +60,10 @@ module.exports = async function getWorkerStats(params) {
     return { status: true, message: "Worker statistics", data: stats };
   } catch (error) {
     logger.error("IPC: getWorkerStats error:", error);
-    return { status: false, message: error.message || "Failed to retrieve stats", data: null };
+    return {
+      status: false,
+      message: error.message || "Failed to retrieve stats",
+      data: null,
+    };
   }
 };

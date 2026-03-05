@@ -3,7 +3,7 @@ const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../../middlewares/errorHandler");
 const { logger } = require("../../../../utils/logger");
 const { AuditLog } = require("../../../../entities/AuditLog");
-const { AppDataSource } = require("../../../db/dataSource");
+const { AppDataSource } = require("../../../db/datasource");
 
 class WorkerHandler {
   constructor() {
@@ -21,6 +21,7 @@ class WorkerHandler {
     this.createWorker = this.importHandler("./create.ipc");
     this.updateWorker = this.importHandler("./update.ipc");
     this.deleteWorker = this.importHandler("./delete.ipc");
+    this.updateStatus = this.importHandler("./update_status.ipc");
   }
 
   importHandler(path) {
@@ -30,7 +31,7 @@ class WorkerHandler {
     } catch (error) {
       console.warn(
         `[WorkerHandler] Failed to load handler: ${path}`,
-        error.message
+        error.message,
       );
       return async () => ({
         status: false,
@@ -62,6 +63,8 @@ class WorkerHandler {
           return await this.handleWithTransaction(this.createWorker, params);
         case "updateWorker":
           return await this.handleWithTransaction(this.updateWorker, params);
+        case "updateStatus":
+          return await this.handleWithTransaction(this.updateStatus, params);
         case "deleteWorker":
           return await this.handleWithTransaction(this.deleteWorker, params);
         default:
@@ -126,8 +129,8 @@ ipcMain.handle(
   "worker",
   withErrorHandling(
     workerHandler.handleRequest.bind(workerHandler),
-    "IPC:worker"
-  )
+    "IPC:worker",
+  ),
 );
 
 module.exports = { WorkerHandler, workerHandler };
