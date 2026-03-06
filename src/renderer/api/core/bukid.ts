@@ -16,7 +16,7 @@ export interface Bukid {
   location?: string | null;
   createdAt: string;
   updatedAt: string;
-  session?: Session;
+  session: Session;
   pitaks?: Pitak[];
 }
 

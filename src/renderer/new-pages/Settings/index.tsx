@@ -26,12 +26,15 @@ import { BukidSettings } from "./components/farm-settings/BukidSettings";
 import { dialogs } from "../../utils/dialogs";
 import { useSessionForm } from "../sessions/hooks/useSessionForm";
 import SessionFormDialog from "../sessions/components/SessionFormDialog";
+import { useDefaultSessionId } from "../../utils/config/farmConfig";
+import sessionAPI from "../../api/core/session";
 
 const FarmManagementSettingsPage: React.FC = () => {
   const sessionFormDialog = useSessionForm();
 
   const [activeTab, setActiveTab] = useState("session");
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
+  const defaultSessionId = useDefaultSessionId();
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "info";
@@ -72,8 +75,32 @@ const FarmManagementSettingsPage: React.FC = () => {
   const handleSave = async () => {
     if (!settings) return;
 
+    const oldDefaultId = defaultSessionId; // from hook (current default before save)
+    const newDefaultId = settings.farm_session?.default_session_id;
+
     try {
+      // First save the settings
       await updateSettings(settings);
+
+      // If default session changed to a valid ID, activate it
+      if (newDefaultId && newDefaultId !== oldDefaultId) {
+        setToast({
+          message: "Activating new default session...",
+          type: "info",
+        });
+        try {
+          await sessionAPI.updateStatus(newDefaultId, "active");
+          setToast({ message: "Default session activated", type: "success" });
+        } catch (err) {
+          console.error("Failed to activate session:", err);
+          setToast({
+            message: "Default session saved but activation failed",
+            type: "error",
+          });
+        } finally {
+          setTimeout(() => setToast(null), 3000);
+        }
+      }
     } catch (err) {
       console.error("Save error:", err);
     }

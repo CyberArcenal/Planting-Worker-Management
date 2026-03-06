@@ -1,6 +1,6 @@
 // services/BukidService.js
 const auditLogger = require("../utils/auditLogger");
-
+const { farmSessionDefaultSessionId } = require("../utils/settings/system");
 class BukidService {
   constructor() {
     this.repository = null;
@@ -169,6 +169,15 @@ class BukidService {
         relations: ["session", "pitaks"],
       });
       if (!bukid) throw new Error(`Bukid with ID ${id} not found`);
+
+      const defaultSessionId = await farmSessionDefaultSessionId();
+      if (!defaultSessionId) {
+        throw new Error("No default session set. Cannot access bukid.");
+      }
+      if (bukid.session?.id !== defaultSessionId) {
+        throw new Error(`Bukid #${id} does not belong to the current session`);
+      }
+
       await auditLogger.logView("Bukid", id, "system");
       return bukid;
     } catch (error) {
@@ -179,7 +188,15 @@ class BukidService {
 
   async findAll(options = {}) {
     const { bukid: repo } = await this.getRepositories();
-
+    if (!options.sessionId) {
+      const defaultSessionId = await farmSessionDefaultSessionId();
+      if (defaultSessionId && defaultSessionId > 0) {
+        options.sessionId = defaultSessionId;
+      } else {
+        console.warn("No default session ID available for Bukid.findAll");
+        return [];
+      }
+    }
     try {
       const qb = repo
         .createQueryBuilder("bukid")

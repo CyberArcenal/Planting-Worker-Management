@@ -2,6 +2,7 @@
 const auditLogger = require("../utils/auditLogger");
 // Import the enum from Assignment entity
 const { AssignmentStatus } = require("../entities/Assignment");
+const { farmSessionDefaultSessionId } = require("../utils/settings/system");
 
 class AssignmentService {
   constructor() {
@@ -250,6 +251,18 @@ class AssignmentService {
         relations: ["worker", "pitak", "session"],
       });
       if (!assignment) throw new Error(`Assignment with ID ${id} not found`);
+
+      // 👇 Enforce current session
+      const defaultSessionId = await farmSessionDefaultSessionId();
+      if (!defaultSessionId) {
+        throw new Error("No default session set. Cannot access assignment.");
+      }
+      if (assignment.session?.id !== defaultSessionId) {
+        throw new Error(
+          `Assignment #${id} does not belong to the current session`,
+        );
+      }
+
       await auditLogger.logView("Assignment", id, "system");
       return assignment;
     } catch (error) {
@@ -265,7 +278,16 @@ class AssignmentService {
    */
   async findAll(options = {}) {
     const { assignment: repo } = await this.getRepositories();
-
+    if (!options.sessionId) {
+      const defaultSessionId = await farmSessionDefaultSessionId();
+      if (defaultSessionId && defaultSessionId > 0) {
+        options.sessionId = defaultSessionId;
+      } else {
+        // No default session – return empty array (or throw)
+        console.warn("No default session ID available for Assignment.findAll");
+        return [];
+      }
+    }
     try {
       const qb = repo
         .createQueryBuilder("assignment")

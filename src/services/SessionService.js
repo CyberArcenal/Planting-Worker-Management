@@ -90,7 +90,7 @@ class SessionService {
     // Allowed transitions for session
     const allowedTransitions = {
       active: ["closed", "archived"],
-      closed: ["archived"],
+      closed: ["active", "archived"],
       archived: [],
     };
 

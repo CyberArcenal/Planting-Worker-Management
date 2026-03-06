@@ -1,7 +1,7 @@
 // services/PitakService.js
 
 const auditLogger = require("../utils/auditLogger");
-
+const { farmSessionDefaultSessionId } = require("../utils/settings/system");
 class PitakService {
   constructor() {
     this.repository = null;
@@ -35,6 +35,7 @@ class PitakService {
    * Create a new pitak. If location is not provided, auto-generate a unique name like "Plot-1", "Plot-2", etc.
    */
   async create(data, user = "system") {
+    const { farmSessionDefaultSessionId } = require("../utils/settings/system");
     const { saveDb } = require("../utils/dbUtils/dbActions");
     const { pitak: repo, bukid: bukidRepo } = await this.getRepositories();
 
@@ -204,6 +205,16 @@ class PitakService {
         relations: ["bukid", "assignments", "payments"],
       });
       if (!pitak) throw new Error(`Pitak with ID ${id} not found`);
+
+      // Pitak is linked to a bukid, which belongs to a session. We need to check the bukid's session.
+      const defaultSessionId = await farmSessionDefaultSessionId();
+      if (!defaultSessionId) {
+        throw new Error("No default session set. Cannot access pitak.");
+      }
+      if (pitak.bukid?.session?.id !== defaultSessionId) {
+        throw new Error(`Pitak #${id} does not belong to the current session`);
+      }
+
       await auditLogger.logView("Pitak", id, "system");
       return pitak;
     } catch (error) {
@@ -214,11 +225,26 @@ class PitakService {
 
   async findAll(options = {}) {
     const { pitak: repo } = await this.getRepositories();
-
+    if (!options.sessionId) {
+      const defaultSessionId = await farmSessionDefaultSessionId();
+      if (defaultSessionId && defaultSessionId > 0) {
+        options.sessionId = defaultSessionId;
+      } else {
+        console.warn("No default session ID available for Pitak.findAll");
+        return [];
+      }
+    }
     try {
       const qb = repo
         .createQueryBuilder("pitak")
-        .leftJoinAndSelect("pitak.bukid", "bukid");
+        .leftJoinAndSelect("pitak.bukid", "bukid")
+        .leftJoinAndSelect("bukid.session", "session");
+
+      if (options.sessionId) {
+        qb.andWhere("session.id = :sessionId", {
+          sessionId: options.sessionId,
+        });
+      }
 
       if (options.bukidId) {
         qb.andWhere("bukid.id = :bukidId", { bukidId: options.bukidId });

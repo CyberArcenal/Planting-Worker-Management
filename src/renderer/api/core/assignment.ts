@@ -19,7 +19,7 @@ export interface Assignment {
   updatedAt: string;
   worker?: Worker;
   pitak?: Pitak;
-  session?: Session;
+  session: Session;
 }
 
 export interface AssignmentResponse {

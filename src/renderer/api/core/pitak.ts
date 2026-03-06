@@ -4,6 +4,7 @@
 import type { Assignment } from "./assignment";
 import type { Bukid } from "./bukid";
 import type { Payment } from "./payment";
+import type { Session } from "./session";
 
 // ----------------------------------------------------------------------
 // 📦 Types (aligned with backend)

@@ -297,7 +297,7 @@ async function seedBukids(repository, sessions) { // ✅ UPDATED
     },
     {
       name: "Bukid C",
-      status: "inactive",
+      status: "active",
       location: "East Section",
       session: sessions[1], // Closed session (Second Cropping 2024)
       createdAt: new Date(),
@@ -441,7 +441,7 @@ async function seedWorkers(repository) {
       contact: "+639777890123",
       email: "luis.torres@example.com",
       address: "654 Maple St, Brgy. Trial",
-      status: "inactive",
+      status: "active",
       hireDate: new Date("2022-08-15"),
       totalDebt: "10000.00",
       totalPaid: "20000.00",
