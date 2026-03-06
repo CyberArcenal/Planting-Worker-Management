@@ -17,7 +17,7 @@ export interface Pitak {
   sideLengths?: any | null;
   areaSqm: number;
   notes?: string | null;
-  status: string;
+  status: "active" | "completed" | "cancelled";
   createdAt: string;
   updatedAt: string;
   bukid?: Bukid;
@@ -32,7 +32,7 @@ export interface PitakCreateData {
   sideLengths?: any;
   areaSqm?: number;
   notes?: string;
-  status?: string;
+  status?: "active" | "completed" | "cancelled";
   totalLuwang?: number;
 }
 
@@ -69,7 +69,10 @@ export interface PitakStatsResponse {
 class PitakAPI {
   private channel = "pitak";
 
-  private async call<T = any>(method: string, params: Record<string, any> = {}): Promise<T> {
+  private async call<T = any>(
+    method: string,
+    params: Record<string, any> = {},
+  ): Promise<T> {
     if (!window.backendAPI?.pitak) {
       throw new Error(`Electron API (${this.channel}) not available`);
     }
@@ -80,7 +83,7 @@ class PitakAPI {
 
   async getAll(params?: {
     bukidId?: number;
-    status?: string;
+    status?: "active" | "completed" | "cancelled";
     search?: string;
     page?: number;
     limit?: number;
@@ -88,7 +91,10 @@ class PitakAPI {
     sortOrder?: "ASC" | "DESC";
   }): Promise<PitaksResponse> {
     try {
-      const response = await this.call<PitaksResponse>("getAllPitaks", params || {});
+      const response = await this.call<PitaksResponse>(
+        "getAllPitaks",
+        params || {},
+      );
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch pitaks");
     } catch (error: any) {
@@ -109,14 +115,16 @@ class PitakAPI {
 
   async getByBukid(
     bukidId: number,
-    params?: Omit<Parameters<PitakAPI['getAll']>[0], 'bukidId'>
+    params?: Omit<Parameters<PitakAPI["getAll"]>[0], "bukidId">,
   ): Promise<PitaksResponse> {
     return this.getAll({ ...params, bukidId });
   }
 
   async getStats(bukidId?: number): Promise<PitakStatsResponse> {
     try {
-      const response = await this.call<PitakStatsResponse>("getPitakStats", { bukidId });
+      const response = await this.call<PitakStatsResponse>("getPitakStats", {
+        bukidId,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch stats");
     } catch (error: any) {
@@ -139,7 +147,10 @@ class PitakAPI {
   async update(id: number, data: PitakUpdateData): Promise<PitakResponse> {
     try {
       if (!id || id <= 0) throw new Error("Invalid ID");
-      const response = await this.call<PitakResponse>("updatePitak", { id, ...data });
+      const response = await this.call<PitakResponse>("updatePitak", {
+        id,
+        ...data,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to update pitak");
     } catch (error: any) {
@@ -148,20 +159,26 @@ class PitakAPI {
   }
 
   /**
- * Update pitak status
- * @param id - Pitak ID
- * @param status - New status ('active', 'inactive', 'archived')
- */
-async updateStatus(id: number, status: string): Promise<PitakResponse> {
-  try {
-    if (!id || id <= 0) throw new Error("Invalid ID");
-    const response = await this.call<PitakResponse>("updateStatus", { id, status });
-    if (response.status) return response;
-    throw new Error(response.message || "Failed to update pitak status");
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to update pitak status");
+   * Update pitak status
+   * @param id - Pitak ID
+   * @param status - New status ('active', 'inactive', 'archived')
+   */
+  async updateStatus(
+    id: number,
+    status: "active" | "completed" | "cancelled",
+  ): Promise<PitakResponse> {
+    try {
+      if (!id || id <= 0) throw new Error("Invalid ID");
+      const response = await this.call<PitakResponse>("updateStatus", {
+        id,
+        status,
+      });
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to update pitak status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update pitak status");
+    }
   }
-}
 
   async delete(id: number): Promise<PitakResponse> {
     try {

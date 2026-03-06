@@ -3,6 +3,7 @@
 const auditLogger = require("../utils/auditLogger");
 const { logger } = require("../utils/logger");
 const Assignment = require("../entities/Assignment");
+const { AppDataSource } = require("../main/db/datasource");
 
 class PitakStateTransitionService {
   // @ts-ignore
@@ -14,7 +15,7 @@ class PitakStateTransitionService {
    * Called when a pitak becomes active.
    */
   // @ts-ignore
-  async onActivate(pitak, manager, oldStatus = null, user = "system") {
+  async onActivate(pitak, oldStatus = null, user = "system") {
     logger.info(
       `[PitakTransition] Activating pitak #${pitak.id}, old status: ${oldStatus}`,
     );
@@ -23,12 +24,12 @@ class PitakStateTransitionService {
 
   /**
    * Called when a pitak is marked as complete.
-   * Cascades: sets all associated assignments to "complete".
+   * Cascades: sets all associated assignments to "completed".
    * The assignment status change will trigger the Assignment transition service,
    * which will handle payment creation automatically.
    */
   // @ts-ignore
-  async onComplete(pitak, manager, oldStatus = null, user = "system") {
+  async onComplete(pitak, oldStatus = null, user = "system") {
     logger.info(
       `[PitakTransition] Completing pitak #${pitak.id}, old status: ${oldStatus}`,
     );
@@ -40,12 +41,12 @@ class PitakStateTransitionService {
       return;
     }
 
-    const assignmentRepo = manager.getRepository(Assignment);
+    const assignmentRepo = AppDataSource.getRepository(Assignment);
 
     for (const assignment of pitak.assignments) {
-      if (assignment.status !== "complete") {
+      if (assignment.status !== "completed") {
         const oldStatus = assignment.status;
-        assignment.status = "complete";
+        assignment.status = "completed";
         assignment.updatedAt = new Date();
         try {
           await assignmentRepo.save(assignment);
@@ -53,7 +54,7 @@ class PitakStateTransitionService {
             "Assignment",
             assignment.id,
             { status: oldStatus },
-            { status: "complete" },
+            { status: "completed" },
             user,
           );
           logger.info(
@@ -80,7 +81,7 @@ class PitakStateTransitionService {
    * Called when a pitak becomes inactive.
    */
   // @ts-ignore
-  async onInactivate(pitak, manager, oldStatus = null, user = "system") {
+  async onCancelled(pitak, oldStatus = null, user = "system") {
     logger.info(
       `[PitakTransition] Inactivating pitak #${pitak.id}, old status: ${oldStatus}`,
     );

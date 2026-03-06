@@ -11,43 +11,44 @@ const Worker = new EntitySchema({
     email: { type: String, nullable: true, unique: true },
     address: { type: String, nullable: true },
     // status: "active", "inactive", "on-leave", "terminated"
-    status: { 
-      type: String, 
-      default: "active" 
+    status: {
+      type: String,
+      default: "active",
+      enum: ["active", "inactive", "on-leave", "terminated"],
     },
     hireDate: { type: Date, nullable: true },
     // Summary fields for quick access
 
     createdAt: { type: Date, createDate: true },
-    updatedAt: { type: Date, updateDate: true }
+    updatedAt: { type: Date, updateDate: true },
   },
   relations: {
-    debts: { 
-      target: "Debt", 
-      type: "one-to-many", 
-      inverseSide: "worker" 
+    debts: {
+      target: "Debt",
+      type: "one-to-many",
+      inverseSide: "worker",
     },
-    payments: { 
-      target: "Payment", 
-      type: "one-to-many", 
-      inverseSide: "worker" 
+    payments: {
+      target: "Payment",
+      type: "one-to-many",
+      inverseSide: "worker",
     },
-    assignments: { 
-      target: "Assignment", 
-      type: "one-to-many", 
-      inverseSide: "worker" 
-    }
+    assignments: {
+      target: "Assignment",
+      type: "one-to-many",
+      inverseSide: "worker",
+    },
   },
   indices: [
     {
       name: "IDX_WORKER_STATUS",
-      columns: ["status"]
+      columns: ["status"],
     },
     {
       name: "IDX_WORKER_NAME",
-      columns: ["name"]
-    }
-  ]
+      columns: ["name"],
+    },
+  ],
 });
 
 module.exports = Worker;

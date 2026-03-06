@@ -145,10 +145,18 @@ class DebtHistoryService {
     const { debtHistory: repo } = await this.getRepositories();
 
     try {
-      const history = await repo.findOne({
-        where: { id },
-        relations: ["debt", "payment"],
-      });
+      const history = await repo
+        .createQueryBuilder("history")
+        .leftJoinAndSelect("history.debt", "debt")
+        .leftJoinAndSelect("debt.worker", "worker")
+        .leftJoinAndSelect("debt.session", "debtSession")
+        .leftJoinAndSelect("history.payment", "payment")
+        .leftJoinAndSelect("payment.worker", "paymentWorker")
+        .leftJoinAndSelect("payment.pitak", "pitak")
+        .leftJoinAndSelect("payment.session", "paymentSession")
+        .where("history.id = :id", { id })
+        .getOne();
+
       if (!history) throw new Error(`DebtHistory with ID ${id} not found`);
       await auditLogger.logView("DebtHistory", id, "system");
       return history;
@@ -165,7 +173,12 @@ class DebtHistoryService {
       const qb = repo
         .createQueryBuilder("history")
         .leftJoinAndSelect("history.debt", "debt")
-        .leftJoinAndSelect("history.payment", "payment");
+        .leftJoinAndSelect("debt.worker", "worker") // 👈 worker details
+        .leftJoinAndSelect("debt.session", "debtSession") // 👈 debt session
+        .leftJoinAndSelect("history.payment", "payment")
+        .leftJoinAndSelect("payment.worker", "paymentWorker") // 👈 payment worker (if needed)
+        .leftJoinAndSelect("payment.pitak", "pitak")
+        .leftJoinAndSelect("payment.session", "paymentSession");
 
       if (options.debtId) {
         qb.andWhere("debt.id = :debtId", { debtId: options.debtId });

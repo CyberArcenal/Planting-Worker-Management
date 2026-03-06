@@ -78,7 +78,8 @@ class SessionService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const repo = await this.getRepository();
+    const auditLogger = require("../utils/auditLogger");
+    const repo = await this.getRepository(); // session repository
 
     const session = await repo.findOne({ where: { id } });
     if (!session) throw new Error(`Session with ID ${id} not found`);
@@ -86,7 +87,7 @@ class SessionService {
     const oldStatus = session.status;
     if (oldStatus === newStatus) return session;
 
-    // Allowed transitions: active → closed/archived, closed → archived, archived is final
+    // Allowed transitions for session
     const allowedTransitions = {
       active: ["closed", "archived"],
       closed: ["archived"],

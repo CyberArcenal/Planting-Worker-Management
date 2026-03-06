@@ -11,6 +11,8 @@ import { showError, showSuccess } from "../../utils/notification";
 import PaymentHistoriesTable from "./components/PaymentHistoriesTable";
 import PaymentHistoryViewDialog from "./components/PaymentHistoryViewDialog";
 import { usePaymentHistoryView } from "./hooks/usePaymentHistoryView";
+import PaymentHistoryNoteDialog from "./components/PaymentHistoryNoteDialog";
+import PaymentHistoryViewNoteDialog from "./components/PaymentHistoryViewNoteDialog";
 
 const PaymentHistoryPage: React.FC = () => {
   const {
@@ -40,6 +42,46 @@ const PaymentHistoryPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+
+  // Note dialogs
+  const [noteDialog, setNoteDialog] = useState<{
+    isOpen: boolean;
+    history: any | null;
+  }>({ isOpen: false, history: null });
+
+  const [viewNoteDialog, setViewNoteDialog] = useState<{
+    isOpen: boolean;
+    history: any | null;
+  }>({ isOpen: false, history: null });
+
+  // Handlers for dropdown actions
+  const handleEdit = (history: any) => {
+    // For now, open the note dialog (since editing might just be notes)
+    setNoteDialog({ isOpen: true, history });
+  };
+
+  const handleAddNote = (history: any) => {
+    setNoteDialog({ isOpen: true, history });
+  };
+
+  const handleViewNote = (history: any) => {
+    setViewNoteDialog({ isOpen: true, history });
+  };
+
+  const handleSendReceipt = async (history: any) => {
+    // Placeholder – in real app, you'd call an API to send receipt
+    const confirmed = await dialogs.confirm({
+      title: "Send Receipt",
+      message: `Send receipt for payment history entry #${history.id}?`,
+    });
+    if (!confirmed) return;
+    try {
+      // await notificationAPI.sendReceipt(history.payment?.id);
+      showSuccess("Receipt sent (placeholder).");
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
 
   const handleDelete = async (history: any) => {
     const confirmed = await dialogs.confirm({
@@ -82,7 +124,6 @@ const PaymentHistoryPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -283,6 +324,11 @@ const PaymentHistoryPage: React.FC = () => {
             sortConfig={sortConfig}
             onView={(h) => viewDialog.open(h.id)}
             onDelete={handleDelete}
+            // New actions
+            onEdit={handleEdit}
+            onAddNote={handleAddNote}
+            onViewNote={handleViewNote}
+            onSendReceipt={handleSendReceipt}
           />
 
           {/* Empty State */}
@@ -340,8 +386,19 @@ const PaymentHistoryPage: React.FC = () => {
         </>
       )}
 
-      {/* View Dialog */}
+      {/* Dialogs */}
       <PaymentHistoryViewDialog hook={viewDialog} />
+      <PaymentHistoryNoteDialog
+        isOpen={noteDialog.isOpen}
+        history={noteDialog.history}
+        onClose={() => setNoteDialog({ isOpen: false, history: null })}
+        onSuccess={reload}
+      />
+      <PaymentHistoryViewNoteDialog
+        isOpen={viewNoteDialog.isOpen}
+        history={viewNoteDialog.history}
+        onClose={() => setViewNoteDialog({ isOpen: false, history: null })}
+      />
     </div>
   );
 };

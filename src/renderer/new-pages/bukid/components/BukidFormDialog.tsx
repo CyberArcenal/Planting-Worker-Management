@@ -25,7 +25,7 @@ interface BukidFormDialogProps {
 type FormData = {
   name: string;
   location: string;
-  status: "active" | "inactive" | "complete" | "initiated";
+  status: "active" | "inactive" | "completed" | "initiated";
   notes: string;
   sessionId: number;
 };

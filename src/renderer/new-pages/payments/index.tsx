@@ -11,6 +11,8 @@ import FilterBar from "./components/FilterBar";
 import PaymentsTable from "./components/PaymentsTable";
 import PaymentViewDialog from "./components/PaymentViewDialog";
 import { usePaymentView } from "./hooks/usePaymentView";
+import PaymentNoteDialog from "./components/PaymentNoteDialog";
+import PaymentViewNoteDialog from "./components/PaymentViewNoteDialog";
 
 const PaymentsPage: React.FC = () => {
   const {
@@ -39,7 +41,79 @@ const PaymentsPage: React.FC = () => {
 
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">(
+    "csv",
+  );
+
+  // Note dialogs
+  const [noteDialog, setNoteDialog] = useState<{
+    isOpen: boolean;
+    payment: any | null;
+  }>({ isOpen: false, payment: null });
+
+  const [viewNoteDialog, setViewNoteDialog] = useState<{
+    isOpen: boolean;
+    payment: any | null;
+  }>({ isOpen: false, payment: null });
+
+  // Handlers for dropdown actions
+  const handleEdit = (payment: any) => {
+    // For now, open the note dialog (since editing might just be notes)
+    setNoteDialog({ isOpen: true, payment });
+  };
+
+  const handleMarkComplete = async (payment: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Complete",
+      message: `Mark payment for "${payment.worker?.name}" as complete?`,
+    });
+    if (!confirmed) return;
+    try {
+      await paymentAPI.updateStatus(payment.id, "completed");
+      showSuccess("Payment marked as complete.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkCancelled = async (payment: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Cancelled",
+      message: `Cancel payment for "${payment.worker?.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await paymentAPI.updateStatus(payment.id, "cancel");
+      showSuccess("Payment cancelled.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleAddNote = (payment: any) => {
+    setNoteDialog({ isOpen: true, payment });
+  };
+
+  const handleViewNote = (payment: any) => {
+    setViewNoteDialog({ isOpen: true, payment });
+  };
+
+  const handleSendReceipt = async (payment: any) => {
+    // Placeholder – in real app, you'd call an API to send receipt
+    const confirmed = await dialogs.confirm({
+      title: "Send Receipt",
+      message: `Send receipt for payment #${payment.id}?`,
+    });
+    if (!confirmed) return;
+    try {
+      // await notificationAPI.sendReceipt(payment.id);
+      showSuccess("Receipt sent (placeholder).");
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
 
   const handleDelete = async (payment: any) => {
     const confirmed = await dialogs.confirm({
@@ -82,7 +156,6 @@ const PaymentsPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -98,10 +171,12 @@ const PaymentsPage: React.FC = () => {
   };
   const { start, end } = getDisplayRange();
 
-  // Summary stats
   const totalGross = allPayments.reduce((sum, p) => sum + p.grossPay, 0);
   const totalNet = allPayments.reduce((sum, p) => sum + p.netPay, 0);
-  const totalDeductions = allPayments.reduce((sum, p) => sum + (p.grossPay - p.netPay), 0);
+  const totalDeductions = allPayments.reduce(
+    (sum, p) => sum + (p.grossPay - p.netPay),
+    0,
+  );
 
   return (
     <div
@@ -200,15 +275,21 @@ const PaymentsPage: React.FC = () => {
           <div className="flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1">
               <span className="font-medium">Total Gross:</span>
-              <span className="text-green-600">₱{totalGross.toLocaleString()}</span>
+              <span className="text-green-600">
+                ₱{totalGross.toLocaleString()}
+              </span>
             </span>
             <span className="flex items-center gap-1">
               <span className="font-medium">Total Net:</span>
-              <span className="text-blue-600">₱{totalNet.toLocaleString()}</span>
+              <span className="text-blue-600">
+                ₱{totalNet.toLocaleString()}
+              </span>
             </span>
             <span className="flex items-center gap-1">
               <span className="font-medium">Total Deductions:</span>
-              <span className="text-red-600">₱{totalDeductions.toLocaleString()}</span>
+              <span className="text-red-600">
+                ₱{totalDeductions.toLocaleString()}
+              </span>
             </span>
           </div>
           <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -317,6 +398,13 @@ const PaymentsPage: React.FC = () => {
             sortConfig={sortConfig}
             onView={(p) => viewDialog.open(p.id)}
             onDelete={handleDelete}
+            // New actions
+            onEdit={handleEdit}
+            onMarkComplete={handleMarkComplete}
+            onMarkCancelled={handleMarkCancelled}
+            onAddNote={handleAddNote}
+            onViewNote={handleViewNote}
+            onSendReceipt={handleSendReceipt}
           />
 
           {/* Empty State */}
@@ -336,12 +424,20 @@ const PaymentsPage: React.FC = () => {
                 className="mt-xs text-sm"
                 style={{ color: "var(--text-tertiary)" }}
               >
-                {filters.search || filters.status !== "all" || filters.workerId !== "all" || filters.pitakId !== "all" || filters.sessionId !== "all"
+                {filters.search ||
+                filters.status !== "all" ||
+                filters.workerId !== "all" ||
+                filters.pitakId !== "all" ||
+                filters.sessionId !== "all"
                   ? "Try adjusting your search or filters"
                   : "Start by adding your first payment"}
               </p>
               <div className="mt-2 gap-xs flex justify-center">
-                {(filters.search || filters.status !== "all" || filters.workerId !== "all" || filters.pitakId !== "all" || filters.sessionId !== "all") && (
+                {(filters.search ||
+                  filters.status !== "all" ||
+                  filters.workerId !== "all" ||
+                  filters.pitakId !== "all" ||
+                  filters.sessionId !== "all") && (
                   <button
                     className="compact-button rounded-md"
                     style={{
@@ -374,7 +470,19 @@ const PaymentsPage: React.FC = () => {
         </>
       )}
 
+      {/* Dialogs */}
       <PaymentViewDialog hook={viewDialog} />
+      <PaymentNoteDialog
+        isOpen={noteDialog.isOpen}
+        payment={noteDialog.payment}
+        onClose={() => setNoteDialog({ isOpen: false, payment: null })}
+        onSuccess={reload}
+      />
+      <PaymentViewNoteDialog
+        isOpen={viewNoteDialog.isOpen}
+        payment={viewNoteDialog.payment}
+        onClose={() => setViewNoteDialog({ isOpen: false, payment: null })}
+      />
     </div>
   );
 };

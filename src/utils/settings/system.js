@@ -862,8 +862,12 @@ async function auditLogEnabled() {
 // ============================================================
 // 📤 EXPORT ALL FUNCTIONS
 // ============================================================
-
+async function defaultCurrency() {
+  // @ts-ignore
+  return getValue("default_currency", SettingType.GENERAL, "PHP");
+}
 module.exports = {
+  defaultCurrency,
   auditLogEnabled,
   farmDebtAllocationStrategy,
   getDefaultInterestRate,

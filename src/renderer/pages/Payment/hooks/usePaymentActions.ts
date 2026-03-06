@@ -53,20 +53,20 @@ export const usePaymentActions = (
     try {
       showToast("Deleting selected payments...", "info");
       const results = await Promise.allSettled(
-        selectedPayments.map((id) => paymentAPI.delete(id))
+        selectedPayments.map((id) => paymentAPI.delete(id)),
       );
       const successful = results.filter(
-        (r) => r.status === "fulfilled" && r.value.status
+        (r) => r.status === "fulfilled" && r.value.status,
       );
       const failed = results.filter(
-        (r) => r.status === "rejected" || !r.value?.status
+        (r) => r.status === "rejected" || !r.value?.status,
       );
 
       if (failed.length === 0) {
         showSuccess(`Successfully deleted ${successful.length} payment(s)`);
       } else {
         showError(
-          `Deleted ${successful.length} payment(s), failed to delete ${failed.length}`
+          `Deleted ${successful.length} payment(s), failed to delete ${failed.length}`,
         );
       }
       fetchPayments();
@@ -84,7 +84,17 @@ export const usePaymentActions = (
 
     try {
       showToast("Exporting to CSV...", "info");
-      const headers = ["ID", "Date", "Worker", "Gross Pay", "Net Pay", "Method", "Status", "Reference", "Notes"];
+      const headers = [
+        "ID",
+        "Date",
+        "Worker",
+        "Gross Pay",
+        "Net Pay",
+        "Method",
+        "Status",
+        "Reference",
+        "Notes",
+      ];
       const rows = payments.map((p) => [
         p.id,
         p.paymentDate || "",
@@ -122,10 +132,10 @@ export const usePaymentActions = (
     async (id: number, newStatus: string) => {
       const action =
         newStatus === "completed"
-          ? "complete"
+          ? "completed"
           : newStatus === "cancelled"
-          ? "cancel"
-          : "update";
+            ? "cancel"
+            : "update";
 
       const confirmed = await showConfirm({
         title: `${action.charAt(0).toUpperCase() + action.slice(1)} Payment`,

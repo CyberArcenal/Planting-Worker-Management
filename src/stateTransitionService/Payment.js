@@ -4,6 +4,7 @@ const auditLogger = require("../utils/auditLogger");
 const { logger } = require("../utils/logger");
 const PaymentHistory = require("../entities/PaymentHistory");
 const { saveDb } = require("../utils/dbUtils/dbActions");
+const { AppDataSource } = require("../main/db/datasource");
 
 class PaymentStateTransitionService {
   // @ts-ignore
@@ -12,35 +13,29 @@ class PaymentStateTransitionService {
   }
 
   // @ts-ignore
-  async onProcessing(payment, manager, oldPayment, user = "system") {
-    logger.info(`[PaymentTransition] Payment #${payment.id} processing, old status: ${oldPayment?.status}`);
-    await this._logHistory(payment, manager, oldPayment, "processing", user);
-  }
-
-  // @ts-ignore
-  async onCompleted(payment, manager, oldPayment, user = "system") {
+  async onCompleted(payment, oldPayment, user = "system") {
     logger.info(`[PaymentTransition] Payment #${payment.id} completed, old status: ${oldPayment?.status}`);
-    await this._logHistory(payment, manager, oldPayment, "completed", user);
+    await this._logHistory(payment, oldPayment, "completed", user);
     // placeholder: could reduce worker's debts
   }
 
   // @ts-ignore
-  async onCancelled(payment, manager, oldPayment, user = "system") {
+  async onCancelled(payment, oldPayment, user = "system") {
     logger.info(`[PaymentTransition] Payment #${payment.id} cancelled, old status: ${oldPayment?.status}`);
-    await this._logHistory(payment, manager, oldPayment, "cancelled", user);
+    await this._logHistory(payment, oldPayment, "cancelled", user);
   }
 
   // @ts-ignore
-  async onPartiallyPaid(payment, manager, oldPayment, user = "system") {
+  async onPartiallyPaid(payment, oldPayment, user = "system") {
     logger.info(`[PaymentTransition] Payment #${payment.id} partially paid, old status: ${oldPayment?.status}`);
-    await this._logHistory(payment, manager, oldPayment, "partially_paid", user);
+    await this._logHistory(payment, oldPayment, "partially_paid", user);
   }
 
   // --- Private helpers ---
 
   // @ts-ignore
-  async _logHistory(payment, manager, oldPayment, actionType, user) {
-    const historyRepo = manager.getRepository(PaymentHistory);
+  async _logHistory(payment, oldPayment, actionType, user) {
+    const historyRepo = AppDataSource.getRepository(PaymentHistory);
 
     // Determine which field changed (status)
     const changedField = "status";
@@ -51,6 +46,7 @@ class PaymentStateTransitionService {
     // If needed, we can add oldAmount/newAmount later.
 
     const history = historyRepo.create({
+      // @ts-ignore
       payment: payment,
       actionType, // e.g., "processing", "completed"
       changedField,
@@ -63,7 +59,9 @@ class PaymentStateTransitionService {
       referenceNumber: payment.referenceNumber,
     });
 
+    // @ts-ignore
     await saveDb(historyRepo, history);
+    // @ts-ignore
     await auditLogger.logCreate("PaymentHistory", history.id, history, user);
     logger.info(`[PaymentTransition] PaymentHistory #${history.id} created for payment #${payment.id}`);
   }

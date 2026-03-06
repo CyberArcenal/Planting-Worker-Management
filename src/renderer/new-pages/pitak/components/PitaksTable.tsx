@@ -15,8 +15,13 @@ interface PitaksTableProps {
   onView: (pitak: Pitak) => void;
   onEdit: (pitak: Pitak) => void;
   onDelete: (pitak: Pitak) => void;
+  // Optional additional actions
+  onAssignWorkers: (pitak: Pitak) => void;
+  onMarkCancelled?: (pitak: Pitak) => void;
+  onMarkComplete?: (pitak: Pitak) => void;
+  onAddNote?: (pitak: Pitak) => void;
+  onViewNote?: (pitak: Pitak) => void;
 }
-
 const PitaksTable: React.FC<PitaksTableProps> = ({
   pitaks,
   selectedPitaks,
@@ -27,6 +32,11 @@ const PitaksTable: React.FC<PitaksTableProps> = ({
   onView,
   onEdit,
   onDelete,
+  onAssignWorkers,
+  onMarkCancelled,
+  onMarkComplete,
+  onAddNote,
+  onViewNote,
 }) => {
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
@@ -179,10 +189,16 @@ const PitaksTable: React.FC<PitaksTableProps> = ({
               </td>
               <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                 <PitakActionsDropdown
-                  pitak={pitak}
+                 pitak={pitak}
                   onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  // Pass new actions
+                  onAssignWorker={onAssignWorkers}
+                  onMarkCancelled={onMarkCancelled}
+                  onMarkComplete={onMarkComplete}
+                  onAddNote={onAddNote}
+                  onViewNote={onViewNote}
                 />
               </td>
             </tr>

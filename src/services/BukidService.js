@@ -98,6 +98,7 @@ class BukidService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/auditLogger");
     const { bukid: repo } = await this.getRepositories();
 
     const bukid = await repo.findOne({ where: { id } });
@@ -106,13 +107,12 @@ class BukidService {
     const oldStatus = bukid.status;
     if (oldStatus === newStatus) return bukid;
 
-    // Allowed transitions: initiated → active/complete/inactive, active → complete/inactive,
-    // inactive → active, complete is final
+    // Allowed transitions – note: we use "completed" (subscriber expects it)
     const allowedTransitions = {
-      initiated: ["active", "complete", "inactive"],
-      active: ["complete", "inactive"],
-      complete: [],
-      inactive: ["active"],
+      initiated: ["active", "completed", "cancelled"],
+      active: ["completed", "cancelled"],
+      completed: [],
+      cancelled: [],
     };
 
     if (!allowedTransitions[oldStatus]?.includes(newStatus)) {

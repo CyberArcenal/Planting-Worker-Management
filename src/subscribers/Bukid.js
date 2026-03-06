@@ -15,16 +15,17 @@ class BukidSubscriber {
     return Bukid;
   }
 
+
   /**
-   * @param {{ entity: any; }} event
+   * @param {{ id: any; }} entity
    */
-  async afterInsert(event) {
+  async afterInsert(entity) {
     const { AppDataSource } = require("../main/db/datasource");
     const {
       BukidStateTransitionService,
     } = require("../stateTransitionService/Bukid");
     this.transitionService = new BukidStateTransitionService(AppDataSource);
-    const entity = event.entity;
+ 
     try {
       // @ts-ignore
       logger.info("[BukidSubscriber] afterInsert", {
@@ -74,15 +75,15 @@ class BukidSubscriber {
           "system",
         );
         break;
-      case "complete":
+      case "completed":
         await this.transitionService.onComplete(
           hydrated,
           oldBukid?.status,
           "system",
         );
         break;
-      case "inactive":
-        await this.transitionService.onInactivate(
+      case "cancelled":
+        await this.transitionService.onCancelled(
           hydrated,
           oldBukid?.status,
           "system",

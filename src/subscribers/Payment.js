@@ -1,6 +1,7 @@
 // src/subscribers/PaymentSubscriber.js
 // @ts-check
 const Payment = require("../entities/Payment");
+
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading PaymentSubscriber");
@@ -15,10 +16,9 @@ class PaymentSubscriber {
   }
 
   /**
-   * @param {{ entity: any; }} event
+   * @param {any} entity
    */
-  async afterInsert(event) {
-    const entity = event.entity;
+  async afterInsert(entity) {
     try {
       // @ts-ignore
       logger.info("[PaymentSubscriber] afterInsert", {
@@ -31,15 +31,15 @@ class PaymentSubscriber {
   }
 
   /**
-   * @param {{ entity: any; databaseEntity: any; queryRunner: { manager: any; }; }} event
+   * @param {{ entity: any; databaseEntity: any; }} event
    */
   async afterUpdate(event) {
+    if (!event.entity) return;
     const { AppDataSource } = require("../main/db/datasource");
     const {
       PaymentStateTransitionService,
     } = require("../stateTransitionService/Payment");
     this.transitionService = new PaymentStateTransitionService(AppDataSource);
-    if (!event.entity) return;
 
     // @ts-ignore
     logger.info("[PaymentSubscriber] afterUpdate", {
@@ -51,23 +51,13 @@ class PaymentSubscriber {
 
     if (oldPayment && oldPayment.status === newPayment.status) return;
 
-    const manager = event.queryRunner.manager;
-    const hydrated = await this._hydratePayment(newPayment.id, manager);
+    const hydrated = await this._hydratePayment(newPayment.id);
     if (!hydrated) return;
 
     switch (newPayment.status) {
-      case "processing":
-        await this.transitionService.onProcessing(
-          hydrated,
-          manager,
-          oldPayment,
-          "system",
-        );
-        break;
       case "completed":
         await this.transitionService.onCompleted(
           hydrated,
-          manager,
           oldPayment,
           "system",
         );
@@ -75,7 +65,6 @@ class PaymentSubscriber {
       case "cancelled":
         await this.transitionService.onCancelled(
           hydrated,
-          manager,
           oldPayment,
           "system",
         );
@@ -83,7 +72,6 @@ class PaymentSubscriber {
       case "partially_paid":
         await this.transitionService.onPartiallyPaid(
           hydrated,
-          manager,
           oldPayment,
           "system",
         );
@@ -97,10 +85,10 @@ class PaymentSubscriber {
 
   /**
    * @param {any} paymentId
-   * @param {{ getRepository: (arg0: import("typeorm").EntitySchema<{ id: unknown; grossPay: unknown; manualDeduction: unknown; netPay: unknown; status: unknown; paymentDate: unknown; paymentMethod: unknown; referenceNumber: unknown; periodStart: unknown; periodEnd: unknown; totalDebtDeduction: unknown; otherDeductions: unknown; deductionBreakdown: unknown; notes: unknown; createdAt: unknown; updatedAt: unknown; idempotencyKey: unknown; }>) => any; }} manager
    */
-  async _hydratePayment(paymentId, manager) {
-    const paymentRepo = manager.getRepository(Payment);
+  async _hydratePayment(paymentId) {
+    const { AppDataSource } = require("../main/db/datasource");
+    const paymentRepo = AppDataSource.getRepository(Payment);
     const payment = await paymentRepo.findOne({
       where: { id: paymentId },
       relations: ["worker", "pitak", "session", "assignment"],

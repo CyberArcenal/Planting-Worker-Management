@@ -15,6 +15,11 @@ interface DebtsTableProps {
   onView: (debt: Debt) => void;
   onEdit: (debt: Debt) => void;
   onDelete: (debt: Debt) => void;
+  // Optional additional actions
+  onMarkPaid?: (debt: Debt) => void;
+  onMarkCancelled?: (debt: Debt) => void;
+  onAddReason?: (debt: Debt) => void;
+  onViewReason?: (debt: Debt) => void;
 }
 
 const DebtsTable: React.FC<DebtsTableProps> = ({
@@ -27,6 +32,10 @@ const DebtsTable: React.FC<DebtsTableProps> = ({
   onView,
   onEdit,
   onDelete,
+  onMarkPaid,
+  onMarkCancelled,
+  onAddReason,
+  onViewReason,
 }) => {
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
@@ -202,6 +211,10 @@ const DebtsTable: React.FC<DebtsTableProps> = ({
                   onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onMarkPaid={onMarkPaid}
+                  onMarkCancelled={onMarkCancelled}
+                  onAddReason={onAddReason}
+                  onViewReason={onViewReason}
                 />
               </td>
             </tr>

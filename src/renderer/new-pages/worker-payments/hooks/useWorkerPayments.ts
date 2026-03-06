@@ -1,15 +1,6 @@
 // src/renderer/pages/worker-payments/hooks/useWorkerPayments.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useFarmPaymentSettings } from "../../../utils/config/farmConfig";
-import workerAPI from "../../../api/core/worker";
-import paymentAPI from "../../../api/core/payment";
-import debtAPI from "../../../api/core/debt";
-
-export interface WorkerWithStats extends Worker {
-  pendingAmount: number; // sum of netPay of pending/partially paid payments
-  totalDebt: number; // sum of debt balances
-  lastPaymentDate?: string;
-}
+import workerPaymentAPI, { type WorkerWithStats } from "../../../api/utils/worker_payment";
 
 export const useWorkerPayments = () => {
   const [allWorkers, setAllWorkers] = useState<WorkerWithStats[]>([]);
@@ -29,54 +20,13 @@ export const useWorkerPayments = () => {
     worker: WorkerWithStats | null;
   }>({ isOpen: false, worker: null });
 
-  const { rate_per_luwang } = useFarmPaymentSettings(); // optional, might be used for future
-
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch all workers, payments, debts
-      const [workersRes, paymentsRes, debtsRes] = await Promise.all([
-        workerAPI.getAll(),
-        paymentAPI.getAll(),
-        debtAPI.getAll(),
-      ]);
-
-      if (!workersRes.status) throw new Error(workersRes.message);
-      if (!paymentsRes.status) throw new Error(paymentsRes.message);
-      if (!debtsRes.status) throw new Error(debtsRes.message);
-
-      const workers = workersRes.data;
-      const payments = paymentsRes.data;
-      const debts = debtsRes.data;
-
-      // Compute stats per worker
-      const workersWithStats: WorkerWithStats[] = workers.map((worker) => {
-        const workerPayments = payments.filter((p) => p.worker?.id === worker.id);
-        const workerDebts = debts.filter((d) => d.worker?.id === worker.id);
-
-        // Pending amount: sum of netPay for payments with status 'pending' or 'partially_paid'
-        const pendingAmount = workerPayments
-          .filter((p) => p.status === "pending" || p.status === "partially_paid")
-          .reduce((sum, p) => sum + p.netPay, 0);
-
-        // Total debt balance
-        const totalDebt = workerDebts.reduce((sum, d) => sum + d.balance, 0);
-
-        // Last payment date (most recent payment with paymentDate)
-        const lastPayment = workerPayments
-          .filter((p) => p.paymentDate)
-          .sort((a, b) => (a.paymentDate! > b.paymentDate! ? -1 : 1))[0];
-
-        return {
-          ...worker,
-          pendingAmount,
-          totalDebt,
-          lastPaymentDate: lastPayment?.paymentDate,
-        };
-      });
-
-      setAllWorkers(workersWithStats);
+      const response = await workerPaymentAPI.getAll();
+      if (!response.status) throw new Error(response.message);
+      setAllWorkers(response.data);
     } catch (err: any) {
       setError(err.message);
     } finally {

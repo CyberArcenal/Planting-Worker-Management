@@ -4,6 +4,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import WorkerActionsDropdown from "./WorkerActionsDropdown";
 import { formatDate } from "../../../utils/formatters";
 import type { Worker } from "../../../api/core/worker";
+
 interface WorkersTableProps {
   workers: Worker[];
   selectedWorkers: number[];
@@ -14,6 +15,11 @@ interface WorkersTableProps {
   onView: (worker: Worker) => void;
   onEdit: (worker: Worker) => void;
   onDelete: (worker: Worker) => void;
+  // Optional status change actions
+  onMarkActive?: (worker: Worker) => void;
+  onMarkInactive?: (worker: Worker) => void;
+  onMarkOnLeave?: (worker: Worker) => void;
+  onMarkTerminated?: (worker: Worker) => void;
 }
 
 const WorkersTable: React.FC<WorkersTableProps> = ({
@@ -26,6 +32,10 @@ const WorkersTable: React.FC<WorkersTableProps> = ({
   onView,
   onEdit,
   onDelete,
+  onMarkActive,
+  onMarkInactive,
+  onMarkOnLeave,
+  onMarkTerminated,
 }) => {
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
@@ -173,6 +183,10 @@ const WorkersTable: React.FC<WorkersTableProps> = ({
                   onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onMarkActive={onMarkActive}
+                  onMarkInactive={onMarkInactive}
+                  onMarkOnLeave={onMarkOnLeave}
+                  onMarkTerminated={onMarkTerminated}
                 />
               </td>
             </tr>

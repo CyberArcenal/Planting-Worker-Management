@@ -1,11 +1,12 @@
 // src/entities/Bukid.js
+const { CANCELLED } = require("node:dns");
 const { EntitySchema } = require("typeorm");
 
 const BukidStatus = {
   INITIATED: "initiated",
   ACTIVE: "active",
-  COMPLETE: "complete",
-  INACTIVE: "inactive",
+  COMPLETE: "completed",
+  CANCELLED: "cancelled",
 };
 
 const Bukid = new EntitySchema({
@@ -16,7 +17,7 @@ const Bukid = new EntitySchema({
     name: { type: String, nullable: false },
     status: {
       type: String,
-      default: BukidStatus.INACTIVE, // default inactive
+      default: BukidStatus.ACTIVE, // default inactive
       enum: BukidStatus,
     },
     notes: { type: String, nullable: true },

@@ -7,15 +7,30 @@ const Payment = new EntitySchema({
   columns: {
     id: { type: Number, primary: true, generated: true },
     grossPay: { type: "decimal", precision: 10, scale: 2, default: 0.0 },
-    manualDeduction: { type: "decimal", precision: 10, scale: 2, nullable: true, default: 0.0 },
+    manualDeduction: {
+      type: "decimal",
+      precision: 10,
+      scale: 2,
+      nullable: true,
+      default: 0.0,
+    },
     netPay: { type: "decimal", precision: 10, scale: 2, default: 0.0 },
-    status: { type: String, default: "pending" }, //pending, partially_paid, complete, cancel
+    status: {
+      type: String,
+      default: "pending",
+      enum: ["pending", "partially_paid", "completed", "cancelled"],
+    }, //pending, partially_paid, complete, cancel
     paymentDate: { type: Date, nullable: true },
     paymentMethod: { type: String, nullable: true },
     referenceNumber: { type: String, nullable: true }, // remove global unique here
     periodStart: { type: Date, nullable: true },
     periodEnd: { type: Date, nullable: true },
-    totalDebtDeduction: { type: "decimal", precision: 10, scale: 2, default: 0.0 },
+    totalDebtDeduction: {
+      type: "decimal",
+      precision: 10,
+      scale: 2,
+      default: 0.0,
+    },
     otherDeductions: { type: "decimal", precision: 10, scale: 2, default: 0.0 },
     deductionBreakdown: { type: "json", nullable: true },
     notes: { type: String, nullable: true },

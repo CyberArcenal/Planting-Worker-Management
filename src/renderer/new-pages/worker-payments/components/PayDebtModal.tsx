@@ -1,13 +1,11 @@
 // src/renderer/pages/worker-payments/components/PayDebtModal.tsx
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import debtAPI from "../../../api/core/debt";
-import debtHistoryAPI from "../../../api/core/debt_history";
 import Button from "../../../components/UI/Button";
 import Modal from "../../../components/UI/Modal";
 import { dialogs } from "../../../utils/dialogs";
 import { formatCurrency } from "../../../utils/formatters";
-import type { WorkerWithStats } from "../hooks/useWorkerPayments";
+import workerPaymentAPI, { type WorkerWithStats } from "../../../api/utils/worker_payment";
 
 interface PayDebtModalProps {
   isOpen: boolean;
@@ -27,7 +25,8 @@ const PayDebtModal: React.FC<PayDebtModalProps> = ({
   onSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [debts, setDebts] = useState<any[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [notes, setNotes] = useState("");
   const {
     register,
     handleSubmit,
@@ -43,12 +42,8 @@ const PayDebtModal: React.FC<PayDebtModalProps> = ({
   useEffect(() => {
     if (isOpen && worker) {
       reset({ amount: 0 });
-      // Fetch worker's active debts
-      debtAPI.getAll({ workerId: worker.id, status: "pending" })
-        .then(res => {
-          if (res.status) setDebts(res.data);
-        })
-        .catch(console.error);
+      setPaymentMethod("cash");
+      setNotes("");
     }
   }, [isOpen, worker, reset]);
 
@@ -74,30 +69,18 @@ const PayDebtModal: React.FC<PayDebtModalProps> = ({
 
     setLoading(true);
     try {
-      // For simplicity, we'll apply the payment to the first pending debt (or distribute proportionally)
-      // In a real app, you might have a strategy. Here we just pay the first debt.
-      const debtToPay = debts[0];
-      if (!debtToPay) throw new Error("No active debt found.");
-
-      const newBalance = debtToPay.balance - data.amount;
-      const amountPaid = data.amount;
-
-      // Create debt history
-      await debtHistoryAPI.create({
-        debtId: debtToPay.id,
-        amountPaid,
-        previousBalance: debtToPay.balance,
-        newBalance,
-        transactionType: "PAYMENT",
-        notes: `Debt payment via worker payment page`,
+      const response = await workerPaymentAPI.payDebt({
+        workerId: worker.id,
+        amount: data.amount,
+        paymentMethod,
+        notes: notes || undefined,
       });
-
-      // Update debt balance (optional, backend might auto-update via history trigger)
-      // If not, we need to update debt manually
-      await debtAPI.update(debtToPay.id, { balance: newBalance });
-
-      dialogs.success("Debt payment recorded.");
-      onSuccess();
+      if (response.status) {
+        dialogs.success("Debt payment applied successfully.");
+        onSuccess();
+      } else {
+        dialogs.error(response.message);
+      }
     } catch (err: any) {
       dialogs.error(err.message);
     } finally {
@@ -135,12 +118,7 @@ const PayDebtModal: React.FC<PayDebtModalProps> = ({
         </div>
 
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: "var(--sidebar-text)" }}
-          >
-            Payment Amount *
-          </label>
+          <label className="block text-sm font-medium mb-1">Payment Amount *</label>
           <input
             type="number"
             step="0.01"
@@ -159,6 +137,39 @@ const PayDebtModal: React.FC<PayDebtModalProps> = ({
           {errors.amount && (
             <p className="text-xs text-red-500 mt-1">{errors.amount.message}</p>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Payment Method</label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            className="compact-input w-full border rounded-md"
+            style={{
+              backgroundColor: "var(--card-bg)",
+              borderColor: "var(--border-color)",
+              color: "var(--sidebar-text)",
+            }}
+          >
+            <option value="cash">Cash</option>
+            <option value="gcash">GCash</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="compact-input w-full border rounded-md"
+            style={{
+              backgroundColor: "var(--card-bg)",
+              borderColor: "var(--border-color)",
+              color: "var(--sidebar-text)",
+            }}
+          />
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-color)]">

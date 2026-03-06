@@ -22,6 +22,7 @@ declare global {
       notificationLog: (payload: any) => Promise<any>;
       session: (payload: any) => Promise<any>;
       systemConfig: (payload: any) => Promise<any>;
+      workerPayment: (payload: any) => Promise<any>;
 
       auditExport: (payload: any) => Promise<any>;
 

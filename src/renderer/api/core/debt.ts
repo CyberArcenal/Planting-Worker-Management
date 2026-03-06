@@ -15,7 +15,7 @@ export interface Debt {
   amount: number;
   reason?: string | null;
   balance: number;
-  status: string;
+  status: "pending" | "partially_paid" | "paid" | "cancelled" | "overdue" | "settled";
   dateIncurred: string;
   dueDate?: string | null;
   paymentTerm?: string | null;
@@ -39,7 +39,7 @@ export interface DebtCreateData {
   dueDate?: string;
   paymentTerm?: string;
   interestRate?: number;
-  status?: string;
+  status?: "pending" | "partially_paid" | "paid" | "cancelled" | "overdue" | "settled";
 }
 
 export interface DebtUpdateData extends Partial<DebtCreateData> {}

@@ -7,15 +7,14 @@ import Pagination from "../../components/Shared/Pagination";
 import Button from "../../components/UI/Button";
 import { dialogs } from "../../utils/dialogs";
 import { showError, showSuccess } from "../../utils/notification";
-// import AssignmentFormDialog from "./components/AssignmentFormDialog";
 import AssignmentsTable from "./components/AssignmentsTable";
 import AssignmentViewDialog from "./components/AssignmentViewDialog";
 import FilterBar from "./components/FilterBar";
-// import { useAssignmentForm } from "./hooks/useAssignmentForm";
-import { useAssignmentView } from "./hooks/useAssignmentView";
 import AssignmentFormDialog from "./components/AssignmentForm";
-import { useAssignmentForm } from "./components/AssignmentForm/hooks/useAssignmentForm";
 import { useAssignmentFormDialog } from "./components/AssignmentForm/hooks/useAssignmentFormDialog";
+import { useAssignmentView } from "./hooks/useAssignmentView";
+import AssignmentViewNoteDialog from "./components/AssignmentViewNoteDialog";
+import AssignmentNoteDialog from "./components/AssignmentNoteDialog";
 
 const AssignmentsPage: React.FC = () => {
   const {
@@ -47,6 +46,17 @@ const AssignmentsPage: React.FC = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
 
+  // Note dialogs
+  const [noteDialog, setNoteDialog] = useState<{
+    isOpen: boolean;
+    assignment: any | null;
+  }>({ isOpen: false, assignment: null });
+
+  const [viewNoteDialog, setViewNoteDialog] = useState<{
+    isOpen: boolean;
+    assignment: any | null;
+  }>({ isOpen: false, assignment: null });
+
   const handleDelete = async (assignment: any) => {
     const confirmed = await dialogs.confirm({
       title: "Delete Assignment",
@@ -60,6 +70,50 @@ const AssignmentsPage: React.FC = () => {
     } catch (err: any) {
       dialogs.alert({ title: "Error", message: err.message });
     }
+  };
+
+  const handleEdit = (assignment: any) => {
+    // For assignment, only notes and date are editable via update API.
+    // We open the note dialog (which also allows editing notes) – date could be added later.
+    setNoteDialog({ isOpen: true, assignment });
+  };
+
+  const handleMarkCompleted = async (assignment: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Completed",
+      message: `Complete assignment for worker "${assignment.worker?.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await assignmentAPI.updateStatus(assignment.id, "completed");
+      showSuccess("Assignment marked as completed.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkCancelled = async (assignment: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Cancelled",
+      message: `Cancel assignment for worker "${assignment.worker?.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await assignmentAPI.updateStatus(assignment.id, "cancelled");
+      showSuccess("Assignment cancelled.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleAddNote = (assignment: any) => {
+    setNoteDialog({ isOpen: true, assignment });
+  };
+
+  const handleViewNote = (assignment: any) => {
+    setViewNoteDialog({ isOpen: true, assignment });
   };
 
   const handleBulkDelete = async () => {
@@ -88,7 +142,6 @@ const AssignmentsPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -104,7 +157,6 @@ const AssignmentsPage: React.FC = () => {
   };
   const { start, end } = getDisplayRange();
 
-  // Summary stats
   const activeCount = allAssignments.filter((a) => a.status === "active").length;
   const completedCount = allAssignments.filter((a) => a.status === "completed").length;
   const cancelledCount = allAssignments.filter((a) => a.status === "cancelled").length;
@@ -333,6 +385,11 @@ const AssignmentsPage: React.FC = () => {
             sortConfig={sortConfig}
             onView={(a) => viewDialog.open(a.id)}
             onDelete={handleDelete}
+            onEdit={handleEdit}
+            onMarkCompleted={handleMarkCompleted}
+            onMarkCancelled={handleMarkCancelled}
+            onAddNote={handleAddNote}
+            onViewNote={handleViewNote}
           />
 
           {/* Empty State */}
@@ -375,7 +432,7 @@ const AssignmentsPage: React.FC = () => {
                     backgroundColor: "var(--accent-green)",
                     color: "white",
                   }}
-                  onClick={() => {formDialog.openAdd([])}}
+                  onClick={() => formDialog.openAdd([])}
                 >
                   Add First Assignment
                 </button>
@@ -406,8 +463,19 @@ const AssignmentsPage: React.FC = () => {
         onClose={formDialog.close}
         onSuccess={reload}
       />
-
       <AssignmentViewDialog hook={viewDialog} />
+
+      <AssignmentNoteDialog
+        isOpen={noteDialog.isOpen}
+        assignment={noteDialog.assignment}
+        onClose={() => setNoteDialog({ isOpen: false, assignment: null })}
+        onSuccess={reload}
+      />
+      <AssignmentViewNoteDialog
+        isOpen={viewNoteDialog.isOpen}
+        assignment={viewNoteDialog.assignment}
+        onClose={() => setViewNoteDialog({ isOpen: false, assignment: null })}
+      />
     </div>
   );
 };

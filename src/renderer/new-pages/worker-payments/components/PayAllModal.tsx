@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import { formatCurrency } from "../../../utils/formatters";
 import { dialogs } from "../../../utils/dialogs";
-import type { WorkerWithStats } from "../hooks/useWorkerPayments";
 import Modal from "../../../components/UI/Modal";
-import paymentAPI from "../../../api/core/payment";
 import Button from "../../../components/UI/Button";
+import type { WorkerWithStats } from "../../../api/utils/worker_payment";
+import workerPaymentAPI from "../../../api/utils/worker_payment";
 
 interface PayAllModalProps {
   isOpen: boolean;
@@ -21,6 +21,8 @@ const PayAllModal: React.FC<PayAllModalProps> = ({
   onSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [notes, setNotes] = useState("");
 
   if (!worker) return null;
 
@@ -33,21 +35,17 @@ const PayAllModal: React.FC<PayAllModalProps> = ({
 
     setLoading(true);
     try {
-      // Create a single payment record for the total pending amount
-      // Note: This assumes you have a default session, pitak, etc. You may need to adjust.
-      // For simplicity, we use a placeholder pitakId and sessionId; in real app, you'd select or use default.
-      const paymentData = {
+      const response = await workerPaymentAPI.payAll({
         workerId: worker.id,
-        pitakId: 1, // TODO: get from context or settings
-        sessionId: 1, // TODO: get from context or settings
-        grossPay: worker.pendingAmount,
-        netPay: worker.pendingAmount,
-        status: "complete",
-        paymentDate: new Date().toISOString().split("T")[0],
-      };
-      await paymentAPI.create(paymentData);
-      dialogs.success("Payment recorded successfully.");
-      onSuccess();
+        paymentMethod,
+        notes: notes || undefined,
+      });
+      if (response.status) {
+        dialogs.success("Payments completed successfully.");
+        onSuccess();
+      } else {
+        dialogs.error(response.message);
+      }
     } catch (err: any) {
       dialogs.error(err.message);
     } finally {
@@ -72,6 +70,40 @@ const PayAllModal: React.FC<PayAllModalProps> = ({
             </span>
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Payment Method</label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            className="compact-input w-full border rounded-md"
+            style={{
+              backgroundColor: "var(--card-bg)",
+              borderColor: "var(--border-color)",
+              color: "var(--sidebar-text)",
+            }}
+          >
+            <option value="cash">Cash</option>
+            <option value="gcash">GCash</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="compact-input w-full border rounded-md"
+            style={{
+              backgroundColor: "var(--card-bg)",
+              borderColor: "var(--border-color)",
+              color: "var(--sidebar-text)",
+            }}
+          />
+        </div>
+
         <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-color)]">
           <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancel

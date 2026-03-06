@@ -13,7 +13,7 @@ export interface Assignment {
   id: number;
   luwangCount: number;
   assignmentDate: string; // ISO date
-  status: "active" | "completed" | "cancelled";
+  status: "initiated" | "active" | "completed" | "cancelled";
   notes?: string | null;
   createdAt: string;
   updatedAt: string;

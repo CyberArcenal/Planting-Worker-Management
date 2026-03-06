@@ -47,7 +47,9 @@ const BukidPage: React.FC = () => {
 
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">(
+    "csv",
+  );
 
   // Note dialogs
   const [noteDialog, setNoteDialog] = useState<{
@@ -115,7 +117,7 @@ const BukidPage: React.FC = () => {
     });
     if (!confirmed) return;
     try {
-      await bukidAPI.updateStatus(bukid.id, "complete");
+      await bukidAPI.updateStatus(bukid.id, "completed");
       showSuccess("Bukid marked as complete.");
       reload();
     } catch (err: any) {
@@ -166,8 +168,12 @@ const BukidPage: React.FC = () => {
   // Summary stats
   const activeCount = allBukids.filter((b) => b.status === "active").length;
   const inactiveCount = allBukids.filter((b) => b.status === "inactive").length;
-  const completeCount = allBukids.filter((b) => b.status === "complete").length;
-  const initiatedCount = allBukids.filter((b) => b.status === "initiated").length;
+  const completeCount = allBukids.filter(
+    (b) => b.status === "completed",
+  ).length;
+  const initiatedCount = allBukids.filter(
+    (b) => b.status === "initiated",
+  ).length;
 
   return (
     <div

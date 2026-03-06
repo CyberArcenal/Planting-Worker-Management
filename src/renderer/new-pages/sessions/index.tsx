@@ -13,6 +13,8 @@ import SessionsTable from "./components/SessionsTable";
 import SessionViewDialog from "./components/SessionViewDialog";
 import { useSessionForm } from "./hooks/useSessionForm";
 import { useSessionView } from "./hooks/useSessionView";
+import SessionNoteDialog from "./components/SessionNoteDialog";
+import SessionViewNoteDialog from "./components/SessionViewNoteDialog";
 
 const SessionsPage: React.FC = () => {
   const {
@@ -43,6 +45,71 @@ const SessionsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+
+  // Note dialogs
+  const [noteDialog, setNoteDialog] = useState<{
+    isOpen: boolean;
+    session: any | null;
+  }>({ isOpen: false, session: null });
+
+  const [viewNoteDialog, setViewNoteDialog] = useState<{
+    isOpen: boolean;
+    session: any | null;
+  }>({ isOpen: false, session: null });
+
+  // Handlers for dropdown actions
+  const handleMarkActive = async (session: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Active",
+      message: `Activate session "${session.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await sessionAPI.updateStatus(session.id, "active");
+      showSuccess("Session marked as active.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkClosed = async (session: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Closed",
+      message: `Close session "${session.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await sessionAPI.updateStatus(session.id, "closed");
+      showSuccess("Session marked as closed.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkArchived = async (session: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Archived",
+      message: `Archive session "${session.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await sessionAPI.updateStatus(session.id, "archived");
+      showSuccess("Session archived.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleAddNote = (session: any) => {
+    setNoteDialog({ isOpen: true, session });
+  };
+
+  const handleViewNote = (session: any) => {
+    setViewNoteDialog({ isOpen: true, session });
+  };
 
   const handleDelete = async (session: any) => {
     const confirmed = await dialogs.confirm({
@@ -85,7 +152,6 @@ const SessionsPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -101,7 +167,6 @@ const SessionsPage: React.FC = () => {
   };
   const { start, end } = getDisplayRange();
 
-  // Summary stats
   const activeCount = allSessions.filter((s) => s.status === "active").length;
   const closedCount = allSessions.filter((s) => s.status === "closed").length;
   const archivedCount = allSessions.filter((s) => s.status === "archived").length;
@@ -331,6 +396,12 @@ const SessionsPage: React.FC = () => {
             onView={(s) => viewDialog.open(s.id)}
             onEdit={formDialog.openEdit}
             onDelete={handleDelete}
+            // New actions
+            onMarkActive={handleMarkActive}
+            onMarkClosed={handleMarkClosed}
+            onMarkArchived={handleMarkArchived}
+            onAddNote={handleAddNote}
+            onViewNote={handleViewNote}
           />
 
           {/* Empty State */}
@@ -409,6 +480,19 @@ const SessionsPage: React.FC = () => {
       />
 
       <SessionViewDialog hook={viewDialog} />
+
+      <SessionNoteDialog
+        isOpen={noteDialog.isOpen}
+        session={noteDialog.session}
+        onClose={() => setNoteDialog({ isOpen: false, session: null })}
+        onSuccess={reload}
+      />
+
+      <SessionViewNoteDialog
+        isOpen={viewNoteDialog.isOpen}
+        session={viewNoteDialog.session}
+        onClose={() => setViewNoteDialog({ isOpen: false, session: null })}
+      />
     </div>
   );
 };

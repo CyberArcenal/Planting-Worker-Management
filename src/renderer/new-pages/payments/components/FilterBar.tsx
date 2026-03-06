@@ -9,11 +9,18 @@ import type { Worker } from "../../../api/core/worker";
 
 interface FilterBarProps {
   filters: PaymentFilters;
-  onFilterChange: (key: keyof PaymentFilters, value: string | number | undefined) => void;
+  onFilterChange: (
+    key: keyof PaymentFilters,
+    value: string | number | undefined,
+  ) => void;
   onReset: () => void;
 }
 
-const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset }) => {
+const FilterBar: React.FC<FilterBarProps> = ({
+  filters,
+  onFilterChange,
+  onReset,
+}) => {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [pitaks, setPitaks] = useState<Pitak[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -42,7 +49,10 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
     >
       {/* Search */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           Search
         </label>
         <input
@@ -61,7 +71,10 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
 
       {/* Status */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           Status
         </label>
         <select
@@ -77,19 +90,27 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
           <option value="partially_paid">Partially Paid</option>
-          <option value="complete">Complete</option>
+          <option value="completed">Complete</option>
           <option value="cancel">Cancelled</option>
         </select>
       </div>
 
       {/* Worker */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           Worker
         </label>
         <select
           value={filters.workerId}
-          onChange={(e) => onFilterChange("workerId", e.target.value === "all" ? "all" : Number(e.target.value))}
+          onChange={(e) =>
+            onFilterChange(
+              "workerId",
+              e.target.value === "all" ? "all" : Number(e.target.value),
+            )
+          }
           className="compact-input w-full border rounded-md"
           style={{
             backgroundColor: "var(--card-bg)",
@@ -108,12 +129,20 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
 
       {/* Pitak */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           Pitak
         </label>
         <select
           value={filters.pitakId}
-          onChange={(e) => onFilterChange("pitakId", e.target.value === "all" ? "all" : Number(e.target.value))}
+          onChange={(e) =>
+            onFilterChange(
+              "pitakId",
+              e.target.value === "all" ? "all" : Number(e.target.value),
+            )
+          }
           className="compact-input w-full border rounded-md"
           style={{
             backgroundColor: "var(--card-bg)",
@@ -132,12 +161,20 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
 
       {/* Session */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           Session
         </label>
         <select
           value={filters.sessionId}
-          onChange={(e) => onFilterChange("sessionId", e.target.value === "all" ? "all" : Number(e.target.value))}
+          onChange={(e) =>
+            onFilterChange(
+              "sessionId",
+              e.target.value === "all" ? "all" : Number(e.target.value),
+            )
+          }
           className="compact-input w-full border rounded-md"
           style={{
             backgroundColor: "var(--card-bg)",
@@ -156,13 +193,18 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
 
       {/* Start Date */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           From Date
         </label>
         <input
           type="date"
           value={filters.startDate || ""}
-          onChange={(e) => onFilterChange("startDate", e.target.value || undefined)}
+          onChange={(e) =>
+            onFilterChange("startDate", e.target.value || undefined)
+          }
           className="compact-input w-full border rounded-md"
           style={{
             backgroundColor: "var(--card-bg)",
@@ -174,13 +216,18 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onReset 
 
       {/* End Date */}
       <div>
-        <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
+        <label
+          className="block text-sm font-medium mb-xs"
+          style={{ color: "var(--sidebar-text)" }}
+        >
           To Date
         </label>
         <input
           type="date"
           value={filters.endDate || ""}
-          onChange={(e) => onFilterChange("endDate", e.target.value || undefined)}
+          onChange={(e) =>
+            onFilterChange("endDate", e.target.value || undefined)
+          }
           className="compact-input w-full border rounded-md"
           style={{
             backgroundColor: "var(--card-bg)",

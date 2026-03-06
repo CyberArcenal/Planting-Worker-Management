@@ -19,6 +19,7 @@ export interface AssignmentFormData {
 
 export interface UseAssignmentFormProps {
   workerIds?: number[];
+  pitakId?: number | null;
   isReassignment?: boolean;
   reassignmentAssignmentId?: number;
   onClose: () => void;
@@ -27,6 +28,7 @@ export interface UseAssignmentFormProps {
 
 export const useAssignmentForm = ({
   workerIds = [],
+  pitakId = null,
   isReassignment = false,
   reassignmentAssignmentId,
   onClose,
@@ -35,7 +37,7 @@ export const useAssignmentForm = ({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<AssignmentFormData>({
-    pitakId: null,
+    pitakId: pitakId? pitakId : null,
     assignmentDate: new Date().toISOString().split("T")[0],
     notes: "",
     workers: [],
@@ -60,6 +62,10 @@ export const useAssignmentForm = ({
     number[]
   >([]);
   const [checkingAssignments, setCheckingAssignments] = useState(false);
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, pitakId }));
+  }, [pitakId]);
 
   // Fetch initial workers based on workerIds prop
   useEffect(() => {

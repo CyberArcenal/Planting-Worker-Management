@@ -1,45 +1,28 @@
-// TopBar.tsx (colors only updated)
+// src/renderer/components/TopBar.tsx (updated)
 import {
   Sun,
   Cloud,
   CloudRain,
   CloudLightning,
   CloudFog,
-  Droplets,
-  Wind,
-  RefreshCw,
+  Droplets, RefreshCw,
   CalendarDays,
   AlertCircle,
   Menu,
   Calendar,
-  Search,
-  User,
-  Bell,
-  MapPin,
-  Thermometer,
+  Search, Bell,
+  MapPin
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import systemConfigAPI from "../../api/core/system_config";
-import { kabAuthStore } from "../../lib/kabAuthStore";
+import sessionAPI, { type Session } from "../../api/core/session";
 import { useDynamicWeather } from "../../hooks/useDynamicWeather";
+import { useDefaultSessionId } from "../../utils/config/farmConfig";
 import UpdateNotifier from "./UpdateNotifier";
 import { NotificationDrawer } from "./NotificationDrawer";
 
 interface TopBarProps {
   toggleSidebar: () => void;
-}
-
-interface DefaultSessionData {
-  id: number;
-  seasonType: string;
-  year: number;
-  startDate: string | null;
-  endDate: string | null;
-  status: string;
-  notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
@@ -50,9 +33,57 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [defaultSession, setDefaultSession] =
-    useState<DefaultSessionData | null>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const [sessionDetails, setSessionDetails] = useState<Session | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
+  const defaultSessionId = useDefaultSessionId();
+
+  // Fetch session details whenever defaultSessionId changes
+  useEffect(() => {
+    const fetchSessionDetails = async () => {
+      if (!defaultSessionId) {
+        setSessionDetails(null);
+        setSessionLoading(false);
+        return;
+      }
+      setSessionLoading(true);
+      try {
+        const response = await sessionAPI.getById(defaultSessionId);
+        if (response.status && response.data) {
+          setSessionDetails(response.data);
+        } else {
+          console.warn("Failed to fetch session details for ID:", defaultSessionId);
+          setSessionDetails(null);
+        }
+      } catch (error) {
+        console.error("Error fetching session details:", error);
+        setSessionDetails(null);
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+
+    fetchSessionDetails();
+  }, [defaultSessionId]);
+
+  // Manual refresh function (can be called by button)
+  const refetchSession = async () => {
+    if (!defaultSessionId) {
+      setSessionDetails(null);
+      return;
+    }
+    setRefreshing(true);
+    try {
+      const response = await sessionAPI.getById(defaultSessionId);
+      if (response.status && response.data) {
+        setSessionDetails(response.data);
+      }
+    } catch (error) {
+      console.error("Error refreshing session:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Use dynamic weather hook
   const {
@@ -115,31 +146,6 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
 
     return location.name;
   };
-
-  // Fetch default session data
-  const fetchDefaultSession = async () => {
-    try {
-      setLoadingSession(true);
-      const response = await systemConfigAPI.getDefaultSessionData();
-      if (response.status && response.data) {
-        setDefaultSession(response.data);
-      } else {
-        console.warn("No default session found or error fetching session data");
-      }
-    } catch (error) {
-      console.error("Error fetching default session:", error);
-    } finally {
-      setLoadingSession(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDefaultSession();
-
-    // Refresh session data every 5 minutes
-    const interval = setInterval(fetchDefaultSession, 300000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Define searchable routes
   const allRoutes = useMemo(
@@ -208,9 +214,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   };
 
   const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchDefaultSession();
-    setTimeout(() => setRefreshing(false), 1000);
+    await refetchSession();
   };
 
   // Get session status color
@@ -339,39 +343,39 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
               style={{ color: "var(--accent-green)" }}
             />
             <div className="min-w-0">
-              {loadingSession ? (
+              {sessionLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-pulse h-3 w-24 bg-[var(--accent-green-light)] rounded"></div>
                 </div>
-              ) : defaultSession ? (
+              ) : sessionDetails ? (
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span
                       className="text-xs font-medium truncate"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      {formatSeasonType(defaultSession.seasonType)}{" "}
-                      {defaultSession.year}
+                      {formatSeasonType(sessionDetails.seasonType as string)}{" "}
+                      {sessionDetails.year}
                     </span>
                     <span
                       className="text-xs px-1.5 py-0.5 rounded-full capitalize"
                       style={{
                         background: getSessionStatusColor(
-                          defaultSession.status,
+                          sessionDetails.status,
                         ),
                         color: "white",
                       }}
                     >
-                      {defaultSession.status}
+                      {sessionDetails.status}
                     </span>
                   </div>
                   <div
                     className="text-xs truncate"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    ID: {defaultSession.id} •{" "}
-                    {defaultSession.startDate
-                      ? new Date(defaultSession.startDate).toLocaleDateString()
+                    ID: {sessionDetails.id} •{" "}
+                    {sessionDetails.startDate
+                      ? new Date(sessionDetails.startDate).toLocaleDateString()
                       : "No start date"}
                   </div>
                 </div>
@@ -674,7 +678,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           {/* Refresh Session Button */}
           <button
             onClick={handleRefresh}
-            disabled={refreshing}
+            disabled={refreshing || sessionLoading}
             className="windows-btn flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{
               background: "var(--accent-green)",

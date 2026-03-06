@@ -1,5 +1,6 @@
 // src/stateTransitionServices/WorkerStateTransitionService.js
 // @ts-check
+const { AppDataSource } = require("../main/db/datasource");
 const { logger } = require("../utils/logger");
 // Stub for notification sender (if needed)
 // const emailSender = require("../channels/email.sender");
@@ -12,25 +13,25 @@ class WorkerStateTransitionService {
   }
 
   // @ts-ignore
-  async onActivate(worker, manager, oldStatus = null, user = "system") {
+  async onActivate(worker, oldStatus = null, user = "system") {
     logger.info(`[WorkerTransition] Worker #${worker.id} activated (old: ${oldStatus})`);
     // Example: could re-enable assignment creation
   }
 
   // @ts-ignore
-  async onInactivate(worker, manager, oldStatus = null, user = "system") {
+  async onInactivate(worker, oldStatus = null, user = "system") {
     logger.info(`[WorkerTransition] Worker #${worker.id} inactivated (old: ${oldStatus})`);
     // Example: prevent new assignments, but existing ones remain
   }
 
   // @ts-ignore
-  async onLeave(worker, manager, oldStatus = null, user = "system") {
+  async onLeave(worker, oldStatus = null, user = "system") {
     logger.info(`[WorkerTransition] Worker #${worker.id} on leave (old: ${oldStatus})`);
     // Example: pause assignments, maybe notify supervisor
   }
 
   // @ts-ignore
-  async onTerminate(worker, manager, oldStatus = null, user = "system") {
+  async onTerminate(worker, oldStatus = null, user = "system") {
     logger.info(`[WorkerTransition] Worker #${worker.id} terminated (old: ${oldStatus})`);
 
     // Example effects when worker is terminated:
@@ -40,7 +41,7 @@ class WorkerStateTransitionService {
     // 4. Update session worker counts
 
     if (worker.assignments && worker.assignments.length > 0) {
-      const assignmentRepo = manager.getRepository(require("../entities/Assignment"));
+      const assignmentRepo = AppDataSource.getRepository(require("../entities/Assignment"));
       for (const assignment of worker.assignments) {
         if (assignment.status === "active") {
           assignment.status = "cancelled";

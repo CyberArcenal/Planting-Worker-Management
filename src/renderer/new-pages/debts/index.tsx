@@ -13,6 +13,8 @@ import DebtViewDialog from "./components/DebtViewDialog";
 import FilterBar from "./components/FilterBar";
 import { useDebtForm } from "./hooks/useDebtForm";
 import { useDebtView } from "./hooks/useDebtView";
+import DebtReasonDialog from "./components/DebtReasonDialog";
+import DebtViewReasonDialog from "./components/DebtViewReasonDialog";
 
 const DebtsPage: React.FC = () => {
   const {
@@ -43,6 +45,56 @@ const DebtsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+
+  // Reason dialogs
+  const [reasonDialog, setReasonDialog] = useState<{
+    isOpen: boolean;
+    debt: any | null;
+  }>({ isOpen: false, debt: null });
+
+  const [viewReasonDialog, setViewReasonDialog] = useState<{
+    isOpen: boolean;
+    debt: any | null;
+  }>({ isOpen: false, debt: null });
+
+  // Status change handlers
+  const handleMarkPaid = async (debt: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Paid",
+      message: `Mark debt for "${debt.worker?.name}" as paid?`,
+    });
+    if (!confirmed) return;
+    try {
+      await debtAPI.updateStatus(debt.id, "paid");
+      showSuccess("Debt marked as paid.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkCancelled = async (debt: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Cancelled",
+      message: `Cancel debt for "${debt.worker?.name}"?`,
+    });
+    if (!confirmed) return;
+    try {
+      await debtAPI.updateStatus(debt.id, "cancelled");
+      showSuccess("Debt cancelled.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleAddReason = (debt: any) => {
+    setReasonDialog({ isOpen: true, debt });
+  };
+
+  const handleViewReason = (debt: any) => {
+    setViewReasonDialog({ isOpen: true, debt });
+  };
 
   const handleDelete = async (debt: any) => {
     const confirmed = await dialogs.confirm({
@@ -85,7 +137,6 @@ const DebtsPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -101,7 +152,6 @@ const DebtsPage: React.FC = () => {
   };
   const { start, end } = getDisplayRange();
 
-  // Summary stats
   const totalAmount = allDebts.reduce((sum, d) => sum + d.amount, 0);
   const totalBalance = allDebts.reduce((sum, d) => sum + d.balance, 0);
   const totalPaid = allDebts.reduce((sum, d) => sum + d.totalPaid, 0);
@@ -329,8 +379,13 @@ const DebtsPage: React.FC = () => {
             onSort={handleSort}
             sortConfig={sortConfig}
             onView={(d) => viewDialog.open(d.id)}
-            onEdit={formDialog.openEdit}
+            onEdit={(d)=> {formDialog.openEdit(d.id)}}
             onDelete={handleDelete}
+            // New actions
+            onMarkPaid={handleMarkPaid}
+            onMarkCancelled={handleMarkCancelled}
+            onAddReason={handleAddReason}
+            onViewReason={handleViewReason}
           />
 
           {/* Empty State */}
@@ -403,12 +458,24 @@ const DebtsPage: React.FC = () => {
         isOpen={formDialog.isOpen}
         mode={formDialog.mode}
         debtId={formDialog.debtId}
-        initialData={formDialog.initialData}
         onClose={formDialog.close}
         onSuccess={reload}
       />
 
       <DebtViewDialog hook={viewDialog} />
+
+      <DebtReasonDialog
+        isOpen={reasonDialog.isOpen}
+        debt={reasonDialog.debt}
+        onClose={() => setReasonDialog({ isOpen: false, debt: null })}
+        onSuccess={reload}
+      />
+
+      <DebtViewReasonDialog
+        isOpen={viewReasonDialog.isOpen}
+        debt={viewReasonDialog.debt}
+        onClose={() => setViewReasonDialog({ isOpen: false, debt: null })}
+      />
     </div>
   );
 };

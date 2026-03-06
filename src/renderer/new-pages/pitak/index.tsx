@@ -5,7 +5,7 @@ import { usePitaks } from "./hooks/usePitaks";
 import { usePitakView } from "./hooks/usePitakView";
 import { dialogs } from "../../utils/dialogs";
 import { showError, showSuccess } from "../../utils/notification";
-import pitakAPI from "../../api/core/pitak";
+import pitakAPI, { type Pitak } from "../../api/core/pitak";
 import Button from "../../components/UI/Button";
 import FilterBar from "./components/FilterBar";
 import PitaksTable from "./components/PitaksTable";
@@ -13,6 +13,10 @@ import Pagination from "../../components/Shared/Pagination";
 import PitakViewDialog from "./components/PitakViewDialog";
 import PitakFormDialog from "./components/pitakFormDialog";
 import { usePitakForm } from "./components/pitakFormDialog/hooks/usePitakForm";
+import PitakViewNoteDialog from "./components/PitakViewNoteDialog";
+import PitakNoteDialog from "./components/PitakNoteDialog";
+import AssignmentFormDialog from "../assignments/components/AssignmentForm";
+import { useAssignmentFormDialog } from "../assignments/components/AssignmentForm/hooks/useAssignmentFormDialog";
 
 const PitakPage: React.FC = () => {
   const {
@@ -36,7 +40,7 @@ const PitakPage: React.FC = () => {
     toggleSelectAll,
     handleSort,
   } = usePitaks();
-
+  const assignmentFormDialog = useAssignmentFormDialog();
   const formDialog = usePitakForm();
   const viewDialog = usePitakView();
 
@@ -45,6 +49,16 @@ const PitakPage: React.FC = () => {
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">(
     "csv",
   );
+
+  const [noteDialog, setNoteDialog] = useState<{
+    isOpen: boolean;
+    pitak: any | null;
+  }>({ isOpen: false, pitak: null });
+
+  const [viewNoteDialog, setViewNoteDialog] = useState<{
+    isOpen: boolean;
+    pitak: any | null;
+  }>({ isOpen: false, pitak: null });
 
   const handleDelete = async (pitak: any) => {
     const confirmed = await dialogs.confirm({
@@ -78,6 +92,45 @@ const PitakPage: React.FC = () => {
     }
   };
 
+  // Status change handlers
+  const handleMarkCancelled = async (pitak: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Cancel?",
+      message: `Set pitak "${pitak.location}" to cancelled?`,
+      icon: "danger",
+    });
+    if (!confirmed) return;
+    try {
+      await pitakAPI.updateStatus(pitak.id, "cancelled");
+      showSuccess("Pitak marked as active.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkComplete = async (pitak: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Completed",
+      message: `Set pitak "${pitak.location}" to completed?`,
+    });
+    if (!confirmed) return;
+    try {
+      await pitakAPI.updateStatus(pitak.id, "completed");
+      showSuccess("Pitak marked as inactive.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleAddNote = (pitak: any) => {
+    setNoteDialog({ isOpen: true, pitak });
+  };
+
+  const handleViewNote = (pitak: any) => {
+    setViewNoteDialog({ isOpen: true, pitak });
+  };
   const handleExport = async () => {
     if (allPitaks.length === 0) return;
     const confirmed = await dialogs.confirm({
@@ -105,8 +158,13 @@ const PitakPage: React.FC = () => {
 
   // Summary stats
   const activeCount = allPitaks.filter((p) => p.status === "active").length;
-  const inactiveCount = allPitaks.filter((p) => p.status === "inactive").length;
-  const archivedCount = allPitaks.filter((p) => p.status === "archived").length;
+  const inactiveCount = allPitaks.filter(
+    (p) => p.status === "cancelled",
+  ).length;
+
+  const handleOnAssignWorkers = (pitak: Pitak) => {
+    assignmentFormDialog.openAdd([], pitak.id);
+  };
 
   return (
     <div
@@ -219,11 +277,7 @@ const PitakPage: React.FC = () => {
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-gray-500"></span>
-              {inactiveCount} Inactive
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-              {archivedCount} Archived
+              {inactiveCount} Cancelled
             </span>
           </div>
           <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -333,6 +387,12 @@ const PitakPage: React.FC = () => {
             onView={(p) => viewDialog.open(p.id)}
             onEdit={formDialog.openEdit}
             onDelete={handleDelete}
+            // New actions
+            onAssignWorkers={handleOnAssignWorkers}
+            onMarkCancelled={handleMarkCancelled}
+            onMarkComplete={handleMarkComplete}
+            onAddNote={handleAddNote}
+            onViewNote={handleViewNote}
           />
 
           {/* Empty State */}
@@ -415,6 +475,25 @@ const PitakPage: React.FC = () => {
       />
 
       <PitakViewDialog hook={viewDialog} />
+      <PitakNoteDialog
+        isOpen={noteDialog.isOpen}
+        pitak={noteDialog.pitak}
+        onClose={() => setNoteDialog({ isOpen: false, pitak: null })}
+        onSuccess={reload}
+      />
+
+      <PitakViewNoteDialog
+        isOpen={viewNoteDialog.isOpen}
+        pitak={viewNoteDialog.pitak}
+        onClose={() => setViewNoteDialog({ isOpen: false, pitak: null })}
+      />
+
+      <AssignmentFormDialog
+        isOpen={assignmentFormDialog.isOpen}
+        pitakId={assignmentFormDialog.pitakId}
+        onClose={assignmentFormDialog.close}
+        onSuccess={reload}
+      />
     </div>
   );
 };

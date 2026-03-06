@@ -1,6 +1,15 @@
 // src/renderer/pages/sessions/components/SessionActionsDropdown.tsx
 import React, { useRef, useEffect, useState } from "react";
-import { Eye, Edit, Trash2, MoreVertical } from "lucide-react";
+import {
+  Eye,
+  Edit,
+  Trash2,
+  MoreVertical,
+  CheckCircle,
+  XCircle,
+  Archive,
+  FileText,
+} from "lucide-react";
 import type { Session } from "../../../api/core/session";
 
 interface SessionActionsDropdownProps {
@@ -8,6 +17,12 @@ interface SessionActionsDropdownProps {
   onView: (session: Session) => void;
   onEdit: (session: Session) => void;
   onDelete: (session: Session) => void;
+  // Optional additional actions
+  onMarkActive?: (session: Session) => void;
+  onMarkClosed?: (session: Session) => void;
+  onMarkArchived?: (session: Session) => void;
+  onAddNote?: (session: Session) => void;
+  onViewNote?: (session: Session) => void;
 }
 
 const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
@@ -15,6 +30,11 @@ const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
   onView,
   onEdit,
   onDelete,
+  onMarkActive,
+  onMarkClosed,
+  onMarkArchived,
+  onAddNote,
+  onViewNote,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,7 +64,7 @@ const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
   const getDropdownPosition = () => {
     if (!buttonRef.current) return {};
     const rect = buttonRef.current.getBoundingClientRect();
-    const dropdownHeight = 150;
+    const dropdownHeight = 350;
     const windowHeight = window.innerHeight;
 
     if (rect.bottom + dropdownHeight > windowHeight) {
@@ -58,6 +78,14 @@ const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
       right: `${window.innerWidth - rect.right}px`,
     };
   };
+
+  const status = session.status;
+  const hasNote = !!session.notes;
+
+  // Allowed transitions based on SessionService
+  const canMarkActive = (status === "closed" || status === "archived") && onMarkActive;
+  const canMarkClosed = status === "active" && onMarkClosed;
+  const canMarkArchived = (status === "active" || status === "closed") && onMarkArchived;
 
   return (
     <div className="session-actions-dropdown-container" ref={dropdownRef}>
@@ -78,10 +106,11 @@ const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
 
       {isOpen && (
         <div
-          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 w-48 z-50 max-h-96 overflow-y-auto"
+          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 w-56 z-50 max-h-96 overflow-y-auto"
           style={getDropdownPosition()}
         >
           <div className="py-1">
+            {/* View Details */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -93,6 +122,7 @@ const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
               <span>View Details</span>
             </button>
 
+            {/* Edit Session */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -104,8 +134,82 @@ const SessionActionsDropdown: React.FC<SessionActionsDropdownProps> = ({
               <span>Edit Session</span>
             </button>
 
-            <div className="border-t border-gray-200 my-1"></div>
+            {/* Separator if any status/note actions exist */}
+            {(onAddNote || onViewNote || canMarkActive || canMarkClosed || canMarkArchived) && (
+              <div className="border-t border-gray-200 my-1" />
+            )}
 
+            {/* Status changes – only show if allowed from current status */}
+            {canMarkActive && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onMarkActive(session));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Mark as Active</span>
+              </button>
+            )}
+
+            {canMarkClosed && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onMarkClosed(session));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-yellow-600 hover:bg-yellow-50"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>Mark as Closed</span>
+              </button>
+            )}
+
+            {canMarkArchived && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onMarkArchived(session));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                <Archive className="w-4 h-4" />
+                <span>Mark as Archived</span>
+              </button>
+            )}
+
+            {/* Note actions */}
+            {onAddNote && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onAddNote(session));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+              >
+                <FileText className="w-4 h-4 text-green-500" />
+                <span>Add / Edit Note</span>
+              </button>
+            )}
+
+            {hasNote && onViewNote && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onViewNote(session));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+              >
+                <FileText className="w-4 h-4 text-blue-500" />
+                <span>View Note</span>
+              </button>
+            )}
+
+            {/* Separator before delete */}
+            <div className="border-t border-gray-200 my-1" />
+
+            {/* Delete */}
             <button
               onClick={(e) => {
                 e.stopPropagation();

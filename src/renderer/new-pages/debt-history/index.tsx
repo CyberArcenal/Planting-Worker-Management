@@ -11,6 +11,8 @@ import DebtHistoriesTable from "./components/DebtHistoriesTable";
 import DebtHistoryViewDialog from "./components/DebtHistoryViewDialog";
 import FilterBar from "./components/FilterBar";
 import { useDebtHistoryView } from "./hooks/useDebtHistoryView";
+import DebtHistoryNoteDialog from "./components/DebtHistoryNoteDialog";
+import DebtHistoryViewNoteDialog from "./components/DebtHistoryViewNoteDialog";
 
 const DebtHistoryPage: React.FC = () => {
   const {
@@ -40,6 +42,31 @@ const DebtHistoryPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+
+  // Note dialogs
+  const [noteDialog, setNoteDialog] = useState<{
+    isOpen: boolean;
+    history: any | null;
+  }>({ isOpen: false, history: null });
+
+  const [viewNoteDialog, setViewNoteDialog] = useState<{
+    isOpen: boolean;
+    history: any | null;
+  }>({ isOpen: false, history: null });
+
+  // Handlers for dropdown actions
+  const handleEdit = (history: any) => {
+    // For now, we can open the note dialog (since editing might just be notes)
+    setNoteDialog({ isOpen: true, history });
+  };
+
+  const handleAddNote = (history: any) => {
+    setNoteDialog({ isOpen: true, history });
+  };
+
+  const handleViewNote = (history: any) => {
+    setViewNoteDialog({ isOpen: true, history });
+  };
 
   const handleDelete = async (history: any) => {
     const confirmed = await dialogs.confirm({
@@ -82,7 +109,6 @@ const DebtHistoryPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -106,19 +132,13 @@ const DebtHistoryPage: React.FC = () => {
         borderColor: "var(--border-color)",
       }}
     >
-      {/* Header */}
+      {/* Header (unchanged) */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-sm mb-4">
         <div>
-          <h2
-            className="text-base font-semibold"
-            style={{ color: "var(--sidebar-text)" }}
-          >
+          <h2 className="text-base font-semibold" style={{ color: "var(--sidebar-text)" }}>
             Debt History
           </h2>
-          <p
-            className="mt-xs text-sm"
-            style={{ color: "var(--text-secondary)" }}
-          >
+          <p className="mt-xs text-sm" style={{ color: "var(--text-secondary)" }}>
             Track all payments and changes on debts
           </p>
         </div>
@@ -139,9 +159,7 @@ const DebtHistoryPage: React.FC = () => {
             disabled={loading}
             className="btn btn-secondary btn-sm rounded-md flex items-center transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md disabled:opacity-50"
           >
-            <RefreshCw
-              className={`icon-sm mr-1 ${loading ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`icon-sm mr-1 ${loading ? "animate-spin" : ""}`} />
             {loading ? "Refreshing..." : "Refresh"}
           </button>
 
@@ -154,10 +172,7 @@ const DebtHistoryPage: React.FC = () => {
             }}
           >
             <div className="flex items-center gap-1">
-              <label
-                className="text-xs"
-                style={{ color: "var(--sidebar-text)" }}
-              >
+              <label className="text-xs" style={{ color: "var(--sidebar-text)" }}>
                 Export:
               </label>
               <select
@@ -201,10 +216,7 @@ const DebtHistoryPage: React.FC = () => {
             borderColor: "var(--accent-blue)",
           }}
         >
-          <span
-            className="font-medium text-sm"
-            style={{ color: "var(--accent-green)" }}
-          >
+          <span className="font-medium text-sm" style={{ color: "var(--accent-green)" }}>
             {selectedHistories.length} entry(ies) selected
           </span>
           <div className="flex gap-xs">
@@ -283,6 +295,9 @@ const DebtHistoryPage: React.FC = () => {
             sortConfig={sortConfig}
             onView={(h) => viewDialog.open(h.id)}
             onDelete={handleDelete}
+            onEdit={handleEdit}
+            onAddNote={handleAddNote}
+            onViewNote={handleViewNote}
           />
 
           {/* Empty State */}
@@ -291,17 +306,11 @@ const DebtHistoryPage: React.FC = () => {
               className="text-center py-8 border rounded-md"
               style={{ borderColor: "var(--border-color)" }}
             >
-              <History
-                className="icon-xl mx-auto mb-2"
-                style={{ color: "var(--text-secondary)" }}
-              />
+              <History className="icon-xl mx-auto mb-2" style={{ color: "var(--text-secondary)" }} />
               <p className="text-base" style={{ color: "var(--sidebar-text)" }}>
                 No debt history found.
               </p>
-              <p
-                className="mt-xs text-sm"
-                style={{ color: "var(--text-tertiary)" }}
-              >
+              <p className="mt-xs text-sm" style={{ color: "var(--text-tertiary)" }}>
                 {filters.search || filters.transactionType !== "all" || filters.debtId !== "all"
                   ? "Try adjusting your search or filters"
                   : "History will appear as debt payments are recorded"}
@@ -340,8 +349,19 @@ const DebtHistoryPage: React.FC = () => {
         </>
       )}
 
-      {/* View Dialog */}
+      {/* Dialogs */}
       <DebtHistoryViewDialog hook={viewDialog} />
+      <DebtHistoryNoteDialog
+        isOpen={noteDialog.isOpen}
+        history={noteDialog.history}
+        onClose={() => setNoteDialog({ isOpen: false, history: null })}
+        onSuccess={reload}
+      />
+      <DebtHistoryViewNoteDialog
+        isOpen={viewNoteDialog.isOpen}
+        history={viewNoteDialog.history}
+        onClose={() => setViewNoteDialog({ isOpen: false, history: null })}
+      />
     </div>
   );
 };

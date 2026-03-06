@@ -15,6 +15,12 @@ interface SessionsTableProps {
   onView: (session: Session) => void;
   onEdit: (session: Session) => void;
   onDelete: (session: Session) => void;
+  // Optional additional actions
+  onMarkActive?: (session: Session) => void;
+  onMarkClosed?: (session: Session) => void;
+  onMarkArchived?: (session: Session) => void;
+  onAddNote?: (session: Session) => void;
+  onViewNote?: (session: Session) => void;
 }
 
 const SessionsTable: React.FC<SessionsTableProps> = ({
@@ -27,6 +33,11 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
   onView,
   onEdit,
   onDelete,
+  onMarkActive,
+  onMarkClosed,
+  onMarkArchived,
+  onAddNote,
+  onViewNote,
 }) => {
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
@@ -196,6 +207,11 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
                   onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onMarkActive={onMarkActive}
+                  onMarkClosed={onMarkClosed}
+                  onMarkArchived={onMarkArchived}
+                  onAddNote={onAddNote}
+                  onViewNote={onViewNote}
                 />
               </td>
             </tr>

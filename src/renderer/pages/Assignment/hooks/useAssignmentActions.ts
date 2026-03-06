@@ -45,7 +45,7 @@ export const useAssignmentActions = (
   const handleUpdateStatus = async (id: number, currentStatus: string) => {
     // Determine new status: if active -> completed, else if completed -> active? But we keep logic from old code
     const newStatus = currentStatus === "active" ? "completed" : "active";
-    const action = newStatus === "active" ? "activate" : "complete";
+    const action = newStatus === "active" ? "activate" : "completed";
 
     const confirmed = await showConfirm({
       title: `${action.charAt(0).toUpperCase() + action.slice(1)} Assignment`,
@@ -114,20 +114,20 @@ export const useAssignmentActions = (
     try {
       showToast("Deleting selected assignments...", "info");
       const results = await Promise.allSettled(
-        selectedAssignments.map((id) => assignmentAPI.delete(id))
+        selectedAssignments.map((id) => assignmentAPI.delete(id)),
       );
       const successful = results.filter(
-        (r) => r.status === "fulfilled" && r.value.status
+        (r) => r.status === "fulfilled" && r.value.status,
       );
       const failed = results.filter(
-        (r) => r.status === "rejected" || !r.value?.status
+        (r) => r.status === "rejected" || !r.value?.status,
       );
 
       if (failed.length === 0) {
         showSuccess(`Successfully deleted ${successful.length} assignment(s)`);
       } else {
         showError(
-          `Deleted ${successful.length} assignment(s), failed to delete ${failed.length} assignment(s)`
+          `Deleted ${successful.length} assignment(s), failed to delete ${failed.length} assignment(s)`,
         );
       }
       await refreshData();
@@ -141,7 +141,8 @@ export const useAssignmentActions = (
     if (
       !(await dialogs.confirm({
         title: "Export Assignments to CSV",
-        message: "Do you want to export the current filtered assignments to a CSV file?",
+        message:
+          "Do you want to export the current filtered assignments to a CSV file?",
       }))
     )
       return;
@@ -167,7 +168,15 @@ export const useAssignmentActions = (
       }
 
       // Convert to CSV
-      const headers = ["ID", "Date", "Worker", "Pitak", "LuWang", "Status", "Notes"];
+      const headers = [
+        "ID",
+        "Date",
+        "Worker",
+        "Pitak",
+        "LuWang",
+        "Status",
+        "Notes",
+      ];
       const rows = data.map((a) => [
         a.id,
         a.assignmentDate,

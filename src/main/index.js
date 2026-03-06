@@ -672,6 +672,7 @@ function registerIpcHandlers() {
       "./ipc/utils/updater/index.ipc.js",
       "./ipc/utils/handlers/fileHandler.js",
       "./ipc/exports/audit/index.ipc.js",
+      "./ipc/utils/worker_payment/index.ipc.js",
     ];
 
     ipcModules.forEach((modulePath) => {

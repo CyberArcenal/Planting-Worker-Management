@@ -22,7 +22,10 @@ export const useAssignments = () => {
     pitakId: "all",
     sessionId: "all",
   });
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  }>({
     key: "assignmentDate",
     direction: "desc",
   });
@@ -70,11 +73,14 @@ export const useAssignments = () => {
       // status filter
       if (filters.status !== "all" && a.status !== filters.status) return false;
       // worker filter
-      if (filters.workerId !== "all" && a.worker?.id !== filters.workerId) return false;
+      if (filters.workerId !== "all" && a.worker?.id !== filters.workerId)
+        return false;
       // pitak filter
-      if (filters.pitakId !== "all" && a.pitak?.id !== filters.pitakId) return false;
+      if (filters.pitakId !== "all" && a.pitak?.id !== filters.pitakId)
+        return false;
       // session filter
-      if (filters.sessionId !== "all" && a.session?.id !== filters.sessionId) return false;
+      if (filters.sessionId !== "all" && a.session?.id !== filters.sessionId)
+        return false;
       return true;
     });
 
@@ -112,13 +118,22 @@ export const useAssignments = () => {
 
   const totalPages = Math.ceil(filteredAssignments.length / pageSize);
 
-  const handleFilterChange = (key: keyof AssignmentFilters, value: string | number) => {
+  const handleFilterChange = (
+    key: keyof AssignmentFilters,
+    value: string | number,
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
   const resetFilters = () => {
-    setFilters({ search: "", status: "all", workerId: "all", pitakId: "all", sessionId: "all" });
+    setFilters({
+      search: "",
+      status: "all",
+      workerId: "all",
+      pitakId: "all",
+      sessionId: "all",
+    });
     setCurrentPage(1);
   };
 
@@ -132,7 +147,7 @@ export const useAssignments = () => {
 
   const toggleAssignmentSelection = (id: number) => {
     setSelectedAssignments((prev) =>
-      prev.includes(id) ? prev.filter((aid) => aid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((aid) => aid !== id) : [...prev, id],
     );
   };
 

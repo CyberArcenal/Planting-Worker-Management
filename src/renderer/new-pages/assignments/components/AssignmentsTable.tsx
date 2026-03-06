@@ -14,6 +14,12 @@ interface AssignmentsTableProps {
   sortConfig: { key: string; direction: "asc" | "desc" };
   onView: (assignment: Assignment) => void;
   onDelete: (assignment: Assignment) => void;
+  // Optional additional actions
+  onEdit?: (assignment: Assignment) => void;
+  onMarkCompleted?: (assignment: Assignment) => void;
+  onMarkCancelled?: (assignment: Assignment) => void;
+  onAddNote?: (assignment: Assignment) => void;
+  onViewNote?: (assignment: Assignment) => void;
 }
 
 const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
@@ -25,6 +31,11 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   sortConfig,
   onView,
   onDelete,
+  onEdit,
+  onMarkCompleted,
+  onMarkCancelled,
+  onAddNote,
+  onViewNote,
 }) => {
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
@@ -104,16 +115,6 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
             <th
               scope="col"
               className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
-              onClick={() => onSort("assignmentDate")}
-            >
-              <div className="flex items-center gap-xs">
-                <span>Date</span>
-                {getSortIcon("assignmentDate")}
-              </div>
-            </th>
-            <th
-              scope="col"
-              className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
               onClick={() => onSort("status")}
             >
               <div className="flex items-center gap-xs">
@@ -124,12 +125,19 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
             <th
               scope="col"
               className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
-              onClick={() => onSort("session")}
+              onClick={() => onSort("assignmentDate")}
             >
               <div className="flex items-center gap-xs">
-                <span>Session</span>
-                {getSortIcon("session")}
+                <span>Assignment Date</span>
+                {getSortIcon("assignmentDate")}
               </div>
+            </th>
+            <th
+              scope="col"
+              className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Notes
             </th>
             <th
               scope="col"
@@ -144,7 +152,10 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
           {assignments.map((assignment) => (
             <tr
               key={assignment.id}
-              onClick={(e) => { e.stopPropagation(); onView(assignment); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(assignment);
+              }}
               className={`hover:bg-[var(--card-secondary-bg)] transition-colors ${
                 selectedAssignments.includes(assignment.id) ? "bg-[var(--accent-blue-dark)]" : ""
               }`}
@@ -169,20 +180,25 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
               <td className="px-4 py-2 whitespace-nowrap text-sm" style={{ color: "var(--text-secondary)" }}>
                 {assignment.luwangCount}
               </td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm" style={{ color: "var(--text-secondary)" }}>
-                {formatDate(assignment.assignmentDate, "MMM dd, yyyy")}
-              </td>
               <td className="px-4 py-2 whitespace-nowrap">
                 {getStatusBadge(assignment.status)}
               </td>
               <td className="px-4 py-2 whitespace-nowrap text-sm" style={{ color: "var(--text-secondary)" }}>
-                {assignment.session?.name || "-"}
+                {formatDate(assignment.assignmentDate)}
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-sm" style={{ color: "var(--text-secondary)" }}>
+                {assignment.notes ? "✓" : "-"}
               </td>
               <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                 <AssignmentActionsDropdown
                   assignment={assignment}
                   onView={onView}
                   onDelete={onDelete}
+                  onEdit={onEdit}
+                  onMarkCompleted={onMarkCompleted}
+                  onMarkCancelled={onMarkCancelled}
+                  onAddNote={onAddNote}
+                  onViewNote={onViewNote}
                 />
               </td>
             </tr>

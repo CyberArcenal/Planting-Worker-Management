@@ -1,6 +1,14 @@
 // src/renderer/pages/debts/components/DebtActionsDropdown.tsx
 import React, { useRef, useEffect, useState } from "react";
-import { Eye, Edit, Trash2, MoreVertical } from "lucide-react";
+import {
+  Eye,
+  Edit,
+  Trash2,
+  MoreVertical,
+  CheckCircle,
+  XCircle,
+  FileText,
+} from "lucide-react";
 import type { Debt } from "../../../api/core/debt";
 
 interface DebtActionsDropdownProps {
@@ -8,6 +16,11 @@ interface DebtActionsDropdownProps {
   onView: (debt: Debt) => void;
   onEdit: (debt: Debt) => void;
   onDelete: (debt: Debt) => void;
+  // Optional additional actions
+  onMarkPaid?: (debt: Debt) => void;
+  onMarkCancelled?: (debt: Debt) => void;
+  onAddReason?: (debt: Debt) => void;
+  onViewReason?: (debt: Debt) => void;
 }
 
 const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
@@ -15,6 +28,10 @@ const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
   onView,
   onEdit,
   onDelete,
+  onMarkPaid,
+  onMarkCancelled,
+  onAddReason,
+  onViewReason,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,7 +61,7 @@ const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
   const getDropdownPosition = () => {
     if (!buttonRef.current) return {};
     const rect = buttonRef.current.getBoundingClientRect();
-    const dropdownHeight = 150;
+    const dropdownHeight = 300;
     const windowHeight = window.innerHeight;
 
     if (rect.bottom + dropdownHeight > windowHeight) {
@@ -58,6 +75,13 @@ const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
       right: `${window.innerWidth - rect.right}px`,
     };
   };
+
+  const status = debt.status;
+  const hasReason = !!debt.reason;
+
+  // Allowed transitions based on DebtService
+  const canMarkPaid = (status === "pending" || status === "partially_paid" || status === "overdue") && onMarkPaid;
+  const canMarkCancelled = (status === "pending" || status === "partially_paid" || status === "overdue") && onMarkCancelled;
 
   return (
     <div className="debt-actions-dropdown-container" ref={dropdownRef}>
@@ -78,10 +102,11 @@ const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
 
       {isOpen && (
         <div
-          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 w-48 z-50 max-h-96 overflow-y-auto"
+          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 w-56 z-50 max-h-96 overflow-y-auto"
           style={getDropdownPosition()}
         >
           <div className="py-1">
+            {/* View Details */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -93,6 +118,7 @@ const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
               <span>View Details</span>
             </button>
 
+            {/* Edit Debt */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -104,8 +130,69 @@ const DebtActionsDropdown: React.FC<DebtActionsDropdownProps> = ({
               <span>Edit Debt</span>
             </button>
 
-            <div className="border-t border-gray-200 my-1"></div>
+            {/* Separator if any reason/status actions exist */}
+            {(onAddReason || onViewReason || canMarkPaid || canMarkCancelled) && (
+              <div className="border-t border-gray-200 my-1" />
+            )}
 
+            {/* Reason actions */}
+            {onAddReason && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onAddReason(debt));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+              >
+                <FileText className="w-4 h-4 text-green-500" />
+                <span>Add / Edit Reason</span>
+              </button>
+            )}
+
+            {hasReason && onViewReason && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onViewReason(debt));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+              >
+                <FileText className="w-4 h-4 text-blue-500" />
+                <span>View Reason</span>
+              </button>
+            )}
+
+            {/* Status changes – only show if allowed from current status */}
+            {canMarkPaid && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onMarkPaid(debt));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Mark as Paid</span>
+              </button>
+            )}
+
+            {canMarkCancelled && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(() => onMarkCancelled(debt));
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>Mark as Cancelled</span>
+              </button>
+            )}
+
+            {/* Separator before delete */}
+            <div className="border-t border-gray-200 my-1" />
+
+            {/* Delete */}
             <button
               onClick={(e) => {
                 e.stopPropagation();

@@ -1,17 +1,14 @@
 // src/subscribers/SessionSubscriber.js
 // @ts-check
 const Session = require("../entities/Session");
-const { AppDataSource } = require("../main/db/datasource");
-const {
-  SessionStateTransitionService,
-} = require("../stateTransitionService/Session");
+
 const { logger } = require("../utils/logger");
 
 console.log("[Subscriber] Loading SessionSubscriber");
 
 class SessionSubscriber {
   constructor() {
-    this.transitionService = new SessionStateTransitionService(AppDataSource);
+    this.transitionService = null;
   }
 
   listenTo() {
@@ -19,10 +16,9 @@ class SessionSubscriber {
   }
 
   /**
-   * @param {{ entity: any; }} event
+   * @param {any} entity
    */
-  async afterInsert(event) {
-    const entity = event.entity;
+  async afterInsert(entity) {
     try {
       // @ts-ignore
       logger.info("[SessionSubscriber] afterInsert", {
@@ -36,10 +32,15 @@ class SessionSubscriber {
   }
 
   /**
-   * @param {{ entity: any; databaseEntity: any; queryRunner: { manager: any; }; }} event
+   * @param {{ entity: any; databaseEntity: any; }} event
    */
   async afterUpdate(event) {
     if (!event.entity) return;
+    const { AppDataSource } = require("../main/db/datasource");
+    const {
+      SessionStateTransitionService,
+    } = require("../stateTransitionService/Session");
+    this.transitionService = new SessionStateTransitionService(AppDataSource);
 
     // @ts-ignore
     logger.info("[SessionSubscriber] afterUpdate", {
@@ -54,33 +55,32 @@ class SessionSubscriber {
       return;
     }
 
-    // Use the transaction manager from the event
-    const manager = event.queryRunner.manager;
-    const hydrated = await this._hydrateSession(newSession.id, manager);
+    // Hydrate session with needed relations
+    const hydrated = await this._hydrateSession(newSession.id);
     if (!hydrated) return;
 
     switch (newSession.status) {
       case "active":
         await this.transitionService.onActivate(
           hydrated,
-          manager,
           oldSession?.status,
+          // @ts-ignore
           "system",
         );
         break;
       case "closed":
         await this.transitionService.onClose(
           hydrated,
-          manager,
           oldSession?.status,
+          // @ts-ignore
           "system",
         );
         break;
       case "archived":
         await this.transitionService.onArchive(
           hydrated,
-          manager,
           oldSession?.status,
+          // @ts-ignore
           "system",
         );
         break;
@@ -93,10 +93,10 @@ class SessionSubscriber {
 
   /**
    * @param {any} sessionId
-   * @param {{ getRepository: (arg0: import("typeorm").EntitySchema<{ id: unknown; name: unknown; seasonType: unknown; year: unknown; startDate: unknown; endDate: unknown; status: unknown; createdAt: unknown; updatedAt: unknown; }>) => any; }} manager
    */
-  async _hydrateSession(sessionId, manager) {
-    const sessionRepo = manager.getRepository(Session);
+  async _hydrateSession(sessionId) {
+     const { AppDataSource } = require("../main/db/datasource");
+    const sessionRepo = AppDataSource.getRepository(Session);
     const session = await sessionRepo.findOne({
       where: { id: sessionId },
       // Add relations if needed for future logic (e.g., bukids, assignments)

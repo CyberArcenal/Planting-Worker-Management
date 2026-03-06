@@ -19,16 +19,15 @@ class PitakSubscriber {
   }
 
   /**
-   * @param {{ entity: any; }} event
+   * @param {any} entity
    */
-  async afterInsert(event) {
-    const entity = event.entity;
+  async afterInsert(entity) {
     try {
       // @ts-ignore
       logger.info("[PitakSubscriber] afterInsert", {
         entity: JSON.parse(JSON.stringify(entity)),
       });
-      // Optionally call onInitiated if needed (but pitak may not have initiated status)
+      // Optionally call onInitiated if needed
     } catch (err) {
       // @ts-ignore
       logger.error("[PitakSubscriber] afterInsert error", err);
@@ -36,7 +35,7 @@ class PitakSubscriber {
   }
 
   /**
-   * @param {{ entity: any; databaseEntity: any; queryRunner: { manager: any; }; }} event
+   * @param {{ entity: any; databaseEntity: any; }} event
    */
   async afterUpdate(event) {
     if (!event.entity) return;
@@ -55,33 +54,31 @@ class PitakSubscriber {
     }
 
     // Hydrate pitak with its assignments (needed for cascade)
-    const manager = event.queryRunner.manager;
-    const hydrated = await this._hydratePitak(newPitak.id, manager);
+    const hydrated = await this._hydratePitak(newPitak.id);
     if (!hydrated) return;
 
-    // Use the transaction manager from the event
     switch (newPitak.status) {
       case "active":
         await this.transitionService.onActivate(
           hydrated,
-          manager,
           oldPitak?.status,
+          // @ts-ignore
           "system",
         );
         break;
-      case "complete":
+      case "completed":
         await this.transitionService.onComplete(
           hydrated,
-          manager,
           oldPitak?.status,
+          // @ts-ignore
           "system",
         );
         break;
-      case "inactive":
-        await this.transitionService.onInactivate(
+      case "cancelled":
+        await this.transitionService.onCancelled(
           hydrated,
-          manager,
           oldPitak?.status,
+          // @ts-ignore
           "system",
         );
         break;
@@ -94,10 +91,9 @@ class PitakSubscriber {
 
   /**
    * @param {any} pitakId
-   * @param {{ getRepository: (arg0: import("typeorm").EntitySchema<{ id: unknown; location: unknown; totalLuwang: unknown; layoutType: unknown; sideLengths: unknown; areaSqm: unknown; notes: unknown; status: unknown; createdAt: unknown; updatedAt: unknown; }>) => any; }} manager
    */
-  async _hydratePitak(pitakId, manager) {
-    const pitakRepo = manager.getRepository(Pitak);
+  async _hydratePitak(pitakId) {
+    const pitakRepo = AppDataSource.getRepository(Pitak);
     const pitak = await pitakRepo.findOne({
       where: { id: pitakId },
       relations: ["assignments"], // we need assignments for cascade

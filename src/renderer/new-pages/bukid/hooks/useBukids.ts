@@ -5,7 +5,7 @@ import bukidAPI from "../../../api/core/bukid";
 
 export interface BukidFilters {
   search: string;
-  status: "all" | "active" | "inactive" | "complete" | "initiated";
+  status: "all" | "active" | "inactive" | "completed" | "initiated";
 }
 
 export const useBukids = () => {

@@ -39,6 +39,7 @@ const Pitak = new EntitySchema({
     status: {
       type: String,
       default: "active",
+      enum: ["active", "completed", "cancelled"]
     },
 
     createdAt: { type: Date, createDate: true },

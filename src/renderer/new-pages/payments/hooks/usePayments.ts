@@ -5,7 +5,7 @@ import paymentAPI from "../../../api/core/payment";
 
 export interface PaymentFilters {
   search: string;
-  status: "all" | "pending" | "partially_paid" | "complete" | "cancel";
+  status: "all" | "pending" | "partially_paid" | "completed" | "cancel";
   workerId: number | "all";
   pitakId: number | "all";
   sessionId: number | "all";
@@ -26,7 +26,10 @@ export const usePayments = () => {
     startDate: undefined,
     endDate: undefined,
   });
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  }>({
     key: "paymentDate",
     direction: "desc",
   });
@@ -74,14 +77,23 @@ export const usePayments = () => {
       // status filter
       if (filters.status !== "all" && p.status !== filters.status) return false;
       // worker filter
-      if (filters.workerId !== "all" && p.worker?.id !== filters.workerId) return false;
+      if (filters.workerId !== "all" && p.worker?.id !== filters.workerId)
+        return false;
       // pitak filter
-      if (filters.pitakId !== "all" && p.pitak?.id !== filters.pitakId) return false;
+      if (filters.pitakId !== "all" && p.pitak?.id !== filters.pitakId)
+        return false;
       // session filter
-      if (filters.sessionId !== "all" && p.session?.id !== filters.sessionId) return false;
+      if (filters.sessionId !== "all" && p.session?.id !== filters.sessionId)
+        return false;
       // date range
-      if (filters.startDate && p.paymentDate && p.paymentDate < filters.startDate) return false;
-      if (filters.endDate && p.paymentDate && p.paymentDate > filters.endDate) return false;
+      if (
+        filters.startDate &&
+        p.paymentDate &&
+        p.paymentDate < filters.startDate
+      )
+        return false;
+      if (filters.endDate && p.paymentDate && p.paymentDate > filters.endDate)
+        return false;
       return true;
     });
 
@@ -123,7 +135,10 @@ export const usePayments = () => {
 
   const totalPages = Math.ceil(filteredPayments.length / pageSize);
 
-  const handleFilterChange = (key: keyof PaymentFilters, value: string | number | undefined) => {
+  const handleFilterChange = (
+    key: keyof PaymentFilters,
+    value: string | number | undefined,
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -151,7 +166,7 @@ export const usePayments = () => {
 
   const togglePaymentSelection = (id: number) => {
     setSelectedPayments((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
     );
   };
 

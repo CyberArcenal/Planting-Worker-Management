@@ -85,7 +85,8 @@ class WorkerService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const repo = await this.getRepository();
+    const auditLogger = require("../utils/auditLogger");
+    const repo = await this.getRepository(); // worker repository
 
     const worker = await repo.findOne({ where: { id } });
     if (!worker) throw new Error(`Worker with ID ${id} not found`);
@@ -93,7 +94,7 @@ class WorkerService {
     const oldStatus = worker.status;
     if (oldStatus === newStatus) return worker;
 
-    // Allowed transitions for worker statuses
+    // Allowed transitions for worker
     const allowedTransitions = {
       active: ["inactive", "on-leave", "terminated"],
       inactive: ["active", "terminated"],

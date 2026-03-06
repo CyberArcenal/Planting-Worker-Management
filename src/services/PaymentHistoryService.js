@@ -113,15 +113,19 @@ class PaymentHistoryService {
       throw error;
     }
   }
-
   async findById(id) {
     const { paymentHistory: repo } = await this.getRepositories();
 
     try {
-      const history = await repo.findOne({
-        where: { id },
-        relations: ["payment"],
-      });
+      const history = await repo
+        .createQueryBuilder("history")
+        .leftJoinAndSelect("history.payment", "payment")
+        .leftJoinAndSelect("payment.worker", "worker")
+        .leftJoinAndSelect("payment.pitak", "pitak")
+        .leftJoinAndSelect("payment.session", "session")
+        .where("history.id = :id", { id })
+        .getOne();
+
       if (!history) throw new Error(`PaymentHistory with ID ${id} not found`);
       await auditLogger.logView("PaymentHistory", id, "system");
       return history;
@@ -137,7 +141,10 @@ class PaymentHistoryService {
     try {
       const qb = repo
         .createQueryBuilder("history")
-        .leftJoinAndSelect("history.payment", "payment");
+        .leftJoinAndSelect("history.payment", "payment")
+        .leftJoinAndSelect("payment.worker", "worker")
+        .leftJoinAndSelect("payment.pitak", "pitak")
+        .leftJoinAndSelect("payment.session", "session");
 
       if (options.paymentId) {
         qb.andWhere("payment.id = :paymentId", {

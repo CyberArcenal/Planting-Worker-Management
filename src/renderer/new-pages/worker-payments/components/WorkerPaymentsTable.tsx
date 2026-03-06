@@ -1,8 +1,8 @@
 // src/renderer/pages/worker-payments/components/WorkerPaymentsTable.tsx
 import React from "react";
-import type { WorkerWithStats } from "../hooks/useWorkerPayments";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
 import type { Worker } from "../../../api/core/worker";
+import type { WorkerWithStats } from "../../../api/utils/worker_payment";
 
 
 interface WorkerPaymentsTableProps {

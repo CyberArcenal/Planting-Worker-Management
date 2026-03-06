@@ -130,6 +130,7 @@ class DebtService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/auditLogger");
     const { debt: repo } = await this.getRepositories();
 
     const debt = await repo.findOne({ where: { id } });
@@ -138,14 +139,14 @@ class DebtService {
     const oldStatus = debt.status;
     if (oldStatus === newStatus) return debt;
 
-    // Allowed transitions for debt statuses
+    // Allowed transitions for debt
     const allowedTransitions = {
-      pending: ["partially_paid", "paid", "cancelled", "overdue", "settled"],
-      partially_paid: ["paid", "cancelled", "overdue", "settled"],
-      overdue: ["paid", "settled", "cancelled"],
-      paid: ["settled"],
-      settled: [],
+      pending: ["partially_paid", "paid", "cancelled", "overdue"],
+      partially_paid: ["paid", "cancelled", "overdue"],
+      overdue: ["paid", "cancelled"],
+      paid: [], // could also allow "settled" if needed
       cancelled: [],
+      settled: [],
     };
 
     if (!allowedTransitions[oldStatus]?.includes(newStatus)) {

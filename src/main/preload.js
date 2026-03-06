@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("backendAPI", {
   notificationLog: (payload) => ipcRenderer.invoke("notificationLog", payload),
   session: (payload) => ipcRenderer.invoke("session", payload),
   systemConfig: (payload) => ipcRenderer.invoke("systemConfig", payload),
+  workerPayment: (payload) => ipcRenderer.invoke("workerPayment", payload),
 
   // Exports
   auditExport: (payload) => ipcRenderer.invoke("auditExport", payload),

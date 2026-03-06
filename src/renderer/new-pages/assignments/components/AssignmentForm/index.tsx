@@ -22,6 +22,7 @@ import PitakSelect from "../../../../components/Selects/Pitak";
 interface AssignmentFormDialogProps {
   isOpen: boolean;
   workerIds?: number[];
+  pitakId?: number | null;
   isReassignment?: boolean;
   reassignmentAssignmentId?: number;
   onClose: () => void;
@@ -31,6 +32,7 @@ interface AssignmentFormDialogProps {
 const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
   isOpen,
   workerIds = [],
+  pitakId,
   isReassignment = false,
   reassignmentAssignmentId,
   onClose,
@@ -62,6 +64,7 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
     isSubmitDisabled,
   } = useAssignmentForm({
     workerIds,
+    pitakId,
     isReassignment,
     reassignmentAssignmentId,
     onClose,
@@ -200,7 +203,7 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                         value={formData.pitakId}
                         onChange={(pitakId) => handleChange("pitakId", pitakId)}
                         placeholder="Search or select a plot..."
-                        disabled={submitting}
+                        disabled={submitting || !!pitakId}
                       />
                       {errors.pitakId && (
                         <p className="mt-1 text-xs flex items-center gap-1 text-red-600">

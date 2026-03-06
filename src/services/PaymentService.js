@@ -142,6 +142,7 @@ class PaymentService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/auditLogger");
     const { payment: repo } = await this.getRepositories();
 
     const payment = await repo.findOne({ where: { id } });
@@ -150,12 +151,12 @@ class PaymentService {
     const oldStatus = payment.status;
     if (oldStatus === newStatus) return payment;
 
-    // Allowed transitions for payment statuses
+    // Allowed transitions for payment
     const allowedTransitions = {
-      pending: ["partially_paid", "complete", "cancel"],
-      partially_paid: ["complete", "cancel"],
-      complete: [],
-      cancel: [],
+      pending: ["partially_paid", "completed", "cancelled"],
+      partially_paid: ["completed", "cancelled"],
+      completed: [],
+      cancelled: [],
     };
 
     if (!allowedTransitions[oldStatus]?.includes(newStatus)) {

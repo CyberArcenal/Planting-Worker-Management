@@ -134,6 +134,7 @@ class PitakService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/auditLogger");
     const { pitak: repo } = await this.getRepositories();
 
     const pitak = await repo.findOne({ where: { id } });
@@ -142,11 +143,11 @@ class PitakService {
     const oldStatus = pitak.status;
     if (oldStatus === newStatus) return pitak;
 
-    // Allowed transitions: active ↔ inactive, and both can go to archived (final)
+    // Allowed transitions for pitak
     const allowedTransitions = {
-      active: ["inactive", "archived"],
-      inactive: ["active", "archived"],
-      archived: [],
+      active: ["completed", "cancelled"],
+      completed: [],
+      cancelled: [],
     };
 
     if (!allowedTransitions[oldStatus]?.includes(newStatus)) {

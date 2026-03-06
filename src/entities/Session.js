@@ -37,6 +37,7 @@ const Session = new EntitySchema({
     status: {
       type: String,
       default: "active", // active | closed | archived
+      enum: ["active", "closed", "archived"]
     },
     createdAt: {
       type: Date,

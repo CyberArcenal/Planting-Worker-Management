@@ -41,14 +41,72 @@ const WorkersPage: React.FC = () => {
 
   const formDialog = useWorkerForm();
   const viewDialog = useWorkerView();
-
   const assignmentFormDialog = useAssignmentFormDialog();
 
   const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">(
-    "csv",
-  );
+  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+
+  // Status change handlers
+  const handleMarkActive = async (worker: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Active",
+      message: `Set worker "${worker.name}" status to Active?`,
+    });
+    if (!confirmed) return;
+    try {
+      await workerAPI.updateStatus(worker.id, "active");
+      showSuccess("Worker marked as active.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkInactive = async (worker: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Inactive",
+      message: `Set worker "${worker.name}" status to Inactive?`,
+    });
+    if (!confirmed) return;
+    try {
+      await workerAPI.updateStatus(worker.id, "inactive");
+      showSuccess("Worker marked as inactive.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkOnLeave = async (worker: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as On Leave",
+      message: `Set worker "${worker.name}" status to On Leave?`,
+    });
+    if (!confirmed) return;
+    try {
+      await workerAPI.updateStatus(worker.id, "on-leave");
+      showSuccess("Worker marked as on leave.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const handleMarkTerminated = async (worker: any) => {
+    const confirmed = await dialogs.confirm({
+      title: "Mark as Terminated",
+      message: `Set worker "${worker.name}" status to Terminated?`,
+    });
+    if (!confirmed) return;
+    try {
+      await workerAPI.updateStatus(worker.id, "terminated");
+      showSuccess("Worker terminated.");
+      reload();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
 
   const handleDelete = async (worker: any) => {
     const confirmed = await dialogs.confirm({
@@ -91,7 +149,6 @@ const WorkersPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -107,15 +164,10 @@ const WorkersPage: React.FC = () => {
   };
   const { start, end } = getDisplayRange();
 
-  // Summary stats
   const activeCount = allWorkers.filter((w) => w.status === "active").length;
-  const inactiveCount = allWorkers.filter(
-    (w) => w.status === "inactive",
-  ).length;
+  const inactiveCount = allWorkers.filter((w) => w.status === "inactive").length;
   const onLeaveCount = allWorkers.filter((w) => w.status === "on-leave").length;
-  const terminatedCount = allWorkers.filter(
-    (w) => w.status === "terminated",
-  ).length;
+  const terminatedCount = allWorkers.filter((w) => w.status === "terminated").length;
 
   return (
     <div
@@ -128,16 +180,10 @@ const WorkersPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-sm mb-4">
         <div>
-          <h2
-            className="text-base font-semibold"
-            style={{ color: "var(--sidebar-text)" }}
-          >
+          <h2 className="text-base font-semibold" style={{ color: "var(--sidebar-text)" }}>
             Workers
           </h2>
-          <p
-            className="mt-xs text-sm"
-            style={{ color: "var(--text-secondary)" }}
-          >
+          <p className="mt-xs text-sm" style={{ color: "var(--text-secondary)" }}>
             Manage farm workers and their details
           </p>
         </div>
@@ -158,9 +204,7 @@ const WorkersPage: React.FC = () => {
             disabled={loading}
             className="btn btn-secondary btn-sm rounded-md flex items-center transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md disabled:opacity-50"
           >
-            <RefreshCw
-              className={`icon-sm mr-1 ${loading ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`icon-sm mr-1 ${loading ? "animate-spin" : ""}`} />
             {loading ? "Refreshing..." : "Refresh"}
           </button>
 
@@ -173,10 +217,7 @@ const WorkersPage: React.FC = () => {
             }}
           >
             <div className="flex items-center gap-1">
-              <label
-                className="text-xs"
-                style={{ color: "var(--sidebar-text)" }}
-              >
+              <label className="text-xs" style={{ color: "var(--sidebar-text)" }}>
                 Export:
               </label>
               <select
@@ -263,10 +304,7 @@ const WorkersPage: React.FC = () => {
             borderColor: "var(--accent-blue)",
           }}
         >
-          <span
-            className="font-medium text-sm"
-            style={{ color: "var(--accent-green)" }}
-          >
+          <span className="font-medium text-sm" style={{ color: "var(--accent-green)" }}>
             {selectedWorkers.length} worker(s) selected
           </span>
           <div className="flex gap-xs">
@@ -346,6 +384,11 @@ const WorkersPage: React.FC = () => {
             onView={(w) => viewDialog.open(w.id)}
             onEdit={formDialog.openEdit}
             onDelete={handleDelete}
+            // Status change handlers
+            onMarkActive={handleMarkActive}
+            onMarkInactive={handleMarkInactive}
+            onMarkOnLeave={handleMarkOnLeave}
+            onMarkTerminated={handleMarkTerminated}
           />
 
           {/* Empty State */}
@@ -354,17 +397,11 @@ const WorkersPage: React.FC = () => {
               className="text-center py-8 border rounded-md"
               style={{ borderColor: "var(--border-color)" }}
             >
-              <Users
-                className="icon-xl mx-auto mb-2"
-                style={{ color: "var(--text-secondary)" }}
-              />
+              <Users className="icon-xl mx-auto mb-2" style={{ color: "var(--text-secondary)" }} />
               <p className="text-base" style={{ color: "var(--sidebar-text)" }}>
                 No workers found.
               </p>
-              <p
-                className="mt-xs text-sm"
-                style={{ color: "var(--text-tertiary)" }}
-              >
+              <p className="mt-xs text-sm" style={{ color: "var(--text-tertiary)" }}>
                 {filters.search || filters.status !== "all"
                   ? "Try adjusting your search or filters"
                   : "Start by adding your first worker"}
@@ -428,6 +465,7 @@ const WorkersPage: React.FC = () => {
       <AssignmentFormDialog
         isOpen={assignmentFormDialog.isOpen}
         workerIds={assignmentFormDialog.workerIds}
+        pitakId={assignmentFormDialog.pitakId}
         isReassignment={assignmentFormDialog.isReassignment}
         reassignmentAssignmentId={assignmentFormDialog.reassignmentAssignmentId}
         onClose={assignmentFormDialog.close}

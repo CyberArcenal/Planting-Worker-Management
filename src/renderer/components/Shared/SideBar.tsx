@@ -1,56 +1,34 @@
-// components/Sidebar.tsx (updated colors only)
+// src/renderer/components/SideBar.tsx
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Truck,
-  TrendingUp,
-  BarChart3,
   Settings,
   ChevronDown,
   ChevronRight,
-  Warehouse,
   Users,
   ClipboardList,
-  Home,
+  Map,
   MapPin,
-  TrendingDown,
-  BoxIcon,
-  FactoryIcon,
-  CarIcon,
-  FilePlus,
-  Key,
-  icons,
-  Lock,
-  Boxes,
-  Repeat,
-  Wrench,
-  LineChart,
-  PieChart,
-  UserPlus,
-  UserCheck,
-  MedalIcon,
-  Medal,
-  Award,
-  Bell,
-  TruckElectricIcon,
-  BellElectric,
-  BellElectricIcon,
-  Receipt,
-  Percent,
-  Logs,
-  CalendarDays,
-  User2,
-  Sprout,
   Wheat,
-  HistoryIcon,
+  Trees,
   Users2,
   DollarSign,
-  BarChart2,
-  Trees,
+  Receipt,
   History,
+  Wallet,
+  Banknote,
+  Scroll,
+  BarChart2,
+  PieChart,
+  LineChart,
+  UserCheck,
+  CalendarDays,
+  ScrollText,
+  Bell,
+  Sprout,
+  HandCoins,
+  FileClock,
 } from "lucide-react";
 import { version, name } from "../../../../package.json";
 
@@ -65,12 +43,14 @@ interface MenuItem {
   category?: string;
   children?: MenuItem[];
 }
+
 export function toTitleCase(str: string) {
   return str.replace(
     /\w\S*/g,
     (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
   );
 }
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const location = useLocation();
   const title = toTitleCase(name);
@@ -92,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       icon: Trees,
       category: "core",
       children: [
-        { path: "/farms/bukid", name: "Mga Bukid", icon: Trees },
+        { path: "/farms/bukid", name: "Mga Bukid", icon: Map },
         { path: "/farms/pitak", name: "Mga Pitak", icon: Wheat },
         {
           path: "/farms/assignments",
@@ -116,12 +96,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       icon: DollarSign,
       category: "core",
       children: [
-        { path: "/finance/worker/payments", name: "Worker Payments", icon: DollarSign },
-        { path: "/finance/payments", name: "Payments", icon: DollarSign },
+        { path: "/finance/worker/payments", name: "Worker Payments", icon: HandCoins },
+        { path: "/finance/payments", name: "Payments", icon: Banknote },
         { path: "/finance/debts", name: "Debt Management", icon: Receipt },
-        { path: "/finance/payment/history", name: "Payment History", icon: HistoryIcon },
-        { path: "/finance/debt/history", name: "Debt History", icon: History },
-
+        { path: "/finance/payment/history", name: "Payment History", icon: FileClock },
+        { path: "/finance/debt/history", name: "Debt History", icon: Scroll },
       ],
     },
     {
@@ -135,9 +114,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         {
           path: "/analytics/finance",
           name: "Financial Reports",
-          icon: DollarSign,
+          icon: LineChart,
         },
-        { path: "/analytics/workers", name: "Worker Performance", icon: Users },
+        { path: "/analytics/workers", name: "Worker Performance", icon: UserCheck },
       ],
     },
     {
@@ -151,11 +130,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           name: "Session Management",
           icon: CalendarDays,
         },
-        { path: "/audit", name: "Audit Trail", icon: ClipboardList },
+        { path: "/audit", name: "Audit Trail", icon: ScrollText },
         {
           path: "/notification-logs",
           name: "Notify Log's",
-          icon: BellElectricIcon,
+          icon: Bell,
         },
         {
           path: "/system/settings",
@@ -190,7 +169,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const isDropdownActive = (items: MenuItem[] = []) =>
     items.some((item) => isActivePath(item.path));
 
-  // Auto‑open dropdowns when a child is active
   useEffect(() => {
     filteredMenu.forEach((item) => {
       if (item.children && isDropdownActive(item.children)) {
@@ -217,8 +195,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer w-full
                   ${
                     isActive
-                      ? "bg-[var(--primary-color)] text-white shadow-md" // 👈 active: white text
-                      : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white" // 👈 hover: white text
+                      ? "bg-[var(--primary-color)] text-white shadow-md"
+                      : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white"
                   }
                   ${!isOpen ? "justify-center" : "justify-between"}
                 `}
@@ -227,8 +205,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   <item.icon
                     className={`w-5 h-5 ${
                       isActive
-                        ? "text-white" // 👈 active: white icon
-                        : "text-[var(--sidebar-text)] group-hover:text-white" // 👈 hover: white icon
+                        ? "text-white"
+                        : "text-[var(--sidebar-text)] group-hover:text-white"
                     }`}
                   />
                   {isOpen && <span className="font-medium">{item.name}</span>}
@@ -239,8 +217,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       isOpenDropdown ? "rotate-180" : ""
                     } ${
                       isActive
-                        ? "text-white" // 👈 active: white chevron
-                        : "text-[var(--sidebar-text)] group-hover:text-white" // 👈 hover: white chevron
+                        ? "text-white"
+                        : "text-[var(--sidebar-text)] group-hover:text-white"
                     }`}
                   />
                 )}
@@ -253,7 +231,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 }`}
               >
                 {isOpen ? (
-                  // Expanded mode: left border on the list
                   <ul
                     className="ml-4 border-l-2 pl-3 mt-1 space-y-1"
                     style={{ borderColor: "var(--primary-color)" }}
@@ -268,7 +245,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                               ${
                                 isChildActive
                                   ? "text-[var(--sidebar-text)] bg-[var(--primary-color)]/20 font-semibold"
-                                  : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white" // 👈 child hover: white text
+                                  : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white"
                               }
                             `}
                           >
@@ -286,7 +263,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     })}
                   </ul>
                 ) : (
-                  // Collapsed mode: centered icons with a green vertical line on the left
                   <div className="relative">
                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--primary-color)]"></div>
                     <ul className="flex flex-col items-center space-y-1 mt-1">
@@ -300,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                                 ${
                                   isChildActive
                                     ? "text-[var(--sidebar-text)] bg-[var(--primary-color)]/20 font-semibold"
-                                    : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white" // 👈 child hover: white text
+                                    : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white"
                                 }
                               `}
                             >
@@ -311,7 +287,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                                     : "text-[var(--sidebar-text)] group-hover:text-white"
                                 }`}
                               />
-                              {/* text is hidden when collapsed */}
                             </Link>
                           </li>
                         );
@@ -322,14 +297,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               </div>
             </>
           ) : (
-            // Regular item (no children)
             <Link
               to={item.path}
               className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full
                 ${
                   isActive
-                    ? "bg-[var(--primary-color)] text-white shadow-md" // 👈 active: white text
-                    : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white" // 👈 hover: white text
+                    ? "bg-[var(--primary-color)] text-white shadow-md"
+                    : "text-[var(--sidebar-text)] hover:bg-[var(--primary-color)] hover:text-white"
                 }
                 ${!isOpen ? "justify-center" : "justify-between"}
               `}
@@ -338,8 +312,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 <item.icon
                   className={`w-5 h-5 ${
                     isActive
-                      ? "text-white" // 👈 active: white icon
-                      : "text-[var(--sidebar-text)] group-hover:text-white" // 👈 hover: white icon
+                      ? "text-white"
+                      : "text-[var(--sidebar-text)] group-hover:text-white"
                   }`}
                 />
                 {isOpen && <span className="font-medium">{item.name}</span>}
@@ -348,7 +322,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 <ChevronRight
                   className={`w-4 h-4 transition-opacity duration-200 ${
                     isActive
-                      ? "opacity-100 text-white" // 👈 active: white chevron
+                      ? "opacity-100 text-white"
                       : "opacity-0 group-hover:opacity-50 text-[var(--sidebar-text)]"
                   }`}
                 />

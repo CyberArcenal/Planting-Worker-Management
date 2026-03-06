@@ -8,6 +8,7 @@ const smsSender = require("../channels/sms.sender");
 const { companyName } = require("../utils/settings/system");
 const DebtHistory = require("../entities/DebtHistory");
 const { saveDb } = require("../utils/dbUtils/dbActions"); // ✅ use saveDb
+const { AppDataSource } = require("../main/db/datasource");
 
 class DebtStateTransitionService {
   // @ts-ignore
@@ -19,11 +20,11 @@ class DebtStateTransitionService {
    * Called when a debt is marked as paid.
    */
   // @ts-ignore
-  async onPaid(debt, manager, oldDebt, user = "system") {
+  async onPaid(debt, oldDebt, user = "system") {
     logger.info(`[DebtTransition] Debt #${debt.id} paid, old status: ${oldDebt?.status}`);
 
     // 1. Log to DebtHistory
-    await this._logHistory(debt, manager, oldDebt, "paid", user);
+    await this._logHistory(debt, oldDebt, "paid", user);
 
     // 2. Notify worker
     await this._notifyWorker(debt, "paid");
@@ -33,10 +34,10 @@ class DebtStateTransitionService {
    * Called when a debt is marked as partially paid.
    */
   // @ts-ignore
-  async onPartiallyPaid(debt, manager, oldDebt, user = "system") {
+  async onPartiallyPaid(debt, oldDebt, user = "system") {
     logger.info(`[DebtTransition] Debt #${debt.id} partially paid, old status: ${oldDebt?.status}`);
 
-    await this._logHistory(debt, manager, oldDebt, "partially_paid", user);
+    await this._logHistory(debt, oldDebt, "partially_paid", user);
     await this._notifyWorker(debt, "partially paid");
   }
 
@@ -44,10 +45,10 @@ class DebtStateTransitionService {
    * Called when a debt is cancelled.
    */
   // @ts-ignore
-  async onCancel(debt, manager, oldDebt, user = "system") {
+  async onCancel(debt, oldDebt, user = "system") {
     logger.info(`[DebtTransition] Debt #${debt.id} cancelled, old status: ${oldDebt?.status}`);
 
-    await this._logHistory(debt, manager, oldDebt, "cancelled", user);
+    await this._logHistory(debt, oldDebt, "cancelled", user);
     await this._notifyWorker(debt, "cancelled");
   }
 
@@ -55,22 +56,23 @@ class DebtStateTransitionService {
    * Called when a debt becomes overdue.
    */
   // @ts-ignore
-  async onOverdue(debt, manager, oldDebt, user = "system") {
+  async onOverdue(debt, oldDebt, user = "system") {
     logger.info(`[DebtTransition] Debt #${debt.id} overdue, old status: ${oldDebt?.status}`);
 
-    await this._logHistory(debt, manager, oldDebt, "overdue", user);
+    await this._logHistory(debt, oldDebt, "overdue", user);
     await this._notifyWorker(debt, "overdue");
   }
 
   // --- Private helpers ---
 
   // @ts-ignore
-  async _logHistory(debt, manager, oldDebt, transactionType, user) {
-    const historyRepo = manager.getRepository(DebtHistory);
+  async _logHistory(debt, oldDebt, transactionType, user) {
+    const historyRepo = AppDataSource.getRepository(DebtHistory);
     const previousBalance = oldDebt?.balance ?? debt.balance; // fallback to current if old not available
     const newBalance = debt.balance;
 
     const history = historyRepo.create({
+      // @ts-ignore
       debt: debt,
       amountPaid: 0, // no monetary change, just status
       previousBalance,
@@ -82,7 +84,9 @@ class DebtStateTransitionService {
       paymentMethod: null,
     });
 
+    // @ts-ignore
     await saveDb(historyRepo, history);
+    // @ts-ignore
     await auditLogger.logCreate("DebtHistory", history.id, history, user);
     logger.info(`[DebtTransition] DebtHistory #${history.id} created for debt #${debt.id}`);
   }

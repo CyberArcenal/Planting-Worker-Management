@@ -18,11 +18,11 @@ class WorkerSubscriber {
     return Worker;
   }
 
+
   /**
-   * @param {{ entity: any; }} event
+   * @param {any} entity
    */
-  async afterInsert(event) {
-    const entity = event.entity;
+  async afterInsert(entity) {
     try {
       // @ts-ignore
       logger.info("[WorkerSubscriber] afterInsert", {
@@ -35,7 +35,7 @@ class WorkerSubscriber {
   }
 
   /**
-   * @param {{ entity: any; databaseEntity: any; queryRunner: { manager: any; }; }} event
+   * @param {{ entity: any; databaseEntity: any; }} event
    */
   async afterUpdate(event) {
     if (!event.entity) return;
@@ -50,40 +50,39 @@ class WorkerSubscriber {
 
     if (oldWorker && oldWorker.status === newWorker.status) return;
 
-    const manager = event.queryRunner.manager;
-    const hydrated = await this._hydrateWorker(newWorker.id, manager);
+    const hydrated = await this._hydrateWorker(newWorker.id);
     if (!hydrated) return;
 
     switch (newWorker.status) {
       case "active":
         await this.transitionService.onActivate(
           hydrated,
-          manager,
           oldWorker?.status,
+          // @ts-ignore
           "system",
         );
         break;
       case "inactive":
         await this.transitionService.onInactivate(
           hydrated,
-          manager,
           oldWorker?.status,
+          // @ts-ignore
           "system",
         );
         break;
       case "on-leave":
         await this.transitionService.onLeave(
           hydrated,
-          manager,
           oldWorker?.status,
+          // @ts-ignore
           "system",
         );
         break;
       case "terminated":
         await this.transitionService.onTerminate(
           hydrated,
-          manager,
           oldWorker?.status,
+          // @ts-ignore
           "system",
         );
         break;
@@ -94,10 +93,9 @@ class WorkerSubscriber {
 
   /**
    * @param {any} workerId
-   * @param {{ getRepository: (arg0: import("typeorm").EntitySchema<{ id: unknown; name: unknown; contact: unknown; email: unknown; address: unknown; status: unknown; hireDate: unknown; createdAt: unknown; updatedAt: unknown; }>) => any; }} manager
    */
-  async _hydrateWorker(workerId, manager) {
-    const workerRepo = manager.getRepository(Worker);
+  async _hydrateWorker(workerId) {
+    const workerRepo = AppDataSource.getRepository(Worker);
     const worker = await workerRepo.findOne({
       where: { id: workerId },
       // relations needed for effects (e.g., assignments, debts)

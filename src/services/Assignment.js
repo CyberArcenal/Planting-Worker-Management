@@ -71,7 +71,8 @@ class AssignmentService {
       const session = await sessionRepo.findOne({
         where: { id: data.sessionId },
       });
-      if (!session) throw new Error(`Session with ID ${data.sessionId} not found`);
+      if (!session)
+        throw new Error(`Session with ID ${data.sessionId} not found`);
 
       // Check uniqueness (worker + pitak + session)
       const existing = await repo.findOne({
@@ -83,7 +84,7 @@ class AssignmentService {
       });
       if (existing) {
         throw new Error(
-          "An assignment already exists for this worker, pitak, and session combination"
+          "An assignment already exists for this worker, pitak, and session combination",
         );
       }
 
@@ -136,7 +137,7 @@ class AssignmentService {
         assignmentDate: data.assignmentDate,
       };
       // Remove undefined fields
-      Object.keys(allowedUpdates).forEach(key => {
+      Object.keys(allowedUpdates).forEach((key) => {
         if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
       });
 
@@ -160,7 +161,9 @@ class AssignmentService {
 
   async updateStatus(id, newStatus, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const { assignment: repo } = await this.getRepositories();
+    const auditLogger = require("../utils/auditLogger");
+    const { AssignmentStatus } = require("../entities/Assignment");
+    const repo = await this.getRepository(); // assignment repository
 
     const assignment = await repo.findOne({ where: { id } });
     if (!assignment) throw new Error(`Assignment with ID ${id} not found`);
@@ -168,7 +171,7 @@ class AssignmentService {
     const oldStatus = assignment.status;
     if (oldStatus === newStatus) return assignment;
 
-    // Allowed transitions based on AssignmentStatus
+    // Allowed transitions based on AssignmentStatus enum
     const allowedTransitions = {
       [AssignmentStatus.INITIATED]: [
         AssignmentStatus.ACTIVE,
@@ -185,7 +188,7 @@ class AssignmentService {
 
     if (!allowedTransitions[oldStatus]?.includes(newStatus)) {
       throw new Error(
-        `Invalid status transition from ${oldStatus} to ${newStatus}`
+        `Invalid status transition from ${oldStatus} to ${newStatus}`,
       );
     }
 
@@ -198,7 +201,7 @@ class AssignmentService {
       id,
       { status: oldStatus },
       { status: newStatus },
-      user
+      user,
     );
     return saved;
   }
@@ -278,16 +281,22 @@ class AssignmentService {
         qb.andWhere("pitak.id = :pitakId", { pitakId: options.pitakId });
       }
       if (options.sessionId) {
-        qb.andWhere("session.id = :sessionId", { sessionId: options.sessionId });
+        qb.andWhere("session.id = :sessionId", {
+          sessionId: options.sessionId,
+        });
       }
       if (options.status) {
         qb.andWhere("assignment.status = :status", { status: options.status });
       }
       if (options.startDate) {
-        qb.andWhere("assignment.assignmentDate >= :startDate", { startDate: options.startDate });
+        qb.andWhere("assignment.assignmentDate >= :startDate", {
+          startDate: options.startDate,
+        });
       }
       if (options.endDate) {
-        qb.andWhere("assignment.assignmentDate <= :endDate", { endDate: options.endDate });
+        qb.andWhere("assignment.assignmentDate <= :endDate", {
+          endDate: options.endDate,
+        });
       }
 
       // Sorting

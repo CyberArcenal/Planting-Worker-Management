@@ -1,3 +1,4 @@
+// src/renderer/pages/system/settings/hooks/useFarmManagementSettings.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
 import systemConfigAPI, {
   type FarmSessionSettings,
@@ -8,6 +9,7 @@ import systemConfigAPI, {
   type FarmDebtSettings,
   type FarmAuditSettings,
 } from "../../../api/core/system_config";
+import { useSettings } from "../../../contexts/SettingsContext"; // 👈 added
 import { showError, showSuccess } from "../../../utils/notification";
 
 interface FarmManagementSettings {
@@ -171,6 +173,9 @@ export const useFarmManagementSettings =
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
+    // 👇 Get context refresh function
+    const { refreshSettings } = useSettings();
+
     const fetchSettings = useCallback(async () => {
       try {
         setLoading(true);
@@ -260,8 +265,16 @@ export const useFarmManagementSettings =
           setOriginalSettings(JSON.parse(JSON.stringify(normalizedSettings)));
           setSaveSuccess(true);
 
+          // 👇 Force the SettingsContext to reload, so hooks like useDefaultSessionId update immediately
+          try {
+            await refreshSettings();
+          } catch (refreshErr) {
+            console.warn("Failed to refresh settings context", refreshErr);
+          }
+
           showSuccess("Farm settings saved successfully!");
 
+          // Optional: still fetch again after a short delay to be extra safe
           setTimeout(() => fetchSettings(), 500);
         } else {
           throw new Error(response.message || "Failed to update settings");

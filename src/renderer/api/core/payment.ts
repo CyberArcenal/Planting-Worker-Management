@@ -17,7 +17,7 @@ export interface Payment {
   grossPay: number;
   manualDeduction?: number | null;
   netPay: number;
-  status: string;
+   status: "pending" | "partially_paid" | "completed" | "cancelled";
   paymentDate?: string | null;
   paymentMethod?: string | null;
   referenceNumber?: string | null;
@@ -46,7 +46,7 @@ export interface PaymentCreateData {
   grossPay: number;
   manualDeduction?: number;
   netPay: number;
-  status?: string;
+  status?: "pending" | "partially_paid" | "completed" | "cancelled";
   paymentDate?: string;
   paymentMethod?: string;
   referenceNumber?: string;
@@ -95,7 +95,10 @@ export interface PaymentStatsResponse {
 class PaymentAPI {
   private channel = "payment";
 
-  private async call<T = any>(method: string, params: Record<string, any> = {}): Promise<T> {
+  private async call<T = any>(
+    method: string,
+    params: Record<string, any> = {},
+  ): Promise<T> {
     if (!window.backendAPI?.payment) {
       throw new Error(`Electron API (${this.channel}) not available`);
     }
@@ -117,7 +120,10 @@ class PaymentAPI {
     sortOrder?: "ASC" | "DESC";
   }): Promise<PaymentsResponse> {
     try {
-      const response = await this.call<PaymentsResponse>("getAllPayments", params || {});
+      const response = await this.call<PaymentsResponse>(
+        "getAllPayments",
+        params || {},
+      );
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch payments");
     } catch (error: any) {
@@ -128,7 +134,9 @@ class PaymentAPI {
   async getById(id: number): Promise<PaymentResponse> {
     try {
       if (!id || id <= 0) throw new Error("Invalid ID");
-      const response = await this.call<PaymentResponse>("getPaymentById", { id });
+      const response = await this.call<PaymentResponse>("getPaymentById", {
+        id,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch payment");
     } catch (error: any) {
@@ -138,28 +146,31 @@ class PaymentAPI {
 
   async getByWorker(
     workerId: number,
-    params?: Omit<Parameters<PaymentAPI['getAll']>[0], 'workerId'>
+    params?: Omit<Parameters<PaymentAPI["getAll"]>[0], "workerId">,
   ): Promise<PaymentsResponse> {
     return this.getAll({ ...params, workerId });
   }
 
   async getByPitak(
     pitakId: number,
-    params?: Omit<Parameters<PaymentAPI['getAll']>[0], 'pitakId'>
+    params?: Omit<Parameters<PaymentAPI["getAll"]>[0], "pitakId">,
   ): Promise<PaymentsResponse> {
     return this.getAll({ ...params, pitakId });
   }
 
   async getBySession(
     sessionId: number,
-    params?: Omit<Parameters<PaymentAPI['getAll']>[0], 'sessionId'>
+    params?: Omit<Parameters<PaymentAPI["getAll"]>[0], "sessionId">,
   ): Promise<PaymentsResponse> {
     return this.getAll({ ...params, sessionId });
   }
 
   async getStats(sessionId?: number): Promise<PaymentStatsResponse> {
     try {
-      const response = await this.call<PaymentStatsResponse>("getPaymentStats", { sessionId });
+      const response = await this.call<PaymentStatsResponse>(
+        "getPaymentStats",
+        { sessionId },
+      );
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch stats");
     } catch (error: any) {
@@ -182,7 +193,10 @@ class PaymentAPI {
   async update(id: number, data: PaymentUpdateData): Promise<PaymentResponse> {
     try {
       if (!id || id <= 0) throw new Error("Invalid ID");
-      const response = await this.call<PaymentResponse>("updatePayment", { id, ...data });
+      const response = await this.call<PaymentResponse>("updatePayment", {
+        id,
+        ...data,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to update payment");
     } catch (error: any) {
@@ -191,25 +205,30 @@ class PaymentAPI {
   }
 
   /**
- * Update payment status
- * @param id - Payment ID
- * @param status - New status ('pending', 'partially_paid', 'complete', 'cancel')
- */
-async updateStatus(id: number, status: string): Promise<PaymentResponse> {
-  try {
-    if (!id || id <= 0) throw new Error("Invalid ID");
-    const response = await this.call<PaymentResponse>("updateStatus", { id, status });
-    if (response.status) return response;
-    throw new Error(response.message || "Failed to update payment status");
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to update payment status");
+   * Update payment status
+   * @param id - Payment ID
+   * @param status - New status ('pending', 'partially_paid', 'complete', 'cancel')
+   */
+  async updateStatus(id: number, status: string): Promise<PaymentResponse> {
+    try {
+      if (!id || id <= 0) throw new Error("Invalid ID");
+      const response = await this.call<PaymentResponse>("updateStatus", {
+        id,
+        status,
+      });
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to update payment status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update payment status");
+    }
   }
-}
 
   async delete(id: number): Promise<PaymentResponse> {
     try {
       if (!id || id <= 0) throw new Error("Invalid ID");
-      const response = await this.call<PaymentResponse>("deletePayment", { id });
+      const response = await this.call<PaymentResponse>("deletePayment", {
+        id,
+      });
       if (response.status) return response;
       throw new Error(response.message || "Failed to delete payment");
     } catch (error: any) {

@@ -1,6 +1,6 @@
 // src/renderer/pages/worker-payments/index.tsx
 import React, { useState } from "react";
-import { Download, Filter, RefreshCw, Users } from "lucide-react";
+import { Download, RefreshCw, Users } from "lucide-react"; // removed Filter icon
 import { useWorkerPayments } from "./hooks/useWorkerPayments";
 import WorkerPaymentsTable from "./components/WorkerPaymentsTable";
 import Pagination from "../../components/Shared/Pagination";
@@ -9,8 +9,6 @@ import { dialogs } from "../../utils/dialogs";
 import { showSuccess, showError } from "../../utils/notification";
 import PayAllModal from "./components/PayAllModal";
 import PayDebtModal from "./components/PayDebtModal";
-import type { Worker } from "../../api/core/worker";
-
 
 const WorkerPaymentsPage: React.FC = () => {
   const {
@@ -30,7 +28,6 @@ const WorkerPaymentsPage: React.FC = () => {
     payDebtModal,
   } = useWorkerPayments();
 
-  const [showFilters, setShowFilters] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
 
@@ -43,7 +40,6 @@ const WorkerPaymentsPage: React.FC = () => {
     if (!confirmed) return;
     setExportLoading(true);
     try {
-      // Placeholder export logic
       showSuccess("Export started (placeholder).");
     } catch (err: any) {
       showError(err.message);
@@ -59,7 +55,6 @@ const WorkerPaymentsPage: React.FC = () => {
   };
   const { start, end } = getDisplayRange();
 
-  // Summary stats
   const totalPending = allWorkers.reduce((sum, w) => sum + w.pendingAmount, 0);
   const totalDebt = allWorkers.reduce((sum, w) => sum + w.totalDebt, 0);
 
@@ -88,17 +83,6 @@ const WorkerPaymentsPage: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-xs w-full sm:w-auto">
-          <button
-            className="compact-button rounded-md flex items-center transition-colors ease-in-out hover:scale-105 hover:shadow-md disabled:opacity-50"
-            style={{
-              backgroundColor: "var(--card-secondary-bg)",
-              color: "var(--sidebar-text)",
-            }}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="icon-sm mr-xs" />
-            Filters {showFilters ? "↑" : "↓"}
-          </button>
           <button
             onClick={reload}
             disabled={loading}
@@ -169,47 +153,6 @@ const WorkerPaymentsPage: React.FC = () => {
           </div>
           <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
             Total Workers: {pagination.total}
-          </div>
-        </div>
-      )}
-
-      {/* Filters (simplified) */}
-      {showFilters && (
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 gap-sm mb-4 compact-card rounded-md border p-3"
-          style={{
-            backgroundColor: "var(--card-secondary-bg)",
-            borderColor: "var(--border-color)",
-          }}
-        >
-          <div>
-            <label className="block text-sm font-medium mb-xs" style={{ color: "var(--sidebar-text)" }}>
-              Search Worker
-            </label>
-            <input
-              type="text"
-              placeholder="Name, contact..."
-              value={filters?.search || ""}
-              onChange={(e) => {/* handle filter */}}
-              className="compact-input w-full border rounded-md"
-              style={{
-                backgroundColor: "var(--card-bg)",
-                borderColor: "var(--border-color)",
-                color: "var(--sidebar-text)",
-              }}
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => {/* reset */}}
-              className="compact-button w-full rounded-md transition-colors"
-              style={{
-                backgroundColor: "var(--primary-color)",
-                color: "var(--sidebar-text)",
-              }}
-            >
-              Reset Filters
-            </button>
           </div>
         </div>
       )}

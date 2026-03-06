@@ -13,7 +13,7 @@ class SessionStateTransitionService {
    * Called when a session becomes active.
    */
   // @ts-ignore
-  async onActivate(session, manager, oldStatus = null, user = "system") {
+  async onActivate(session, oldStatus = null, user = "system") {
     logger.info(`[SessionTransition] Activating session #${session.id}, old status: ${oldStatus}`);
     // Placeholder: future logic (e.g., ensure no other active session if not allowed)
   }
@@ -22,7 +22,7 @@ class SessionStateTransitionService {
    * Called when a session is closed.
    */
   // @ts-ignore
-  async onClose(session, manager, oldStatus = null, user = "system") {
+  async onClose(session, oldStatus = null, user = "system") {
     logger.info(`[SessionTransition] Closing session #${session.id}, old status: ${oldStatus}`);
     // Placeholder: future logic (e.g., freeze assignments, generate report)
   }
@@ -31,7 +31,7 @@ class SessionStateTransitionService {
    * Called when a session is archived.
    */
   // @ts-ignore
-  async onArchive(session, manager, oldStatus = null, user = "system") {
+  async onArchive(session, oldStatus = null, user = "system") {
     logger.info(`[SessionTransition] Archiving session #${session.id}, old status: ${oldStatus}`);
     // Placeholder: future logic (e.g., move to long-term storage, prevent edits)
   }

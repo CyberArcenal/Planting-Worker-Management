@@ -15,7 +15,7 @@ export interface Worker {
   contact?: string | null;
   email?: string | null;
   address?: string | null;
-  status: string;
+  status: "active" | "inactive" | "on-leave" | "terminated";
   hireDate?: string | null;
   createdAt: string;
   updatedAt: string;

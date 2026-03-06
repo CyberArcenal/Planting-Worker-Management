@@ -29,6 +29,7 @@ const Debt = new EntitySchema({
     status: {
       type: String,
       default: "pending",
+      enum: ["pending", "partially_paid", "paid", "cancelled", "overdue", "settled"]
     },
     dateIncurred: { type: Date, createDate: true },
     dueDate: { type: Date, nullable: true },

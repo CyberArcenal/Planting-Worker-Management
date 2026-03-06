@@ -14,6 +14,13 @@ interface PaymentsTableProps {
   sortConfig: { key: string; direction: "asc" | "desc" };
   onView: (payment: Payment) => void;
   onDelete: (payment: Payment) => void;
+  // Optional additional actions
+  onEdit?: (payment: Payment) => void;
+  onMarkComplete?: (payment: Payment) => void;
+  onMarkCancelled?: (payment: Payment) => void;
+  onAddNote?: (payment: Payment) => void;
+  onViewNote?: (payment: Payment) => void;
+  onSendReceipt?: (payment: Payment) => void;
 }
 
 const PaymentsTable: React.FC<PaymentsTableProps> = ({
@@ -25,6 +32,12 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
   sortConfig,
   onView,
   onDelete,
+  onEdit,
+  onMarkComplete,
+  onMarkCancelled,
+  onAddNote,
+  onViewNote,
+  onSendReceipt,
 }) => {
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
@@ -197,6 +210,12 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                   payment={payment}
                   onView={onView}
                   onDelete={onDelete}
+                  onEdit={onEdit}
+                  onMarkComplete={onMarkComplete}
+                  onMarkCancelled={onMarkCancelled}
+                  onAddNote={onAddNote}
+                  onViewNote={onViewNote}
+                  onSendReceipt={onSendReceipt}
                 />
               </td>
             </tr>
