@@ -18,7 +18,7 @@ import {
   FileText,
   Edit,
 } from "lucide-react";
-import bukidAPI from "../../../apis/core/bukid";
+import bukidAPI from "../../../api/core/bukid";
 import { showError } from "../../../utils/notification";
 
 interface ViewStatsDialogProps {
@@ -49,7 +49,7 @@ const ViewStatsDialog: React.FC<ViewStatsDialogProps> = ({
         if (!bukidResponse.status) {
           throw new Error(bukidResponse.message);
         }
-        setBukid(bukidResponse.data.bukid);
+        setBukid(bukidResponse.data);
 
         // Fetch stats
         const statsResponse = await bukidAPI.getStats();

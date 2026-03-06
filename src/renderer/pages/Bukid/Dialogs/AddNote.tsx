@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { X, FileText, Save, Loader2 } from "lucide-react";
 import { showError, showSuccess } from "../../../utils/notification";
-import bukidAPI from "../../../apis/core/bukid";
+import bukidAPI from "../../../api/core/bukid";
 
 interface AddNoteDialogProps {
   id: number;

@@ -1,0 +1,36 @@
+Based on the entities you have, here's a breakdown of which ones should have a state transition service, following the pattern we used for `Purchase` and `Assignment`:
+
+---
+
+### ✅ **Recommended to have State Transition Services**
+
+| Entity    | Statuses                                                                 | Why a Service is Needed                                                                                             |
+|-----------|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| **Bukid** | `active`, `inactive`, `archived`                                         | Changing status may affect pitaks, assignments, and reports. E.g., archiving a bukid should prevent new pitaks.    |
+| **Pitak** | `active`, `inactive`, `completed`                                        | When a pitak is completed, it may trigger final payments or affect utilization stats. Inactivation may block assignments. |
+| **Session**| `active`, `closed`, `archived`                                          | Closing or archiving a session should freeze all related data (assignments, payments, debts) and possibly generate reports. |
+| **Debt**  | `pending`, `partially_paid`, `paid`, `cancelled`, `overdue`              | Status changes affect worker balance, may trigger interest calculations, or affect payment allocation.              |
+| **Payment**| `pending`, `processing`, `completed`, `cancelled`, `partially_paid`     | Completing a payment could reduce debts, update worker earnings, and trigger notifications.                         |
+| **Worker**| `active`, `inactive`, `on-leave`, `terminated`                           | Status changes may affect assignment eligibility, debt collection, and payment processing.                          |
+
+---
+
+### ❌ **Not Needed (or minimal)**
+
+| Entity             | Reason                                                                                   |
+|--------------------|------------------------------------------------------------------------------------------|
+| `Notification`     | No business rules; just a record.                                                        |
+| `NotificationLog`  | Log only, no state changes.                                                              |
+| `AuditLog`         | Log only, no state changes.                                                              |
+| `DebtHistory`      | History records, not a state machine.                                                    |
+| `PaymentHistory`   | History records, not a state machine.                                                    |
+
+---
+
+### 🧠 **Implementation Notes**
+
+- **Keep it simple at first**: Start with services for entities where status changes have immediate, critical side effects (e.g., **Payment** → reduce debt, **Debt** → update worker balance). You can add others later.
+- **Reuse the pattern**: Each service should have methods like `onActivate`, `onComplete`, `onCancel`, etc., depending on the statuses. The subscriber will detect status changes and call the appropriate method.
+- **Leverage settings**: For example, when a `Payment` is completed, you may want to check settings like `auto_apply_debt_payment` before deducting debt.
+
+Would you like me to create the skeleton for any of these services next?

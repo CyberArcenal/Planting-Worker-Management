@@ -14,5 +14,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/main", "src/channels"]
+  "include": ["src/main", "src/channels", "src/renderer/new-pages/worker-payments"]
 }

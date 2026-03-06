@@ -10,7 +10,7 @@ import {
   Clock,
   RefreshCw,
 } from "lucide-react";
-import pitakAPI from "../../../apis/core/pitak";
+import pitakAPI from "../../../api/core/pitak";
 import { showError } from "../../../utils/notification";
 import { formatDate } from "../../../utils/formatters";
 

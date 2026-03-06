@@ -1,12 +1,18 @@
 // src/hooks/useUpdater.ts
-import { useEffect, useState } from 'react';
-import type { DownloadProgress, UpdateInfo } from '../apis/utils/updater';
-import updaterAPI from '../apis/utils/updater';
+import { useEffect, useState } from "react";
+import type { DownloadProgress, UpdateInfo } from "../api/utils/updater";
+import updaterAPI from "../api/utils/updater";
 
-export type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'error';
+export type UpdateState =
+  | "idle"
+  | "checking"
+  | "available"
+  | "downloading"
+  | "downloaded"
+  | "error";
 
 export const useUpdater = () => {
-  const [state, setState] = useState<UpdateState>('idle');
+  const [state, setState] = useState<UpdateState>("idle");
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,28 +20,28 @@ export const useUpdater = () => {
   useEffect(() => {
     // Set up listeners
     const unsubChecking = updaterAPI.onChecking(() => {
-      setState('checking');
+      setState("checking");
       setError(null);
     });
     const unsubAvailable = updaterAPI.onUpdateAvailable((info) => {
-      setState('available');
+      setState("available");
       setUpdateInfo(info);
       setError(null);
     });
     const unsubNotAvailable = updaterAPI.onUpdateNotAvailable(() => {
-      setState('idle');
+      setState("idle");
       setUpdateInfo(null);
     });
     const unsubProgress = updaterAPI.onDownloadProgress((p) => {
-      setState('downloading');
+      setState("downloading");
       setProgress(p);
     });
     const unsubDownloaded = updaterAPI.onUpdateDownloaded((info) => {
-      setState('downloaded');
+      setState("downloaded");
       setUpdateInfo(info);
     });
     const unsubError = updaterAPI.onError((msg) => {
-      setState('error');
+      setState("error");
       setError(msg);
     });
 
@@ -56,7 +62,7 @@ export const useUpdater = () => {
     try {
       await updaterAPI.checkForUpdates();
     } catch (err: any) {
-      setState('error');
+      setState("error");
       setError(err.message);
     }
   };
@@ -65,7 +71,7 @@ export const useUpdater = () => {
     try {
       await updaterAPI.downloadUpdate();
     } catch (err: any) {
-      setState('error');
+      setState("error");
       setError(err.message);
     }
   };
@@ -74,7 +80,7 @@ export const useUpdater = () => {
     try {
       await updaterAPI.quitAndInstall();
     } catch (err: any) {
-      setState('error');
+      setState("error");
       setError(err.message);
     }
   };

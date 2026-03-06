@@ -1,224 +1,150 @@
 // components/Session/hooks/useSessionData.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type {
-  FilterParams,
-  SessionListData,
-  SessionStatsData,
-} from "../../../apis/core/session";
-import sessionAPI from "../../../apis/core/session";
-
-type SessionApiShape =
-  | SessionListData[] // plain array
-  | {
-      sessions: SessionListData[];
-      pagination?: { total?: number; totalPages?: number };
-    }
-  | {
-      items: SessionListData[];
-      pagination?: { total?: number; totalPages?: number };
-    }
-  | Record<string, any>; // fallback for unexpected shapes
+import sessionAPI from "../../../api/core/session";
+import type { Session, SessionStats } from "../../../api/core/session";
+import { showError } from "../../../utils/notification";
 
 export const useSessionData = () => {
-  const [allSessions, setAllSessions] = useState<SessionListData[]>([]);
-  const [sessions, setSessions] = useState<SessionListData[]>([]);
-  const [stats, setStats] = useState<SessionStatsData | null>(null);
+  const [allSessions, setAllSessions] = useState<Session[]>([]);
+  const [stats, setStats] = useState<SessionStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const [limit] = useState(20);
 
-  // Filters / sorting / view
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "closed" | "archived"
-  >("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed" | "archived">("all");
   const [yearFilter, setYearFilter] = useState<number | "all">("all");
   const [seasonTypeFilter, setSeasonTypeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("startDate");
-  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedSessions, setSelectedSessions] = useState<number[]>([]);
 
+  // Fetch all sessions with backend filters (except search & seasonType)
   const fetchSessions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const filters: FilterParams = {
-        status: statusFilter !== "all" ? statusFilter : undefined,
-        year: yearFilter !== "all" ? (yearFilter as number) : undefined,
-        search: searchQuery.trim() || undefined,
-        sortBy: sortBy || undefined,
-        sortOrder: sortOrder || undefined,
-        limit,
-        offset: (currentPage - 1) * limit,
+      const params: any = {
+        limit: 1000, // fetch enough for client‑side filtering
       };
+      if (statusFilter !== "all") params.status = statusFilter;
+      if (yearFilter !== "all") params.year = yearFilter;
 
-      const response = await sessionAPI.getAll(filters as any);
-
-      if (!response || !response.status) {
-        throw new Error(response?.message || "Failed to fetch sessions");
-      }
-
-      // Narrow the response.data into a union we can handle
-      const data = response.data as SessionApiShape;
-
-      if (Array.isArray(data)) {
-        // shape: SessionListData[]
-        setAllSessions(data);
-        setTotalItems(data.length);
-        setTotalPages(Math.max(1, Math.ceil(data.length / limit)));
-      } else if (data && Array.isArray((data as any).sessions)) {
-        // shape: { sessions: SessionListData[], pagination?: {...} }
-        const items = (data as any).sessions as SessionListData[];
-        const pagination = (data as any).pagination;
-        setAllSessions(items);
-        setTotalItems(pagination?.total ?? items.length);
-        setTotalPages(
-          pagination?.totalPages ??
-            Math.max(1, Math.ceil(items.length / limit)),
-        );
-      } else if (data && Array.isArray((data as any).items)) {
-        // shape: { items: SessionListData[], pagination?: {...} }
-        const items = (data as any).items as SessionListData[];
-        const pagination = (data as any).pagination;
-        setAllSessions(items);
-        setTotalItems(pagination?.total ?? items.length);
-        setTotalPages(
-          pagination?.totalPages ??
-            Math.max(1, Math.ceil(items.length / limit)),
-        );
+      const response = await sessionAPI.getAll(params);
+      if (response.status) {
+        setAllSessions(response.data);
       } else {
-        // Fallback: unknown shape — clear results to avoid runtime errors
-        setAllSessions([]);
-        setTotalItems(0);
-        setTotalPages(1);
+        throw new Error(response.message || "Failed to fetch sessions");
       }
     } catch (err: any) {
-      setError(err?.message ?? "Unknown error");
-      console.error("Failed to fetch sessions:", err);
+      setError(err.message);
+      showError(err.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [
-    currentPage,
-    searchQuery,
-    statusFilter,
-    yearFilter,
-    seasonTypeFilter,
-    sortBy,
-    sortOrder,
-    limit,
-  ]);
+  }, [statusFilter, yearFilter]);
 
+  // Fetch stats
   const fetchStats = useCallback(async () => {
     try {
       const response = await sessionAPI.getStats();
-      if (response?.status) {
-        setStats(response.data as SessionStatsData);
+      if (response.status) {
+        setStats(response.data);
       }
     } catch (err) {
       console.error("Failed to fetch session stats:", err);
     }
   }, []);
 
-  // Sorting
-  const sortedSessions = useMemo(() => {
-    const arr = [...allSessions];
-    arr.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortBy) {
-        case "startDate":
-          aValue = a.startDate ? new Date(a.startDate).getTime() : 0;
-          bValue = b.startDate ? new Date(b.startDate).getTime() : 0;
-          break;
-        case "endDate":
-          aValue = a.endDate ? new Date(a.endDate).getTime() : 0;
-          bValue = b.endDate ? new Date(b.endDate).getTime() : 0;
-          break;
-        case "year":
-          aValue = a.year ?? 0;
-          bValue = b.year ?? 0;
-          break;
-        case "status":
-          aValue = a.status ?? "";
-          bValue = b.status ?? "";
-          break;
-        default:
-          aValue = a.id;
-          bValue = b.id;
-      }
-
-      if (aValue === bValue) return 0;
-      if (sortOrder === "ASC") return aValue > bValue ? 1 : -1;
-      return aValue < bValue ? 1 : -1;
-    });
-    return arr;
-  }, [allSessions, sortBy, sortOrder]);
-
-  // Pagination (derive visible sessions)
-  useEffect(() => {
-    const startIdx = (currentPage - 1) * limit;
-    const endIdx = startIdx + limit;
-    setSessions(sortedSessions.slice(startIdx, endIdx));
-  }, [sortedSessions, currentPage, limit]);
-
-  // Initial load
   useEffect(() => {
     fetchSessions();
     fetchStats();
   }, [fetchSessions, fetchStats]);
 
-  // Debounced search: reset to page 1 and fetch
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchSessions();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchSessions]);
+  // Client‑side filtering (search, seasonType) and sorting
+  const filteredSessions = useMemo(() => {
+    let filtered = allSessions;
 
-  // Reset selections on page change
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((s) => s.name.toLowerCase().includes(q));
+    }
+
+    if (seasonTypeFilter !== "all") {
+      filtered = filtered.filter((s) => s.seasonType === seasonTypeFilter);
+    }
+
+    filtered.sort((a, b) => {
+      let aVal: any, bVal: any;
+      switch (sortBy) {
+        case "name":
+          aVal = a.name;
+          bVal = b.name;
+          break;
+        case "year":
+          aVal = a.year;
+          bVal = b.year;
+          break;
+        case "startDate":
+          aVal = a.startDate ? new Date(a.startDate).getTime() : 0;
+          bVal = b.startDate ? new Date(b.startDate).getTime() : 0;
+          break;
+        case "endDate":
+          aVal = a.endDate ? new Date(a.endDate).getTime() : 0;
+          bVal = b.endDate ? new Date(b.endDate).getTime() : 0;
+          break;
+        default:
+          aVal = a.id;
+          bVal = b.id;
+      }
+      if (aVal === bVal) return 0;
+      const compare = aVal > bVal ? 1 : -1;
+      return sortOrder === "asc" ? compare : -compare;
+    });
+
+    return filtered;
+  }, [allSessions, searchQuery, seasonTypeFilter, sortBy, sortOrder]);
+
+  // Pagination
+  const totalItems = filteredSessions.length;
+  const totalPages = Math.ceil(totalItems / limit);
+  const paginatedSessions = useMemo(() => {
+    const start = (currentPage - 1) * limit;
+    return filteredSessions.slice(start, start + limit);
+  }, [filteredSessions, currentPage, limit]);
+
+  // Reset page on filter change
   useEffect(() => {
-    setSelectedSessions([]);
-  }, [currentPage]);
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, yearFilter, seasonTypeFilter, sortBy, sortOrder]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([fetchSessions(), fetchStats()]);
-    setRefreshing(false);
   };
 
-  const handleSort = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
-    } else {
-      setSortBy(field);
-      setSortOrder("ASC");
-    }
-    setCurrentPage(1);
-  };
+  // Compute totalBukids from sessions (for stats)
+  const totalBukids = useMemo(() => {
+    return filteredSessions.reduce((sum, s) => sum + (s.bukids?.length || 0), 0);
+  }, [filteredSessions]);
 
   return {
-    sessions,
-    allSessions,
+    sessions: paginatedSessions,
+    allSessions: filteredSessions,
     stats,
+    totalBukids,
     loading,
     refreshing,
     error,
     currentPage,
     totalPages,
     totalItems,
-    limit,
     searchQuery,
     setSearchQuery,
     statusFilter,
@@ -238,6 +164,5 @@ export const useSessionData = () => {
     setSortBy,
     sortOrder,
     setSortOrder,
-    handleSort,
   };
 };

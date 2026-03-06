@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import ActivationDialog from "../components/activations/ActivationDialog";
 import { kabAuthStore } from "../lib/kabAuthStore";
-import activationAPI from "../apis/utils/activation";
+import activationAPI from "../api/utils/activation";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

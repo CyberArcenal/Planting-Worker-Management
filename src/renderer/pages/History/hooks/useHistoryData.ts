@@ -1,23 +1,14 @@
 // components/History/hooks/useHistoryData.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { HistoryType, HistoryFilters } from "../types/history.types";
-import paymentAPI, {
-  type PaymentResponse,
-  type PaymentHistoryItem,
-  type PaymentHistoryResponseData,
-} from "../../../apis/core/payment";
-import debtAPI, {
-  type DebtHistoryData,
-  type DebtHistoryItem,
-  type DebtHistoryResponseData,
-  type DebtResponse,
-} from "../../../apis/core/debt";
+import paymentHistoryAPI from "../../../api/core/payment_history";
+import debtHistoryAPI from "../../../api/core/debt_history";
+import type { PaymentHistory } from "../../../api/core/payment_history";
+import type { DebtHistory } from "../../../api/core/debt_history";
 
 interface UseHistoryDataReturn {
-  paymentHistory: PaymentHistoryItem[];
-  debtHistory: DebtHistoryItem[];
-  paymentHistorySummary: PaymentHistoryResponseData["summary"] | null;
-  debtHistorySummary: DebtHistoryResponseData["summary"] | null;
+  paymentHistory: PaymentHistory[];
+  debtHistory: DebtHistory[];
   loading: boolean;
   error: string | null;
   totalPages: number;
@@ -31,156 +22,40 @@ export const useHistoryData = (
   currentPage: number,
   limit: number,
 ): UseHistoryDataReturn => {
-  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>(
-    [],
-  );
-  const [debtHistory, setDebtHistory] = useState<DebtHistoryItem[]>([]);
-  const [paymentHistorySummary, setPaymentHistorySummary] = useState<
-    PaymentHistoryResponseData["summary"] | null
-  >(null);
-  const [debtHistorySummary, setDebtHistorySummary] = useState<
-    DebtHistoryResponseData["summary"] | null
-  >(null);
+  const [allPaymentHistory, setAllPaymentHistory] = useState<PaymentHistory[]>([]);
+  const [allDebtHistory, setAllDebtHistory] = useState<DebtHistory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
-  const fetchHistoryData = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const params: any = {
-        page: currentPage,
-        limit,
-        startDate: filters.dateFrom || undefined,
-        endDate: filters.dateTo || undefined,
-        actionType:
-          filters.transactionType !== "all"
-            ? filters.transactionType
-            : undefined,
-      };
-
       if (viewType === "payment") {
-        // Note: Using paymentId = 0 to get all payment history
-        // You might want to adjust this based on your API design
-        const response: PaymentResponse<PaymentHistoryResponseData> =
-          await paymentAPI.getPaymentHistory(0, params);
-
-        if (response.status && response.data) {
-          let filteredHistory = response.data.history || [];
-
-          // Apply worker filter if specified
-          if (filters.workerId) {
-            filteredHistory = filteredHistory.filter(
-              (record) => record.worker?.id === filters.workerId,
-            );
-          }
-
-          // Apply search filter if specified
-          if (filters.searchQuery) {
-            const searchLower = filters.searchQuery.toLowerCase();
-            filteredHistory = filteredHistory.filter(
-              (record) =>
-                record.worker?.firstName?.toLowerCase().includes(searchLower) ||
-                record.worker?.lastName?.toLowerCase().includes(searchLower) ||
-                record.worker?.code?.toLowerCase().includes(searchLower) ||
-                record.notes?.toLowerCase().includes(searchLower) ||
-                record.paymentInfo?.referenceNumber
-                  ?.toLowerCase()
-                  .includes(searchLower) ||
-                record.performedBy?.toLowerCase().includes(searchLower),
-            );
-          }
-
-          setPaymentHistory(filteredHistory);
-          setPaymentHistorySummary(response.data.summary);
-          setTotalItems(response.data.pagination?.total || 0);
-          setTotalPages(response.data.pagination?.totalPages || 1);
+        // Fetch payment history with date range
+        const params: any = {};
+        if (filters.dateFrom) params.startDate = filters.dateFrom;
+        if (filters.dateTo) params.endDate = filters.dateTo;
+        // Note: actionType filtering is done client-side
+        const response = await paymentHistoryAPI.getAll(params);
+        if (response.status) {
+          setAllPaymentHistory(response.data);
         } else {
-          throw new Error(
-            response.message || "Failed to fetch payment history",
-          );
+          throw new Error(response.message || "Failed to fetch payment history");
         }
       } else {
-        // For debt history, we need to fetch all debts first
-        const debtsResponse = await debtAPI.getAll({
-          date_from: filters.dateFrom || undefined,
-          date_to: filters.dateTo || undefined,
-        });
-
-        if (debtsResponse.status && debtsResponse.data) {
-          const allDebtHistories: DebtHistoryItem[] = [];
-
-          // Fetch history for each debt that matches filters
-          for (const debt of debtsResponse.data) {
-            // Filter by worker if specified
-            if (filters.workerId && debt.worker?.id !== filters.workerId) {
-              continue;
-            }
-
-            const historyResponse: DebtResponse<DebtHistoryResponseData> =
-              await debtAPI.getHistory(debt.id);
-            if (historyResponse.status && historyResponse.data) {
-              allDebtHistories.push(...(historyResponse.data.history || []));
-            }
-          }
-
-          // Apply additional filters
-          let filteredDebtHistory = allDebtHistories;
-
-          if (filters.transactionType !== "all") {
-            filteredDebtHistory = filteredDebtHistory.filter(
-              (record) => record.transactionType === filters.transactionType,
-            );
-          }
-
-          if (filters.searchQuery) {
-            const searchLower = filters.searchQuery.toLowerCase();
-            filteredDebtHistory = filteredDebtHistory.filter(
-              (record) =>
-                record.worker?.firstName?.toLowerCase().includes(searchLower) ||
-                record.worker?.lastName?.toLowerCase().includes(searchLower) ||
-                record.worker?.code?.toLowerCase().includes(searchLower) ||
-                record.notes?.toLowerCase().includes(searchLower) ||
-                record.referenceNumber?.toLowerCase().includes(searchLower) ||
-                record.paymentMethod?.toLowerCase().includes(searchLower),
-            );
-          }
-
-          // Sort by transaction date (newest first)
-          filteredDebtHistory.sort((a, b) => {
-            const dateA = new Date(a.transactionDate).getTime();
-            const dateB = new Date(b.transactionDate).getTime();
-            return dateB - dateA;
-          });
-
-          // Paginate locally (since backend doesn't support pagination for consolidated debt history)
-          const startIndex = (currentPage - 1) * limit;
-          const paginatedHistory = filteredDebtHistory.slice(
-            startIndex,
-            startIndex + limit,
-          );
-
-          const totalPaid = filteredDebtHistory.reduce(
-            (sum, item) => sum + item.amountPaid,
-            0,
-          );
-          const transactionTypes = [
-            ...new Set(filteredDebtHistory.map((item) => item.transactionType)),
-          ];
-
-          setDebtHistory(paginatedHistory);
-          setDebtHistorySummary({
-            totalRecords: filteredDebtHistory.length,
-            totalPaid,
-            transactionTypes,
-          });
-          setTotalItems(filteredDebtHistory.length);
-          setTotalPages(Math.ceil(filteredDebtHistory.length / limit));
+        // Fetch debt history with date range and transactionType (if provided)
+        const params: any = {};
+        if (filters.dateFrom) params.startDate = filters.dateFrom;
+        if (filters.dateTo) params.endDate = filters.dateTo;
+        if (filters.transactionType !== "all") {
+          params.transactionType = filters.transactionType;
+        }
+        const response = await debtHistoryAPI.getAll(params);
+        if (response.status) {
+          setAllDebtHistory(response.data);
         } else {
-          throw new Error(debtsResponse.message || "Failed to fetch debts");
+          throw new Error(response.message || "Failed to fetch debt history");
         }
       }
     } catch (err: any) {
@@ -189,21 +64,100 @@ export const useHistoryData = (
     } finally {
       setLoading(false);
     }
-  }, [viewType, filters, currentPage, limit]);
+  }, [viewType, filters.dateFrom, filters.dateTo, filters.transactionType]);
 
   useEffect(() => {
-    fetchHistoryData();
-  }, [fetchHistoryData]);
+    fetchAll();
+  }, [fetchAll]);
+
+  // ---------- Client‑side filtering ----------
+  const filteredData = useMemo(() => {
+    if (viewType === "payment") {
+      let filtered = allPaymentHistory;
+
+      // Filter by workerId
+      if (filters.workerId) {
+        filtered = filtered.filter(
+          (item) => item.payment?.worker?.id === filters.workerId
+        );
+      }
+
+      // Filter by transactionType (actionType)
+      if (filters.transactionType !== "all") {
+        filtered = filtered.filter(
+          (item) => item.actionType.toLowerCase() === filters.transactionType.toLowerCase()
+        );
+      }
+
+      // Search query
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (item) =>
+            item.payment?.worker?.name?.toLowerCase().includes(q) ||
+            item.notes?.toLowerCase().includes(q) ||
+            item.referenceNumber?.toLowerCase().includes(q) ||
+            item.performedBy?.toLowerCase().includes(q)
+        );
+      }
+
+      // Sort by changeDate (newest first)
+      filtered.sort((a, b) => new Date(b.changeDate).getTime() - new Date(a.changeDate).getTime());
+      return filtered;
+    } else {
+      let filtered = allDebtHistory;
+
+      // Filter by workerId
+      if (filters.workerId) {
+        filtered = filtered.filter(
+          (item) => item.debt?.worker?.id === filters.workerId
+        );
+      }
+
+      // Filter by transactionType (already applied at API if not "all")
+      if (filters.transactionType !== "all") {
+        filtered = filtered.filter(
+          (item) => item.transactionType === filters.transactionType
+        );
+      }
+
+      // Search query
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (item) =>
+            item.debt?.worker?.name?.toLowerCase().includes(q) ||
+            item.notes?.toLowerCase().includes(q) ||
+            item.referenceNumber?.toLowerCase().includes(q) ||
+            item.paymentMethod?.toLowerCase().includes(q)
+        );
+      }
+
+      // Sort by transactionDate (newest first)
+      filtered.sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime());
+      return filtered;
+    }
+  }, [viewType, allPaymentHistory, allDebtHistory, filters]);
+
+  // Pagination
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / limit);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * limit;
+    return filteredData.slice(start, start + limit);
+  }, [filteredData, currentPage, limit]);
+
+  const refresh = useCallback(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   return {
-    paymentHistory,
-    debtHistory,
-    paymentHistorySummary,
-    debtHistorySummary,
+    paymentHistory: viewType === "payment" ? (paginatedData as PaymentHistory[]) : [],
+    debtHistory: viewType === "debt" ? (paginatedData as DebtHistory[]) : [],
     loading,
     error,
     totalPages,
     totalItems,
-    refresh: fetchHistoryData,
+    refresh,
   };
 };

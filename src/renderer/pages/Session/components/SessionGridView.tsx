@@ -1,7 +1,7 @@
 // components/Session/components/SessionGridView.tsx
 import React from "react";
 import { Calendar, MapPin, Users, Home, CheckSquare } from "lucide-react";
-import type { SessionListData } from "../../../apis/core/session";
+import type { SessionListData } from "../../../api/core/session";
 import { formatDate } from "../../../utils/formatters";
 
 interface SessionGridViewProps {

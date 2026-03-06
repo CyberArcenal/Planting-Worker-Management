@@ -1,19 +1,18 @@
 // components/Session/components/SessionStats.tsx
 import React from "react";
-import {
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Archive,
-  TrendingUp,
-} from "lucide-react";
-import type { SessionStatsData } from "../../../apis/core/session";
+import { Calendar, CheckCircle, XCircle, Archive, TrendingUp } from "lucide-react";
+import type { SessionStats } from "../../../api/core/session";
 
 interface SessionStatsProps {
-  stats: SessionStatsData | null;
+  stats: SessionStats | null;
+  totalBukids: number; // computed from sessions
 }
 
-const SessionStats: React.FC<SessionStatsProps> = ({ stats }) => {
+const SessionStats: React.FC<SessionStatsProps> = ({ stats, totalBukids }) => {
+  const activeSessions = stats?.statusBreakdown?.active || 0;
+  const closedSessions = stats?.statusBreakdown?.closed || 0;
+  const archivedSessions = stats?.statusBreakdown?.archived || 0;
+
   const statCards = [
     {
       title: "Total Sessions",
@@ -24,28 +23,28 @@ const SessionStats: React.FC<SessionStatsProps> = ({ stats }) => {
     },
     {
       title: "Active",
-      value: stats?.activeSessions || 0,
+      value: activeSessions,
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
     {
       title: "Closed",
-      value: stats?.closedSessions || 0,
+      value: closedSessions,
       icon: XCircle,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
     },
     {
       title: "Archived",
-      value: stats?.archivedSessions || 0,
+      value: archivedSessions,
       icon: Archive,
       color: "text-gray-600",
       bgColor: "bg-gray-100",
     },
     {
       title: "Total Bukids",
-      value: stats?.totalBukids || 0,
+      value: totalBukids,
       icon: TrendingUp,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
@@ -62,10 +61,7 @@ const SessionStats: React.FC<SessionStatsProps> = ({ stats }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">{card.title}</p>
-              <p
-                className="text-2xl font-bold mt-1"
-                style={{ color: "var(--text-primary)" }}
-              >
+              <p className="text-2xl font-bold mt-1 text-gray-900">
                 {card.value.toLocaleString()}
               </p>
             </div>

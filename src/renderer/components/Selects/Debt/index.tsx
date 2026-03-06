@@ -1,89 +1,129 @@
-// components/DebtSelect.tsx
+// src/renderer/components/Selects/Debt/index.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Loader, CreditCard } from "lucide-react";
-import type { DebtData } from "../../../apis/core/debt";
-import debtAPI from "../../../apis/core/debt";
+import { createPortal } from "react-dom";
+import { Search, ChevronDown, CreditCard, X } from "lucide-react";
+import type { Debt } from "../../../api/core/debt";
+import debtAPI from "../../../api/core/debt";
 
 interface DebtSelectProps {
   value: number | null;
-  onChange: (debtId: number | null) => void;
+  onChange: (debtId: number | null, debt?: Debt) => void;
   disabled?: boolean;
   placeholder?: string;
+  className?: string;
+  workerFilter?: number | null;
 }
 
 const DebtSelect: React.FC<DebtSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  placeholder = "Select a debt",
+  placeholder = "Select a debt...",
+  className = "w-full max-w-md",
+  workerFilter = null,
 }) => {
-  const [debts, setDebts] = useState<DebtData[]>([]);
-  const [filteredDebts, setFilteredDebts] = useState<DebtData[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
+  const [filteredDebts, setFilteredDebts] = useState<Debt[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Load debts
   useEffect(() => {
-    const fetchDebts = async () => {
+    const loadDebts = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await debtAPI.getAll({});
-
-        if (response.status && response.data) {
-          setDebts(response.data);
-          setFilteredDebts(response.data);
+        const params: any = { limit: 1000 };
+        if (workerFilter) {
+          params.workerId = workerFilter;
         }
-      } catch (err) {
-        console.error("Error fetching debts:", err);
+        const response = await debtAPI.getAll(params);
+        if (response.status && response.data) {
+          const list = Array.isArray(response.data) ? response.data : response.data || [];
+          setDebts(list);
+          setFilteredDebts(list);
+        }
+      } catch (error) {
+        console.error("Failed to load debts:", error);
       } finally {
         setLoading(false);
       }
     };
+    loadDebts();
+  }, [workerFilter]);
 
-    fetchDebts();
-  }, []);
-
+  // Filter debts
   useEffect(() => {
-    if (searchTerm.trim() === "") {
+    if (!searchTerm.trim()) {
       setFilteredDebts(debts);
-    } else {
-      const filtered = debts.filter(
-        (debt) =>
-          debt.worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          debt.reason?.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-      setFilteredDebts(filtered);
+      return;
     }
+    const lower = searchTerm.toLowerCase();
+    setFilteredDebts(
+      debts.filter(
+        (d) =>
+          d.worker?.name?.toLowerCase().includes(lower) ||
+          d.reason?.toLowerCase().includes(lower) ||
+          d.status?.toLowerCase().includes(lower)
+      )
+    );
   }, [searchTerm, debts]);
 
+  // Focus search when dropdown opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  // Update dropdown position
+  const updateDropdownPosition = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+      window.addEventListener("scroll", updateDropdownPosition, true);
+      window.addEventListener("resize", updateDropdownPosition);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+      window.removeEventListener("resize", updateDropdownPosition);
+    };
+  }, [isOpen]);
+
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleSelect = (debtId: number) => {
-    onChange(debtId);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  const handleClear = () => {
-    onChange(null);
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -92,169 +132,211 @@ const DebtSelect: React.FC<DebtSelectProps> = ({
     }).format(amount);
   };
 
+  const handleSelect = (debt: Debt) => {
+    onChange(debt.id, debt);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(null);
+  };
+
   const selectedDebt = debts.find((d) => d.id === value);
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return { bg: "#fef3c7", text: "#92400e" };
+      case "partially_paid":
+        return { bg: "#dbeafe", text: "#1e40af" };
+      case "paid":
+        return { bg: "#d1fae5", text: "#065f46" };
+      case "cancelled":
+        return { bg: "#f3f4f6", text: "#6b7280" };
+      case "overdue":
+        return { bg: "#fee2e2", text: "#991b1b" };
+      case "settled":
+        return { bg: "#e0e7ff", text: "#3730a3" };
+      default:
+        return { bg: "#f3f4f6", text: "#6b7280" };
+    }
+  };
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`
+          w-full px-4 py-2 rounded-lg text-left flex items-center gap-2
+          transition-colors duration-200
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-gray-800"}
+        `}
         style={{
-          backgroundColor: "var(--input-bg)",
-          border: "1px solid var(--input-border)",
+          backgroundColor: "var(--card-bg)",
+          border: "1px solid var(--border-color)",
           color: "var(--text-primary)",
-          minHeight: "44px",
+          minHeight: "42px",
         }}
       >
-        <div className="flex items-center gap-2 truncate">
+        <CreditCard
+          className="w-4 h-4 flex-shrink-0"
+          style={{ color: "var(--primary-color)" }}
+        />
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           {selectedDebt ? (
             <>
-              <CreditCard
-                className="w-4 h-4"
-                style={{ color: "var(--accent-green)" }}
-              />
-              <span className="truncate">
-                {selectedDebt.worker.name} -{" "}
-                {formatCurrency(selectedDebt.balance)}
+              <span className="font-medium truncate">
+                {selectedDebt.worker?.name || "Unknown"} - {formatCurrency(selectedDebt.balance)}
               </span>
+              {selectedDebt.reason && (
+                <span
+                  className="text-xs truncate"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  ({selectedDebt.reason})
+                </span>
+              )}
             </>
           ) : (
-            <span style={{ color: "var(--text-secondary)" }}>
+            <span
+              className="truncate"
+              style={{ color: "var(--text-secondary)" }}
+            >
               {placeholder}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {selectedDebt && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear();
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              style={{ color: "var(--accent-rust)" }}
-            >
-              ×
-            </button>
-          )}
-          <ChevronDown
-            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        {selectedDebt && !disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="p-1 rounded-full hover:bg-gray-700 transition-colors flex-shrink-0"
             style={{ color: "var(--text-secondary)" }}
-          />
-        </div>
+            title="Remove selected"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        <ChevronDown
+          className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          style={{ color: "var(--text-secondary)" }}
+        />
       </button>
 
-      {isOpen && (
-        <div
-          className="absolute z-50 w-full mt-1 rounded-lg shadow-lg"
-          style={{
-            backgroundColor: "var(--card-bg)",
-            border: "1px solid var(--border-color)",
-            maxHeight: "300px",
-            overflow: "hidden",
-          }}
-        >
+      {isOpen &&
+        createPortal(
           <div
-            className="p-3 border-b"
-            style={{ borderColor: "var(--border-color)" }}
+            ref={dropdownRef}
+            className="fixed z-[9999] rounded-lg shadow-lg overflow-hidden"
+            style={{
+              top: dropdownStyle.top,
+              left: dropdownStyle.left,
+              width: dropdownStyle.width,
+              backgroundColor: "var(--card-bg)",
+              border: "1px solid var(--border-color)",
+              maxHeight: "350px",
+            }}
           >
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                style={{ color: "var(--text-secondary)" }}
-              />
-              <input
-                type="text"
-                placeholder="Search debts..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
-                style={{
-                  backgroundColor: "var(--input-bg)",
-                  border: "1px solid var(--input-border)",
-                  color: "var(--text-primary)",
-                }}
-                autoFocus
-              />
+            <div
+              className="p-2 border-b"
+              style={{ borderColor: "var(--border-color)" }}
+            >
+              <div className="relative">
+                <Search
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                  style={{ color: "var(--text-secondary)" }}
+                />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search by worker, reason, status..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded text-sm"
+                  style={{
+                    backgroundColor: "var(--card-secondary-bg)",
+                    border: "1px solid var(--border-color)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          {loading && (
-            <div className="p-4 text-center">
-              <Loader
-                className="w-5 h-5 animate-spin mx-auto"
-                style={{ color: "var(--accent-green)" }}
-              />
-              <p
-                className="text-xs mt-2"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Loading debts...
-              </p>
-            </div>
-          )}
-
-          {!loading && (
-            <div className="max-h-60 overflow-y-auto">
-              {filteredDebts.length === 0 ? (
+            <div className="overflow-y-auto" style={{ maxHeight: "250px" }}>
+              {loading && debts.length === 0 ? (
                 <div
-                  className="p-4 text-center text-sm"
+                  className="p-3 text-center text-sm"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  {searchTerm ? "No debts found" : "No debts available"}
+                  Loading...
+                </div>
+              ) : filteredDebts.length === 0 ? (
+                <div
+                  className="p-3 text-center text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  No debts found
                 </div>
               ) : (
-                filteredDebts.map((debt) => (
-                  <button
-                    key={debt.id}
-                    type="button"
-                    onClick={() => handleSelect(debt.id)}
-                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                      debt.id === value ? "bg-gray-50" : ""
-                    }`}
-                    style={{
-                      borderBottom: "1px solid var(--border-light)",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        debt.id === value
-                          ? "bg-blue-500 border-blue-500"
-                          : "border-gray-300"
-                      }`}
+                filteredDebts.map((debt) => {
+                  const colors = getStatusColor(debt.status);
+                  return (
+                    <button
+                      key={debt.id}
+                      type="button"
+                      onClick={() => handleSelect(debt)}
+                      className={`
+                        w-full px-3 py-2 text-left flex items-center gap-2
+                        transition-colors text-sm cursor-pointer hover:bg-[var(--card-hover-bg)]
+                        ${debt.id === value ? "bg-[var(--accent-blue-light)]" : ""}
+                      `}
+                      style={{ borderBottom: "1px solid var(--border-color)" }}
                     >
-                      {debt.id === value && (
-                        <div className="w-2 h-2 rounded-full bg-white"></div>
-                      )}
-                    </div>
-                    <CreditCard
-                      className="w-4 h-4"
-                      style={{ color: "var(--accent-green)" }}
-                    />
-                    <div className="flex-1 text-left">
-                      <div className="font-medium text-sm">
-                        {debt.worker.name}
+                      <CreditCard
+                        className="w-3.5 h-3.5 flex-shrink-0"
+                        style={{ color: "var(--primary-color)" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="font-medium truncate"
+                            style={{ color: "var(--text-primary)" }}
+                          >
+                            {debt.worker?.name || "Unknown"}
+                          </span>
+                          <span
+                            className="text-xs px-1.5 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: colors.bg,
+                              color: colors.text,
+                            }}
+                          >
+                            {debt.status}
+                          </span>
+                        </div>
+                        <div
+                          className="text-xs mt-0.5"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          {formatCurrency(debt.balance)} • Due: {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : "N/A"}
+                          {debt.reason && ` • ${debt.reason}`}
+                        </div>
                       </div>
-                      <div
-                        className="text-xs"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {formatCurrency(debt.balance)} • {debt.status}
-                      </div>
-                    </div>
-                  </button>
-                ))
+                    </button>
+                  );
+                })
               )}
             </div>
-          )}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

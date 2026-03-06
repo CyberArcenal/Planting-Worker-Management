@@ -21,14 +21,14 @@ import {
   Calculator,
   Shield,
 } from "lucide-react";
-import type { WorkerData } from "../../../apis/core/worker";
+import type { WorkerData } from "../../../api/core/worker";
 import type {
   DebtData,
   DebtCreationRequest,
   DebtUpdateRequest,
-} from "../../../apis/core/debt";
-import debtAPI from "../../../apis/core/debt";
-import workerAPI from "../../../apis/core/worker";
+} from "../../../api/core/debt";
+import debtAPI from "../../../api/core/debt";
+import workerAPI from "../../../api/core/worker";
 import { showError, showSuccess } from "../../../utils/notification";
 import { dialogs } from "../../../utils/dialogs";
 import WorkerSelect from "../../../components/Selects/Worker";

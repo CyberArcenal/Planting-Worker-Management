@@ -14,6 +14,10 @@ const Session = new EntitySchema({
       type: String,
       nullable: false, // e.g. "First Cropping 2026"
     },
+    notes: {
+      type: String,
+      nullable: true,
+    },
     seasonType: {
       type: String,
       nullable: true, // optional: 'tag-ulan' or 'tag-araw'
@@ -33,6 +37,7 @@ const Session = new EntitySchema({
     status: {
       type: String,
       default: "active", // active | closed | archived
+      enum: ["active", "closed", "archived"]
     },
     createdAt: {
       type: Date,
@@ -64,13 +69,6 @@ const Session = new EntitySchema({
     },
     debts: {
       target: "Debt",
-      type: "one-to-many",
-      inverseSide: "session",
-      cascade: true,
-    },
-
-    userActivities: {
-      target: "UserActivity",
       type: "one-to-many",
       inverseSide: "session",
       cascade: true,

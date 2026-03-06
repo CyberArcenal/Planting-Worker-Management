@@ -13,7 +13,7 @@ import {
   Clock,
   Info,
 } from "lucide-react";
-import sessionAPI from "../../../apis/core/session";
+import sessionAPI from "../../../api/core/session";
 import { showError } from "../../../utils/notification";
 import { formatDate } from "../../../utils/formatters";
 

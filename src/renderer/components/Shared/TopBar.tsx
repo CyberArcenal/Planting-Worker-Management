@@ -1,56 +1,89 @@
-// components/TopBar.tsx
+// src/renderer/components/TopBar.tsx (updated)
 import {
   Sun,
   Cloud,
   CloudRain,
   CloudLightning,
   CloudFog,
-  Droplets,
-  Wind,
-  RefreshCw,
+  Droplets, RefreshCw,
   CalendarDays,
   AlertCircle,
   Menu,
   Calendar,
-  Search,
-  User,
-  Bell,
-  MapPin,
-  Thermometer,
+  Search, Bell,
+  MapPin
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import systemConfigAPI from "../../apis/core/system_config";
-import { kabAuthStore } from "../../lib/kabAuthStore";
+import sessionAPI, { type Session } from "../../api/core/session";
 import { useDynamicWeather } from "../../hooks/useDynamicWeather";
+import { useDefaultSessionId } from "../../utils/config/farmConfig";
 import UpdateNotifier from "./UpdateNotifier";
+import { NotificationDrawer } from "./NotificationDrawer";
 
 interface TopBarProps {
   toggleSidebar: () => void;
 }
 
-interface DefaultSessionData {
-  id: number;
-  seasonType: string;
-  year: number;
-  startDate: string | null;
-  endDate: string | null;
-  status: string;
-  notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
-  const currentUser = kabAuthStore.getUser();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [defaultSession, setDefaultSession] =
-    useState<DefaultSessionData | null>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const [sessionDetails, setSessionDetails] = useState<Session | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
+  const defaultSessionId = useDefaultSessionId();
+
+  // Fetch session details whenever defaultSessionId changes
+  useEffect(() => {
+    const fetchSessionDetails = async () => {
+      if (!defaultSessionId) {
+        setSessionDetails(null);
+        setSessionLoading(false);
+        return;
+      }
+      setSessionLoading(true);
+      try {
+        const response = await sessionAPI.getById(defaultSessionId);
+        if (response.status && response.data) {
+          setSessionDetails(response.data);
+        } else {
+          console.warn("Failed to fetch session details for ID:", defaultSessionId);
+          setSessionDetails(null);
+        }
+      } catch (error) {
+        console.error("Error fetching session details:", error);
+        setSessionDetails(null);
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+
+    fetchSessionDetails();
+  }, [defaultSessionId]);
+
+  // Manual refresh function (can be called by button)
+  const refetchSession = async () => {
+    if (!defaultSessionId) {
+      setSessionDetails(null);
+      return;
+    }
+    setRefreshing(true);
+    try {
+      const response = await sessionAPI.getById(defaultSessionId);
+      if (response.status && response.data) {
+        setSessionDetails(response.data);
+      }
+    } catch (error) {
+      console.error("Error refreshing session:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Use dynamic weather hook
   const {
@@ -99,7 +132,10 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
     await getWeatherForSavedLocation(index);
     setShowLocationMenu(false);
   };
-
+  // Callback to update badge from drawer
+  const handleUnreadCountChange = (count: number) => {
+    setUnreadCount(count);
+  };
   // Format location name for display
   const formatLocationName = (location: any) => {
     if (!location) return "Getting location...";
@@ -110,31 +146,6 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
 
     return location.name;
   };
-
-  // Fetch default session data
-  const fetchDefaultSession = async () => {
-    try {
-      setLoadingSession(true);
-      const response = await systemConfigAPI.getDefaultSessionData();
-      if (response.status && response.data) {
-        setDefaultSession(response.data);
-      } else {
-        console.warn("No default session found or error fetching session data");
-      }
-    } catch (error) {
-      console.error("Error fetching default session:", error);
-    } finally {
-      setLoadingSession(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDefaultSession();
-
-    // Refresh session data every 5 minutes
-    const interval = setInterval(fetchDefaultSession, 300000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Define searchable routes
   const allRoutes = useMemo(
@@ -203,9 +214,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   };
 
   const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchDefaultSession();
-    setTimeout(() => setRefreshing(false), 1000);
+    await refetchSession();
   };
 
   // Get session status color
@@ -314,7 +323,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             style={{
               background: "var(--accent-green-light)",
               borderColor: "var(--accent-green)",
-              color: "var(--accent-green)",
+              color: "var(--accent-green-dark)",
             }}
           >
             <Menu className="w-5 h-5" />
@@ -324,49 +333,49 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           <div
             className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(46, 125, 50, 0.1)",
+              border: "1px solid var(--border-color)",
               minWidth: "220px",
             }}
           >
             <CalendarDays
               className="w-4 h-4 flex-shrink-0"
-              style={{ color: "white" }}
+              style={{ color: "var(--accent-green)" }}
             />
             <div className="min-w-0">
-              {loadingSession ? (
+              {sessionLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-pulse h-3 w-24 bg-white/20 rounded"></div>
+                  <div className="animate-pulse h-3 w-24 bg-[var(--accent-green-light)] rounded"></div>
                 </div>
-              ) : defaultSession ? (
+              ) : sessionDetails ? (
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span
                       className="text-xs font-medium truncate"
-                      style={{ color: "white" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
-                      {formatSeasonType(defaultSession.seasonType)}{" "}
-                      {defaultSession.year}
+                      {formatSeasonType(sessionDetails.seasonType as string)}{" "}
+                      {sessionDetails.year}
                     </span>
                     <span
                       className="text-xs px-1.5 py-0.5 rounded-full capitalize"
                       style={{
                         background: getSessionStatusColor(
-                          defaultSession.status,
+                          sessionDetails.status,
                         ),
                         color: "white",
                       }}
                     >
-                      {defaultSession.status}
+                      {sessionDetails.status}
                     </span>
                   </div>
                   <div
                     className="text-xs truncate"
-                    style={{ color: "rgba(255,255,255,0.8)" }}
+                    style={{ color: "var(--text-secondary)" }}
                   >
-                    ID: {defaultSession.id} •{" "}
-                    {defaultSession.startDate
-                      ? new Date(defaultSession.startDate).toLocaleDateString()
+                    ID: {sessionDetails.id} •{" "}
+                    {sessionDetails.startDate
+                      ? new Date(sessionDetails.startDate).toLocaleDateString()
                       : "No start date"}
                   </div>
                 </div>
@@ -379,14 +388,14 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                     />
                     <span
                       className="text-xs font-medium"
-                      style={{ color: "white" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       No Active Session
                     </span>
                   </div>
                   <div
                     className="text-xs cursor-pointer hover:underline"
-                    style={{ color: "var(--accent-green-light)" }}
+                    style={{ color: "var(--accent-green)" }}
                     onClick={() => navigate("/system/sessions")}
                   >
                     Click to set default session
@@ -400,18 +409,24 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           <div
             className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(46, 125, 50, 0.1)",
+              border: "1px solid var(--border-color)",
             }}
           >
-            <Calendar className="w-4 h-4" style={{ color: "white" }} />
+            <Calendar
+              className="w-4 h-4"
+              style={{ color: "var(--accent-green)" }}
+            />
             <div className="flex flex-col">
-              <div className="text-sm font-medium" style={{ color: "white" }}>
+              <div
+                className="text-sm font-medium"
+                style={{ color: "var(--text-primary)" }}
+              >
                 {today.toLocaleDateString("en-US", { weekday: "long" })}
               </div>
               <div
                 className="text-xs"
-                style={{ color: "rgba(255,255,255,0.8)" }}
+                style={{ color: "var(--text-secondary)" }}
               >
                 {formattedDate}
               </div>
@@ -520,6 +535,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
 
         {/* Right Section - Actions & Profile */}
         <div className="flex items-center gap-3">
+          <UpdateNotifier />
           {/* Weather Widget with Location Menu */}
           <div className="relative">
             <div
@@ -528,13 +544,13 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                 weather && !weatherLoading
                   ? {
                       background: getWeatherColorScheme(weather.condition).bg,
-                      border: "1px solid rgba(255,255,255,0.2)",
+                      border: "1px solid var(--border-color)",
                       minWidth: "200px",
                       cursor: "pointer",
                     }
                   : {
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.2)",
+                      background: "rgba(46, 125, 50, 0.1)",
+                      border: "1px solid var(--border-color)",
                       minWidth: "200px",
                       cursor: "pointer",
                     }
@@ -543,7 +559,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             >
               {weatherLoading ? (
                 <div className="flex items-center justify-center w-full">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--accent-green)]"></div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between w-full">
@@ -554,17 +570,24 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                         style={{
                           color: weather
                             ? getWeatherColorScheme(weather.condition).icon
-                            : "white",
+                            : "var(--accent-green)",
                         }}
                       />
                     )}
                     <div>
-                      <div className="text-sm font-medium text-white">
+                      <div
+                        className="text-sm font-medium"
+                        style={{ color: "var(--text-primary)" }}
+                      >
                         {weather ? `${weather.temperature}°C` : "--°C"}
                       </div>
-                      <div className="text-xs text-white/80 truncate max-w-[120px]">
+                      <div className="text-xs text-[var(--text-secondary)] truncate max-w-[120px]">
                         {weather
-                          ? `${weather.condition} • ${currentLocation?.city || currentLocation?.name || "Unknown"}`
+                          ? `${weather.condition} • ${
+                              currentLocation?.city ||
+                              currentLocation?.name ||
+                              "Unknown"
+                            }`
                           : "No weather data"}
                       </div>
                     </div>
@@ -575,9 +598,12 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
                         e.stopPropagation();
                         handleRefreshWeather();
                       }}
-                      className="p-1 hover:bg-white/10 rounded"
+                      className="p-1 hover:bg-[var(--card-secondary-bg)] rounded"
                     >
-                      <RefreshCw className="w-3 h-3 text-white" />
+                      <RefreshCw
+                        className="w-3 h-3"
+                        style={{ color: "var(--text-secondary)" }}
+                      />
                     </button>
                   )}
                 </div>
@@ -652,7 +678,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           {/* Refresh Session Button */}
           <button
             onClick={handleRefresh}
-            disabled={refreshing}
+            disabled={refreshing || sessionLoading}
             className="windows-btn flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{
               background: "var(--accent-green)",
@@ -665,59 +691,32 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             />
             <span className="hidden md:inline text-sm">Refresh</span>
           </button>
-          <UpdateNotifier />
+
           {/* Notification Bell */}
           <button
+            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
             className="relative windows-btn p-2 rounded-lg"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "white",
+              background: "rgba(46, 125, 50, 0.1)",
+              border: "1px solid var(--border-color)",
+              color: "var(--text-primary)",
             }}
           >
             <Bell className="w-5 h-5" />
-            <span
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-              style={{ background: "var(--accent-red)" }}
-            ></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-5 h-5 bg-[var(--danger-color)] text-white text-xs rounded-full flex items-center justify-center font-medium">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
-
-          {/* Profile */}
-          <div
-            className="flex items-center gap-2 p-1 rounded-lg cursor-pointer"
-            onClick={() => navigate("/system/profile")}
-            style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-            }}
-          >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center"
-              style={{
-                background: "var(--accent-green)",
-                color: "white",
-              }}
-            >
-              <User className="w-5 h-5" />
-            </div>
-            <div className="hidden lg:block text-left">
-              <div className="text-sm font-medium" style={{ color: "white" }}>
-                <span className="truncate max-w-[120px]">
-                  {currentUser ? currentUser.username || "User" : "User"}
-                </span>
-              </div>
-              <div
-                className="text-xs"
-                style={{ color: "rgba(255,255,255,0.8)" }}
-              >
-                {defaultSession
-                  ? `Session: ${defaultSession.id}`
-                  : "Administrator"}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+      {/* Notification Drawer */}
+      <NotificationDrawer
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        onUnreadCountChange={handleUnreadCountChange}
+      />
     </header>
   );
 };

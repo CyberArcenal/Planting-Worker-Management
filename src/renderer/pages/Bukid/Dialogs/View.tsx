@@ -26,8 +26,8 @@ import type {
   BukidStatsData,
   WorkerCountData,
   PitakCountData,
-} from "../../../apis/core/bukid";
-import bukidAPI from "../../../apis/core/bukid";
+} from "../../../api/core/bukid";
+import bukidAPI from "../../../api/core/bukid";
 import { showError } from "../../../utils/notification";
 import { formatDate, formatCurrency } from "../../../utils/formatters";
 

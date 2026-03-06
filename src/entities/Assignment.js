@@ -2,6 +2,7 @@
 const { EntitySchema } = require("typeorm");
 
 const AssignmentStatus = {
+  INITIATED: "initiated",
   ACTIVE: "active",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
@@ -22,6 +23,7 @@ const Assignment = new EntitySchema({
     status: {
       type: String,
       default: AssignmentStatus.ACTIVE,
+      enum: AssignmentStatus,
     },
     notes: { type: String, nullable: true },
     createdAt: { type: Date, createDate: true },
@@ -70,3 +72,4 @@ const Assignment = new EntitySchema({
 });
 
 module.exports = Assignment;
+module.exports.AssignmentStatus = AssignmentStatus;

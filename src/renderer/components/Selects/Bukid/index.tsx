@@ -1,250 +1,301 @@
-// components/BukidSelect.tsx
+// src/renderer/components/Selects/Bukid/index.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Loader, TreePalm } from "lucide-react";
-import type { BukidData } from "../../../apis/core/bukid";
-import bukidAPI from "../../../apis/core/bukid";
+import { createPortal } from "react-dom";
+import { Search, ChevronDown, TreePalm, X } from "lucide-react";
+import type { Bukid } from "../../../api/core/bukid";
+import bukidAPI from "../../../api/core/bukid";
 
 interface BukidSelectProps {
   value: number | null;
-  onChange: (bukidId: number | null) => void;
+  onChange: (bukidId: number | null, bukid?: Bukid) => void;
   disabled?: boolean;
   placeholder?: string;
+  activeOnly?: boolean;
+  className?: string;
 }
 
 const BukidSelect: React.FC<BukidSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  placeholder = "Select a farm",
+  placeholder = "Select a farm...",
+  activeOnly = true,
+  className = "w-full max-w-md",
 }) => {
-  const [bukids, setBukids] = useState<BukidData[]>([]);
-  const [filteredBukids, setFilteredBukids] = useState<BukidData[]>([]);
+  const [bukids, setBukids] = useState<Bukid[]>([]);
+  const [filteredBukids, setFilteredBukids] = useState<Bukid[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Load bukids
   useEffect(() => {
-    const fetchBukids = async () => {
+    const loadBukids = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await bukidAPI.getAll({ limit: 1000 });
-
-        if (response.status && response.data?.bukids) {
-          setBukids(response.data.bukids);
-          setFilteredBukids(response.data.bukids);
+        const params: any = { limit: 1000 };
+        if (activeOnly) {
+          params.status = "active"; // assuming API supports filtering
         }
-      } catch (err) {
-        console.error("Error fetching farms:", err);
+        const response = await bukidAPI.getAll(params);
+        if (response.status && response.data) {
+          let list = Array.isArray(response.data) ? response.data : response.data || [];
+          if (activeOnly && !params.status) {
+            list = list.filter((b) => b.status === "active");
+          }
+          setBukids(list);
+          setFilteredBukids(list);
+        }
+      } catch (error) {
+        console.error("Failed to load farms:", error);
       } finally {
         setLoading(false);
       }
     };
+    loadBukids();
+  }, [activeOnly]);
 
-    fetchBukids();
-  }, []);
-
+  // Filter bukids
   useEffect(() => {
-    if (searchTerm.trim() === "") {
+    if (!searchTerm.trim()) {
       setFilteredBukids(bukids);
-    } else {
-      const filtered = bukids.filter(
-        (bukid) =>
-          bukid.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (bukid.location &&
-            bukid.location.toLowerCase().includes(searchTerm.toLowerCase())),
-      );
-      setFilteredBukids(filtered);
+      return;
     }
+    const lower = searchTerm.toLowerCase();
+    setFilteredBukids(
+      bukids.filter(
+        (b) =>
+          b.name.toLowerCase().includes(lower) ||
+          (b.location && b.location.toLowerCase().includes(lower))
+      )
+    );
   }, [searchTerm, bukids]);
 
+  // Focus search when dropdown opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  // Update dropdown position
+  const updateDropdownPosition = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+      window.addEventListener("scroll", updateDropdownPosition, true);
+      window.addEventListener("resize", updateDropdownPosition);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+      window.removeEventListener("resize", updateDropdownPosition);
+    };
+  }, [isOpen]);
+
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleSelect = (bukidId: number) => {
-    onChange(bukidId);
+  const handleSelect = (bukid: Bukid) => {
+    onChange(bukid.id, bukid);
     setIsOpen(false);
     setSearchTerm("");
   };
 
-  const handleClear = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onChange(null);
   };
 
   const selectedBukid = bukids.find((b) => b.id === value);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`
+          w-full px-4 py-2 rounded-lg text-left flex items-center gap-2
+          transition-colors duration-200
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-gray-800"}
+        `}
         style={{
-          backgroundColor: "var(--input-bg)",
-          border: "1px solid var(--input-border)",
+          backgroundColor: "var(--card-bg)",
+          border: "1px solid var(--border-color)",
           color: "var(--text-primary)",
-          minHeight: "44px",
+          minHeight: "42px",
         }}
       >
-        <div className="flex items-center gap-2 truncate">
+        <TreePalm
+          className="w-4 h-4 flex-shrink-0"
+          style={{ color: "var(--primary-color)" }}
+        />
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           {selectedBukid ? (
             <>
-              <TreePalm
-                className="w-4 h-4"
-                style={{ color: "var(--accent-green)" }}
-              />
-              <span className="truncate">{selectedBukid.name}</span>
+              <span className="font-medium truncate">{selectedBukid.name}</span>
+              {selectedBukid.location && (
+                <span
+                  className="text-xs truncate"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  ({selectedBukid.location})
+                </span>
+              )}
             </>
           ) : (
-            <span style={{ color: "var(--text-secondary)" }}>
+            <span
+              className="truncate"
+              style={{ color: "var(--text-secondary)" }}
+            >
               {placeholder}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {selectedBukid && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear();
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              style={{ color: "var(--accent-rust)" }}
-            >
-              ×
-            </button>
-          )}
-          <ChevronDown
-            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        {selectedBukid && !disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="p-1 rounded-full hover:bg-gray-700 transition-colors flex-shrink-0"
             style={{ color: "var(--text-secondary)" }}
-          />
-        </div>
+            title="Remove selected"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        <ChevronDown
+          className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          style={{ color: "var(--text-secondary)" }}
+        />
       </button>
 
-      {isOpen && (
-        <div
-          className="absolute z-50 w-full mt-1 rounded-lg shadow-lg"
-          style={{
-            backgroundColor: "var(--card-bg)",
-            border: "1px solid var(--border-color)",
-            maxHeight: "300px",
-            overflow: "hidden",
-          }}
-        >
+      {isOpen &&
+        createPortal(
           <div
-            className="p-3 border-b"
-            style={{ borderColor: "var(--border-color)" }}
+            ref={dropdownRef}
+            className="fixed z-[9999] rounded-lg shadow-lg overflow-hidden"
+            style={{
+              top: dropdownStyle.top,
+              left: dropdownStyle.left,
+              width: dropdownStyle.width,
+              backgroundColor: "var(--card-bg)",
+              border: "1px solid var(--border-color)",
+              maxHeight: "350px",
+            }}
           >
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                style={{ color: "var(--text-secondary)" }}
-              />
-              <input
-                type="text"
-                placeholder="Search farms..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
-                style={{
-                  backgroundColor: "var(--input-bg)",
-                  border: "1px solid var(--input-border)",
-                  color: "var(--text-primary)",
-                }}
-                autoFocus
-              />
+            <div
+              className="p-2 border-b"
+              style={{ borderColor: "var(--border-color)" }}
+            >
+              <div className="relative">
+                <Search
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                  style={{ color: "var(--text-secondary)" }}
+                />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search by name or location..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded text-sm"
+                  style={{
+                    backgroundColor: "var(--card-secondary-bg)",
+                    border: "1px solid var(--border-color)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          {loading && (
-            <div className="p-4 text-center">
-              <Loader
-                className="w-5 h-5 animate-spin mx-auto"
-                style={{ color: "var(--accent-green)" }}
-              />
-              <p
-                className="text-xs mt-2"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Loading farms...
-              </p>
-            </div>
-          )}
-
-          {!loading && (
-            <div className="max-h-60 overflow-y-auto">
-              {filteredBukids.length === 0 ? (
+            <div className="overflow-y-auto" style={{ maxHeight: "250px" }}>
+              {loading && bukids.length === 0 ? (
                 <div
-                  className="p-4 text-center text-sm"
+                  className="p-3 text-center text-sm"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  {searchTerm ? "No farms found" : "No farms available"}
+                  Loading...
+                </div>
+              ) : filteredBukids.length === 0 ? (
+                <div
+                  className="p-3 text-center text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  No farms found
                 </div>
               ) : (
                 filteredBukids.map((bukid) => (
                   <button
                     key={bukid.id}
                     type="button"
-                    onClick={() => handleSelect(bukid.id!)}
-                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                      bukid.id === value ? "bg-gray-50" : ""
-                    }`}
-                    style={{
-                      borderBottom: "1px solid var(--border-light)",
-                      color: "var(--text-primary)",
-                    }}
+                    onClick={() => handleSelect(bukid)}
+                    className={`
+                      w-full px-3 py-2 text-left flex items-center gap-2
+                      transition-colors text-sm cursor-pointer hover:bg-[var(--card-hover-bg)]
+                      ${bukid.id === value ? "bg-[var(--accent-blue-light)]" : ""}
+                    `}
+                    style={{ borderBottom: "1px solid var(--border-color)" }}
                   >
-                    <div
-                      className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        bukid.id === value
-                          ? "bg-blue-500 border-blue-500"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {bukid.id === value && (
-                        <div className="w-2 h-2 rounded-full bg-white"></div>
-                      )}
-                    </div>
                     <TreePalm
-                      className="w-4 h-4"
-                      style={{ color: "var(--accent-green)" }}
+                      className="w-3.5 h-3.5 flex-shrink-0"
+                      style={{ color: "var(--primary-color)" }}
                     />
-                    <div className="flex-1 text-left">
-                      <div className="font-medium text-sm">{bukid.name}</div>
+                    <div className="flex-1 min-w-0">
+                      <span
+                        className="font-medium truncate"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {bukid.name}
+                      </span>
                       <div
-                        className="text-xs"
+                        className="text-xs mt-0.5"
                         style={{ color: "var(--text-secondary)" }}
                       >
-                        {bukid.location || "No location"} •{" "}
-                        {bukid.status || "No status"}
+                        {bukid.location || "No location"} • {bukid.status}
                       </div>
                     </div>
                   </button>
                 ))
               )}
             </div>
-          )}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

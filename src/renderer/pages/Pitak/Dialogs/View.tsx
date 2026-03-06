@@ -30,8 +30,8 @@ import {
   Crop,
   RectangleCircle,
 } from "lucide-react";
-import type { PitakWithDetails } from "../../../apis/core/pitak";
-import pitakAPI from "../../../apis/core/pitak";
+import type { PitakWithDetails } from "../../../api/core/pitak";
+import pitakAPI from "../../../api/core/pitak";
 import { showError } from "../../../utils/notification";
 import { formatDate, formatCurrency } from "../../../utils/formatters";
 

@@ -1,291 +1,335 @@
-// components/WorkerSelect.tsx
+// src/renderer/components/Selects/Worker/index.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Loader, User } from "lucide-react";
-import type { WorkerData } from "../../../apis/core/worker";
-import workerAPI from "../../../apis/core/worker";
+import { createPortal } from "react-dom";
+import { Search, ChevronDown, User, X } from "lucide-react";
+import type { Worker } from "../../../api/core/worker";
+import workerAPI from "../../../api/core/worker";
 
 interface WorkerSelectProps {
   value: number | null;
-  onChange: (workerId: number | null) => void;
+  onChange: (workerId: number | null, worker?: Worker) => void;
   disabled?: boolean;
   placeholder?: string;
-  inModal?: boolean; // New prop for modal context
+  activeOnly?: boolean;
+  className?: string;
 }
 
 const WorkerSelect: React.FC<WorkerSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  placeholder = "Select a worker",
-  inModal = false,
+  placeholder = "Select a worker...",
+  activeOnly = true,
+  className = "w-full max-w-md",
 }) => {
-  const [workers, setWorkers] = useState<WorkerData[]>([]);
-  const [filteredWorkers, setFilteredWorkers] = useState<WorkerData[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Load workers
   useEffect(() => {
-    const fetchWorkers = async () => {
+    const loadWorkers = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await workerAPI.getAllWorkers({ limit: 1000 });
-
-        if (response.status && response.data?.workers) {
-          const filtered = response.data.workers.filter(
-            (worker) =>
-              worker.status === "active" || worker.status === "on-leave",
-          );
-          setWorkers(filtered);
-          setFilteredWorkers(filtered);
+        const params: any = {
+          sortBy: "name",
+          sortOrder: "ASC",
+          limit: 1000,
+        };
+        if (activeOnly) {
+          params.status = "active"; // adjust based on API; maybe fetch all and filter client-side
         }
-      } catch (err) {
-        console.error("Error fetching workers:", err);
+        const response = await workerAPI.getAll(params);
+        if (response.status && response.data) {
+          let list = Array.isArray(response.data) ? response.data : response.data || [];
+          if (activeOnly) {
+            list = list.filter((w) => w.status === "active" || w.status === "on-leave");
+          }
+          setWorkers(list);
+          setFilteredWorkers(list);
+        }
+      } catch (error) {
+        console.error("Failed to load workers:", error);
       } finally {
         setLoading(false);
       }
     };
+    loadWorkers();
+  }, [activeOnly]);
 
-    fetchWorkers();
-  }, []);
-
+  // Filter workers
   useEffect(() => {
-    if (searchTerm.trim() === "") {
+    if (!searchTerm.trim()) {
       setFilteredWorkers(workers);
-    } else {
-      const filtered = workers.filter(
-        (worker) =>
-          worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (worker.contact &&
-            worker.contact.toLowerCase().includes(searchTerm.toLowerCase())),
-      );
-      setFilteredWorkers(filtered);
+      return;
     }
+    const lower = searchTerm.toLowerCase();
+    setFilteredWorkers(
+      workers.filter(
+        (w) =>
+          w.name.toLowerCase().includes(lower) ||
+          (w.contact && w.contact.toLowerCase().includes(lower)) ||
+          (w.email && w.email.toLowerCase().includes(lower))
+      )
+    );
   }, [searchTerm, workers]);
 
+  // Focus search when dropdown opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  // Update dropdown position
+  const updateDropdownPosition = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+      window.addEventListener("scroll", updateDropdownPosition, true);
+      window.addEventListener("resize", updateDropdownPosition);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+      window.removeEventListener("resize", updateDropdownPosition);
+    };
+  }, [isOpen]);
+
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleSelect = (workerId: number) => {
-    onChange(workerId);
+  const handleSelect = (worker: Worker) => {
+    onChange(worker.id, worker);
     setIsOpen(false);
     setSearchTerm("");
   };
 
-  const handleClear = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onChange(null);
   };
 
   const selectedWorker = workers.find((w) => w.id === value);
 
-  // Adjust z-index for modal context
-  const dropdownZIndex = inModal ? "z-[10000]" : "z-50";
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return { bg: "#d1fae5", text: "#065f46" };
+      case "on-leave":
+        return { bg: "#fef3c7", text: "#92400e" };
+      case "inactive":
+        return { bg: "#f3f4f6", text: "#6b7280" };
+      case "terminated":
+        return { bg: "#fee2e2", text: "#991b1b" };
+      default:
+        return { bg: "#f3f4f6", text: "#6b7280" };
+    }
+  };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm transition-colors ${
-          disabled
-            ? "opacity-50 cursor-not-allowed"
-            : "cursor-pointer hover:border-green-300"
-        }`}
+        className={`
+          w-full px-4 py-2 rounded-lg text-left flex items-center gap-2
+          transition-colors duration-200
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-gray-800"}
+        `}
         style={{
-          backgroundColor: "white",
-          border: "1px solid #e5e7eb",
-          color: "#1f2937",
-          minHeight: "44px",
+          backgroundColor: "var(--card-bg)",
+          border: "1px solid var(--border-color)",
+          color: "var(--text-primary)",
+          minHeight: "42px",
         }}
       >
-        <div className="flex items-center gap-2 truncate">
+        <User
+          className="w-4 h-4 flex-shrink-0"
+          style={{ color: "var(--primary-color)" }}
+        />
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           {selectedWorker ? (
             <>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center">
-                  <User className="w-3 h-3" style={{ color: "#10b981" }} />
-                </div>
-                <span className="truncate font-medium">
-                  {selectedWorker.name}
+              <span className="font-medium truncate">{selectedWorker.name}</span>
+              {selectedWorker.contact && (
+                <span
+                  className="text-xs truncate"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  ({selectedWorker.contact})
                 </span>
-              </div>
+              )}
             </>
           ) : (
-            <span className="text-gray-500">{placeholder}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {selectedWorker && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear();
-              }}
-              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-              style={{ color: "#dc2626" }}
-              title="Clear selection"
+            <span
+              className="truncate"
+              style={{ color: "var(--text-secondary)" }}
             >
-              ×
-            </button>
+              {placeholder}
+            </span>
           )}
-          <ChevronDown
-            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-            style={{ color: "#6b7280" }}
-          />
         </div>
+        {selectedWorker && !disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="p-1 rounded-full hover:bg-gray-700 transition-colors flex-shrink-0"
+            style={{ color: "var(--text-secondary)" }}
+            title="Remove selected"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        <ChevronDown
+          className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          style={{ color: "var(--text-secondary)" }}
+        />
       </button>
 
-      {isOpen && (
-        <div
-          className={`absolute ${dropdownZIndex} w-full mt-1 rounded-lg shadow-xl`}
-          style={{
-            backgroundColor: "white",
-            border: "1px solid #e5e7eb",
-            maxHeight: "320px",
-            overflow: "hidden",
-            boxShadow:
-              "0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <div className="p-3 border-b" style={{ borderColor: "#f3f4f6" }}>
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                style={{ color: "#9ca3af" }}
-              />
-              <input
-                type="text"
-                placeholder="Search workers by name or contact..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm border focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
-                style={{
-                  backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  color: "#1f2937",
-                }}
-                autoFocus
-              />
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className="fixed z-[9999] rounded-lg shadow-lg overflow-hidden"
+            style={{
+              top: dropdownStyle.top,
+              left: dropdownStyle.left,
+              width: dropdownStyle.width,
+              backgroundColor: "var(--card-bg)",
+              border: "1px solid var(--border-color)",
+              maxHeight: "350px",
+            }}
+          >
+            <div
+              className="p-2 border-b"
+              style={{ borderColor: "var(--border-color)" }}
+            >
+              <div className="relative">
+                <Search
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                  style={{ color: "var(--text-secondary)" }}
+                />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search by name, contact, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded text-sm"
+                  style={{
+                    backgroundColor: "var(--card-secondary-bg)",
+                    border: "1px solid var(--border-color)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          {loading && (
-            <div className="p-4 text-center">
-              <Loader
-                className="w-5 h-5 animate-spin mx-auto"
-                style={{ color: "#10b981" }}
-              />
-              <p className="text-xs mt-2" style={{ color: "#6b7280" }}>
-                Loading workers...
-              </p>
-            </div>
-          )}
-
-          {!loading && (
-            <div className="max-h-64 overflow-y-auto thin-scrollbar">
-              {filteredWorkers.length === 0 ? (
-                <div className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <p
-                    className="text-sm font-medium mb-1"
-                    style={{ color: "#374151" }}
-                  >
-                    {searchTerm ? "No workers found" : "No workers available"}
-                  </p>
-                  <p className="text-xs" style={{ color: "#6b7280" }}>
-                    {searchTerm
-                      ? "Try a different search term"
-                      : "Add workers in the Workers section"}
-                  </p>
+            <div className="overflow-y-auto" style={{ maxHeight: "250px" }}>
+              {loading && workers.length === 0 ? (
+                <div
+                  className="p-3 text-center text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Loading...
+                </div>
+              ) : filteredWorkers.length === 0 ? (
+                <div
+                  className="p-3 text-center text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  No workers found
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
-                  {filteredWorkers.map((worker) => (
+                filteredWorkers.map((worker) => {
+                  const colors = getStatusColor(worker.status);
+                  return (
                     <button
                       key={worker.id}
                       type="button"
-                      onClick={() => handleSelect(worker.id)}
-                      className={`w-full p-3 text-left transition-colors flex items-center gap-3 hover:bg-green-50 ${
-                        worker.id === value ? "bg-green-50" : ""
-                      }`}
-                      style={{
-                        color: "#1f2937",
-                      }}
+                      onClick={() => handleSelect(worker)}
+                      className={`
+                        w-full px-3 py-2 text-left flex items-center gap-2
+                        transition-colors text-sm cursor-pointer hover:bg-[var(--card-hover-bg)]
+                        ${worker.id === value ? "bg-[var(--accent-blue-light)]" : ""}
+                      `}
+                      style={{ borderBottom: "1px solid var(--border-color)" }}
                     >
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                          worker.id === value
-                            ? "bg-green-500 border-green-500"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {worker.id === value && (
-                          <div className="w-2 h-2 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                          <User
-                            className="w-4 h-4"
-                            style={{ color: "#059669" }}
-                          />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="font-medium text-sm">
+                      <User
+                        className="w-3.5 h-3.5 flex-shrink-0"
+                        style={{ color: "var(--primary-color)" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="font-medium truncate"
+                            style={{ color: "var(--text-primary)" }}
+                          >
                             {worker.name}
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor:
-                                  worker.status === "active"
-                                    ? "#d1fae5"
-                                    : "#fef3c7",
-                                color:
-                                  worker.status === "active"
-                                    ? "#065f46"
-                                    : "#92400e",
-                              }}
-                            >
-                              {worker.status}
-                            </span>
-                            {worker.contact && (
-                              <span className="text-xs text-gray-500">
-                                {worker.contact}
-                              </span>
-                            )}
-                          </div>
+                          </span>
+                          <span
+                            className="text-xs px-1.5 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: colors.bg,
+                              color: colors.text,
+                            }}
+                          >
+                            {worker.status}
+                          </span>
+                        </div>
+                        <div
+                          className="text-xs mt-0.5"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          {worker.contact || worker.email || "No contact"}
                         </div>
                       </div>
                     </button>
-                  ))}
-                </div>
+                  );
+                })
               )}
             </div>
-          )}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
