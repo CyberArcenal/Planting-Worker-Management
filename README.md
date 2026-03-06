@@ -111,9 +111,10 @@ Originally designed for kabisilya workflows, now expanded into a **general farm 
 ## 📸 Screenshots
 Here are sample displays of the system
 
-![Screenshot 3](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/img3.png?raw=true)
-![Screenshot 2](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/img2.png?raw=true)
-![Screenshot 1](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/img4.png?raw=true)
+![Screenshot 1](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/1.png?raw=true)
+![Screenshot 7](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/7.png?raw=true)
+![Screenshot 9](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/9.png?raw=true)
+![Screenshot 2](https://github.com/CyberArcenal/Kabisilya-Management/blob/main/screenshots/2.png?raw=true)
 
 
 ---
